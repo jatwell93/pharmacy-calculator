@@ -113,7 +113,7 @@ async function callOpenRouterAI(prompt) {
         "X-Title": "Pharmacy Opportunity Calculator",
       },
       body: JSON.stringify({
-        model: "meta-llama/llama-3-70b-instruct:free", // Free model to start
+        model: "meta-llama/llama-3.3-70b-instruct:free", // Free model to start
         messages: [
           {
             role: "user",
@@ -126,9 +126,26 @@ async function callOpenRouterAI(prompt) {
     },
   );
 
+  // === IMPROVED ERROR HANDLING ===
   if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`OpenRouter API error: ${response.status} - ${errorText}`);
+    const status = response.status;
+
+    const errorMessages = {
+      400: "Bad request - please check your request format",
+      401: "Invalid API key - please check your OpenRouter configuration",
+      402: "Insufficient credits - your API key has run out of credits",
+      404: "Model not found - the model name may be outdated. Please check the OpenRouter website for the latest model names.",
+      429: "Rate limit exceeded - you have sent too many requests. Please wait a moment and try again.",
+      502: "Bad gateway - temporary issue with the AI provider. Please wait a few minutes and try again.",
+      503: "Service unavailable - the AI service is temporarily down. Please try again later.",
+    };
+
+    if (errorMessages[status]) {
+      throw new Error(`OpenRouter Error (${status}): ${errorMessages[status]}`);
+    } else {
+      const errorText = await response.text();
+      throw new Error(`OpenRouter API error: ${status} - ${errorText}`);
+    }
   }
 
   const data = await response.json();
