@@ -337,15 +337,27 @@
                 </section>
             </div>
             <div class="mt-8 p-4 bg-gray-100 rounded-lg">
-                <h3 class="text-lg font-semibold mb-2">Development Tools</h3>
-                <button
-                    onclick="testRealAI()"
-                    class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded"
-                >
-                    Test REAL AI Connection
-                </button>
+                <h3 class="text-lg font-semibold mb-2">AI Integration Tests</h3>
+
+                <div class="space-y-2">
+                    <button
+                        onclick="testWithRealData()"
+                        class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded block w-full"
+                    >
+                        Test AI with Real Calculator Data
+                    </button>
+
+                    <button
+                        onclick="testWithSampleData()"
+                        class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded block w-full"
+                    >
+                        Test AI with Sample Data
+                    </button>
+                </div>
+
                 <p class="text-sm text-gray-600 mt-2">
-                    Click this to test if the serverless function is working
+                    Use "Sample Data" if you haven't entered anything in the
+                    calculator yet
                 </p>
             </div>
         </div>
@@ -1036,17 +1048,87 @@
                 ],
             };
 
-            // Test function for our AI integration
-            async function testRealAI() {
-                console.log("Testing REAL AI integration...");
+            // ==================== SAMPLE DATA TEST ====================
+
+            async function testWithSampleData() {
+                console.log("Testing AI with sample data...");
 
                 try {
-                    // Use actual data from your calculator instead of test data
+                    const sampleData = [
+                        {
+                            id: "daa-eligible",
+                            name: "DAA - eligible",
+                            currentValue: 25487,
+                            potentialValue: 64911,
+                            additionalValue: 39424,
+                            growthPercentage: 114,
+                        },
+                        {
+                            id: "vaccinations",
+                            name: "COVID-19 Vaccinations",
+                            currentValue: 3809,
+                            potentialValue: 5012,
+                            additionalValue: 1203,
+                            growthPercentage: 32,
+                        },
+                        {
+                            id: "medschecks",
+                            name: "MedsChecks",
+                            currentValue: 21554,
+                            potentialValue: 21554,
+                            additionalValue: 0,
+                            growthPercentage: 0,
+                        },
+                    ];
+
+                    const response = await fetch("/api/generate-plan", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                        },
+                        body: JSON.stringify({
+                            analysisData: sampleData,
+                            userPreferences: {
+                                timelineMonths: 6,
+                                focusAreas: ["DAA services", "Vaccinations"],
+                                riskTolerance: "medium",
+                            },
+                        }),
+                    });
+
+                    const result = await response.json();
+                    console.log("AI Response with sample data:", result);
+
+                    if (result.success) {
+                        alert(
+                            "🎉 AI is working with sample data! Check console for full plan.",
+                        );
+                        displayPlanPreview(result.plan);
+                    } else {
+                        alert("❌ AI Error: " + result.error);
+                        if (result.fallbackPlan) {
+                            alert(
+                                "But we have a fallback plan! Check console.",
+                            );
+                            console.log("Fallback plan:", result.fallbackPlan);
+                        }
+                    }
+                } catch (error) {
+                    console.error("Sample data test failed:", error);
+                    alert("❌ Connection failed: " + error.message);
+                }
+            }
+
+            // Update the real data test function name
+            async function testWithRealData() {
+                console.log("Testing AI with real calculator data...");
+
+                try {
                     const realData = collectCurrentAnalysisData();
 
                     if (realData.length === 0) {
                         alert(
-                            "Please enter some data in the calculator first!",
+                            'No growth opportunities found. Please increase some "Potential Volume" numbers in the calculator first!',
                         );
                         return;
                     }
@@ -1073,7 +1155,6 @@
                         alert(
                             "🎉 REAL AI is working! Check console for full plan.",
                         );
-                        // Let's display a preview
                         displayPlanPreview(result.plan);
                     } else {
                         alert("❌ AI Error: " + result.error);
@@ -1244,6 +1325,130 @@
                         tbody.appendChild(tr);
                     });
                 });
+            }
+
+            // ==================== DATA COLLECTION FUNCTION ====================
+
+            function collectCurrentAnalysisData() {
+                const analysisData = [];
+
+                // Loop through all services in all parts
+                Object.values(servicesData)
+                    .flat()
+                    .forEach((service) => {
+                        if (service.isCombined) {
+                            // Handle combined services like MedsChecks
+                            service.fields.forEach((field) => {
+                                const currentVol =
+                                    parseFloat(
+                                        document.getElementById(
+                                            `current-${service.id}-${field.id}`,
+                                        ).value,
+                                    ) || 0;
+                                const potentialVol =
+                                    parseFloat(
+                                        document.getElementById(
+                                            `potential-${service.id}-${field.id}`,
+                                        ).value,
+                                    ) || 0;
+
+                                if (potentialVol > currentVol) {
+                                    // For combined services, we need to calculate the values
+                                    const currentVal =
+                                        field.fundedRate *
+                                        currentVol *
+                                        service.timeFactor;
+                                    const potentialVal =
+                                        field.fundedRate *
+                                        potentialVol *
+                                        service.timeFactor;
+                                    const additionalVal =
+                                        potentialVal - currentVal;
+
+                                    analysisData.push({
+                                        id: `${service.id}-${field.id}`,
+                                        name: field.name,
+                                        currentValue: Math.round(currentVal),
+                                        potentialValue:
+                                            Math.round(potentialVal),
+                                        additionalValue:
+                                            Math.round(additionalVal),
+                                        growthPercentage:
+                                            currentVol > 0
+                                                ? Math.round(
+                                                      ((potentialVol -
+                                                          currentVol) /
+                                                          currentVol) *
+                                                          100,
+                                                  )
+                                                : 100,
+                                    });
+                                }
+                            });
+                        } else {
+                            // Handle regular services
+                            const currentVol =
+                                parseFloat(
+                                    document.getElementById(
+                                        `current-${service.id}`,
+                                    ).value,
+                                ) || 0;
+                            const potentialVol =
+                                parseFloat(
+                                    document.getElementById(
+                                        `potential-${service.id}`,
+                                    ).value,
+                                ) || 0;
+                            const currentValElement = document.getElementById(
+                                `current-val-${service.id}`,
+                            );
+                            const additionalValElement =
+                                document.getElementById(
+                                    `additional-val-${service.id}`,
+                                );
+
+                            if (
+                                currentValElement &&
+                                additionalValElement &&
+                                potentialVol > currentVol
+                            ) {
+                                const currentVal =
+                                    parseFloat(
+                                        currentValElement.textContent.replace(
+                                            /[^0-9.-]+/g,
+                                            "",
+                                        ),
+                                    ) || 0;
+                                const additionalVal =
+                                    parseFloat(
+                                        additionalValElement.textContent.replace(
+                                            /[^0-9.-]+/g,
+                                            "",
+                                        ),
+                                    ) || 0;
+                                const potentialVal = currentVal + additionalVal;
+
+                                analysisData.push({
+                                    id: service.id,
+                                    name: service.name,
+                                    currentValue: Math.round(currentVal),
+                                    potentialValue: Math.round(potentialVal),
+                                    additionalValue: Math.round(additionalVal),
+                                    growthPercentage:
+                                        currentVol > 0
+                                            ? Math.round(
+                                                  ((potentialVol - currentVol) /
+                                                      currentVol) *
+                                                      100,
+                                              )
+                                            : 100,
+                                });
+                            }
+                        }
+                    });
+
+                console.log("Collected analysis data:", analysisData);
+                return analysisData;
             }
 
             document.addEventListener("DOMContentLoaded", () => {
