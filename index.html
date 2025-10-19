@@ -195,8 +195,8 @@
         </div>
         <div class="mt-8 p-4 bg-gray-100 rounded-lg">
             <h3 class="text-lg font-semibold mb-2">Development Tools</h3>
-            <button onclick="testAIConnection()" class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded">
-                Test AI Connection
+            <button onclick="testRealAI()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded">
+                Test REAL AI Connection
             </button>
             <p class="text-sm text-gray-600 mt-2">Click this to test if the serverless function is working</p>
         </div>
@@ -290,38 +290,63 @@
         };
 
         // Test function for our AI integration
-        async function testAIConnection() {
-            console.log('Testing AI connection...');
+        // Replace your testAIConnection function with this:
+        async function testRealAI() {
+            console.log('Testing REAL AI integration...');
 
             try {
-                const testData = {
-                    analysisData: [
-                        { name: "DAA Services", additionalValue: 50000 },
-                        { name: "Vaccinations", additionalValue: 20000 }
-                    ],
-                    userPreferences: { timelineMonths: 6 }
-                };
+                // Use actual data from your calculator instead of test data
+                const realData = collectCurrentAnalysisData();
+
+                if (realData.length === 0) {
+                    alert('Please enter some data in the calculator first!');
+                    return;
+                }
 
                 const response = await fetch('/api/generate-plan', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify(testData)
+                    body: JSON.stringify({
+                        analysisData: realData,
+                        userPreferences: {
+                            timelineMonths: 6,
+                            focusAreas: ['High ROI services'],
+                            riskTolerance: 'medium'
+                        }
+                    })
                 });
 
                 const result = await response.json();
-                console.log('Test AI Response:', result);
+                console.log('Real AI Response:', result);
 
                 if (result.success) {
-                    alert('✅ Serverless function is working! Received: ' + JSON.stringify(result.plan));
+                    alert('🎉 REAL AI is working! Check console for full plan.');
+                    // Let's display a preview
+                    displayPlanPreview(result.plan);
                 } else {
-                    alert('❌ Function error: ' + result.error);
+                    alert('❌ AI Error: ' + result.error);
                 }
             } catch (error) {
-                console.error('Test failed:', error);
-                alert('❌ Connection failed: ' + error.message + '\n\nThis is normal until we deploy to Netlify.');
+                console.error('Real AI test failed:', error);
+                alert('❌ Connection failed: ' + error.message);
             }
+        }
+
+        function displayPlanPreview(plan) {
+            const preview = `
+            🏥 Your AI Pharmacy Plan is Ready!
+
+            Investment: $${plan.financials.investmentRequired}
+            Projected ROI: ${plan.financials.projectedROI}x
+            Key Actions: ${plan.actions.staffing.length + plan.actions.marketing.length} steps
+
+            First Month: ${plan.timeline.milestones[0]}
+            `;
+
+            console.log('📋 PLAN PREVIEW:', preview);
+            console.log('Full plan details:', plan);
         }
 
         const formatCurrency = (value) => new Intl.NumberFormat('en-AU', { style: 'currency', currency: 'AUD' }).format(value);
