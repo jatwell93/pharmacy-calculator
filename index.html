@@ -1352,8 +1352,12 @@
                                         ).value,
                                     ) || 0;
 
-                                if (potentialVol > currentVol) {
-                                    // For combined services, we need to calculate the values
+                                // Only include services with actual growth potential
+                                if (
+                                    potentialVol > currentVol &&
+                                    currentVol >= 0 &&
+                                    potentialVol >= 0
+                                ) {
                                     const currentVal =
                                         field.fundedRate *
                                         currentVol *
@@ -1410,44 +1414,58 @@
                             if (
                                 currentValElement &&
                                 additionalValElement &&
-                                potentialVol > currentVol
+                                potentialVol > currentVol &&
+                                currentVol >= 0 &&
+                                potentialVol >= 0
                             ) {
+                                const currentValText =
+                                    currentValElement.textContent.replace(
+                                        /[^0-9.-]+/g,
+                                        "",
+                                    );
+                                const additionalValText =
+                                    additionalValElement.textContent.replace(
+                                        /[^0-9.-]+/g,
+                                        "",
+                                    );
+
                                 const currentVal =
-                                    parseFloat(
-                                        currentValElement.textContent.replace(
-                                            /[^0-9.-]+/g,
-                                            "",
-                                        ),
-                                    ) || 0;
+                                    parseFloat(currentValText) || 0;
                                 const additionalVal =
-                                    parseFloat(
-                                        additionalValElement.textContent.replace(
-                                            /[^0-9.-]+/g,
-                                            "",
-                                        ),
-                                    ) || 0;
+                                    parseFloat(additionalValText) || 0;
                                 const potentialVal = currentVal + additionalVal;
 
-                                analysisData.push({
-                                    id: service.id,
-                                    name: service.name,
-                                    currentValue: Math.round(currentVal),
-                                    potentialValue: Math.round(potentialVal),
-                                    additionalValue: Math.round(additionalVal),
-                                    growthPercentage:
-                                        currentVol > 0
-                                            ? Math.round(
-                                                  ((potentialVol - currentVol) /
-                                                      currentVol) *
-                                                      100,
-                                              )
-                                            : 100,
-                                });
+                                // Validate we have reasonable numbers
+                                if (
+                                    !isNaN(currentVal) &&
+                                    !isNaN(potentialVal) &&
+                                    currentVal >= 0 &&
+                                    potentialVal >= 0
+                                ) {
+                                    analysisData.push({
+                                        id: service.id,
+                                        name: service.name,
+                                        currentValue: Math.round(currentVal),
+                                        potentialValue:
+                                            Math.round(potentialVal),
+                                        additionalValue:
+                                            Math.round(additionalVal),
+                                        growthPercentage:
+                                            currentVol > 0
+                                                ? Math.round(
+                                                      ((potentialVol -
+                                                          currentVol) /
+                                                          currentVol) *
+                                                          100,
+                                                  )
+                                                : 100,
+                                    });
+                                }
                             }
                         }
                     });
 
-                console.log("Collected analysis data:", analysisData);
+                console.log("🔍 DEBUG: Cleaned analysis data:", analysisData);
                 return analysisData;
             }
 

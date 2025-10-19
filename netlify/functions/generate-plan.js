@@ -102,6 +102,21 @@ async function callOpenRouterAI(prompt) {
     throw new Error("OpenRouter API key not configured");
   }
 
+  console.log("🔍 DEBUG: Prompt length:", prompt.length);
+  console.log("🔍 DEBUG: First 200 chars of prompt:", prompt.substring(0, 200));
+
+  const requestBody = {
+    model: "meta-llama/llama-3.3-70b-instruct:free",
+    messages: [{ role: "user", content: prompt }],
+    max_tokens: 2000,
+    temperature: 0.7,
+  };
+
+  console.log(
+    "🔍 DEBUG: Request body size:",
+    JSON.stringify(requestBody).length,
+  );
+
   const response = await fetch(
     "https://openrouter.ai/api/v1/chat/completions",
     {
@@ -109,22 +124,14 @@ async function callOpenRouterAI(prompt) {
       headers: {
         Authorization: `Bearer ${apiKey}`,
         "Content-Type": "application/json",
-        "HTTP-Referer": "pharmacy-opportunity-analyser.netlify.app",
+        "HTTP-Referer": "https://pharmacy-opportunity-analyser.netlify.app",
         "X-Title": "Pharmacy Opportunity Calculator",
       },
-      body: JSON.stringify({
-        model: "meta-llama/llama-3.3-70b-instruct:free", // Free model to start
-        messages: [
-          {
-            role: "user",
-            content: prompt,
-          },
-        ],
-        max_tokens: 2000,
-        temperature: 0.7, // Controls creativity vs consistency
-      }),
+      body: JSON.stringify(requestBody),
     },
   );
+
+  console.log("🔍 DEBUG: Response status:", response.status);
 
   // === IMPROVED ERROR HANDLING ===
   if (!response.ok) {
@@ -149,6 +156,7 @@ async function callOpenRouterAI(prompt) {
   }
 
   const data = await response.json();
+  console.log("🔍 DEBUG: AI response received");
   return data.choices[0].message.content;
 }
 
