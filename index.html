@@ -1,341 +1,1091 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Opportunity Analysis Calculator</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #f8fafc;
-        }
-
-        input[type="number"] {
-            -moz-appearance: textfield;
-            width: 70px;
-        }
-
-        input::-webkit-outer-spin-button,
-        input::-webkit-inner-spin-button {
-            -webkit-appearance: none;
-            margin: 0;
-        }
-
-        .table-header {
-            background-color: #f1f5f9;
-            color: #475569;
-            font-weight: 600;
-        }
-
-        .calc-input {
-            border: 1px solid #cbd5e1;
-            border-radius: 0.375rem;
-            padding: 0.5rem;
-            text-align: center;
-            transition: border-color 0.2s;
-        }
-
-        .calc-input:focus {
-            outline: none;
-            border-color: #4f46e5;
-            box-shadow: 0 0 0 1px #4f46e5;
-        }
-
-        .calc-input:disabled {
-            background-color: #f1f5f9;
-            cursor: not-allowed;
-        }
-
-        .result-cell {
-            font-weight: 500;
-            color: #1e293b;
-        }
-
-        .section-title {
-            color: #4338ca;
-        }
-
-        .total-card {
-            background-color: #eef2ff;
-            border-left: 4px solid #4f46e5;
-        }
-
-        .funded-cell {
-            color: #334155;
-            font-size: 0.875rem;
-        }
-    </style>
-</head>
-
-<body class="p-4 md:p-8">
-
-    <div class="max-w-screen-xl mx-auto bg-white p-6 rounded-2xl shadow-lg">
-        <header class="mb-8">
-            <h1 class="text-3xl font-bold text-gray-800">Opportunity Analysis Calculator</h1>
-            <p class="text-gray-600 mt-2">Enter your pharmacy's patient fees and service volumes to see the estimated
-                yearly financial opportunity.</p>
-        </header>
-
-        <!-- Totals Section -->
-        <section id="projected-opportunity" class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
-            <div class="total-card p-5 rounded-lg">
-                <h3 class="text-md font-semibold text-gray-600">Estimated Current Value (Yearly)</h3>
-                <p id="total-current-value" class="text-3xl font-bold text-gray-900 mt-2">$0.00</p>
-            </div>
-            <div class="total-card p-5 rounded-lg">
-                <h3 class="text-md font-semibold text-gray-600">Estimated Additional Value (Yearly)</h3>
-                <p id="total-additional-value" class="text-3xl font-bold text-gray-900 mt-2">$0.00</p>
-            </div>
-            <div class="total-card p-5 rounded-lg">
-                <h3 class="text-md font-semibold text-gray-600">Estimated Total Value (Yearly)</h3>
-                <p id="total-potential-value" class="text-3xl font-bold text-gray-900 mt-2">$0.00</p>
-            </div>
-        </section>
-
-        <div class="space-y-12">
-            <!-- Part 1: Government-Funded Programs -->
-            <section>
-                <h2 class="text-2xl font-semibold mb-4 section-title">Part 1: Government-Funded Programs</h2>
-                <div class="overflow-x-auto">
-                    <table class="min-w-full divide-y divide-gray-200">
-                        <thead class="table-header">
-                            <tr>
-                                <th class="px-4 py-3 text-left text-xs uppercase tracking-wider">Program</th>
-                                <th class="px-4 py-3 text-left text-xs uppercase tracking-wider">Funded Per Service</th>
-                                <th class="px-4 py-3 text-center text-xs uppercase tracking-wider">Patient Fee (Current
-                                    / Potential)</th>
-                                <th class="px-4 py-3 text-center text-xs uppercase tracking-wider">Current Volume</th>
-                                <th class="px-4 py-3 text-center text-xs uppercase tracking-wider">Potential Volume</th>
-                                <th class="px-4 py-3 text-right text-xs uppercase tracking-wider">Est. Current (Yearly)
-                                </th>
-                                <th class="px-4 py-3 text-right text-xs uppercase tracking-wider">Est. Additional
-                                    (Yearly)</th>
-                            </tr>
-                        </thead>
-                        <tbody class="bg-white divide-y divide-gray-200" id="part1-body"></tbody>
-                    </table>
-                </div>
-            </section>
-
-            <!-- Part 2: Vaccinations -->
-            <section>
-                <h2 class="text-2xl font-semibold mb-4 section-title">Part 2: Vaccinations</h2>
-                <div class="overflow-x-auto">
-                    <table class="min-w-full divide-y divide-gray-200">
-                        <thead class="table-header">
-                            <tr>
-                                <th class="px-4 py-3 text-left text-xs uppercase tracking-wider">Program</th>
-                                <th class="px-4 py-3 text-left text-xs uppercase tracking-wider">Funded Per Service</th>
-                                <th class="px-4 py-3 text-center text-xs uppercase tracking-wider">Patient Fee (Current
-                                    / Potential)</th>
-                                <th class="px-4 py-3 text-center text-xs uppercase tracking-wider">Current Volume</th>
-                                <th class="px-4 py-3 text-center text-xs uppercase tracking-wider">Potential Volume</th>
-                                <th class="px-4 py-3 text-right text-xs uppercase tracking-wider">Est. Current (Yearly)
-                                </th>
-                                <th class="px-4 py-3 text-right text-xs uppercase tracking-wider">Est. Additional
-                                    (Yearly)</th>
-                            </tr>
-                        </thead>
-                        <tbody class="bg-white divide-y divide-gray-200" id="part2-body"></tbody>
-                    </table>
-                </div>
-            </section>
-
-            <!-- Part 3: Pharmacy Programs & Services -->
-            <section>
-                <h2 class="text-2xl font-semibold mb-4 section-title">Part 3: Pharmacy Programs & Services</h2>
-                <div class="overflow-x-auto">
-                    <table class="min-w-full divide-y divide-gray-200">
-                        <thead class="table-header">
-                            <tr>
-                                <th class="px-4 py-3 text-left text-xs uppercase tracking-wider">Service</th>
-                                <th class="px-4 py-3 text-left text-xs uppercase tracking-wider">Funded / Other Value
-                                </th>
-                                <th class="px-4 py-3 text-center text-xs uppercase tracking-wider">Patient Fee (Current
-                                    / Potential)</th>
-                                <th class="px-4 py-3 text-center text-xs uppercase tracking-wider">Current Volume</th>
-                                <th class="px-4 py-3 text-center text-xs uppercase tracking-wider">Potential Volume</th>
-                                <th class="px-4 py-3 text-right text-xs uppercase tracking-wider">Est. Current (Yearly)
-                                </th>
-                                <th class="px-4 py-3 text-right text-xs uppercase tracking-wider">Est. Additional
-                                    (Yearly)</th>
-                            </tr>
-                        </thead>
-                        <tbody class="bg-white divide-y divide-gray-200" id="part3-body"></tbody>
-                    </table>
-                </div>
-            </section>
-
-            <!-- Part 4: Biologics Dispensary Opportunity -->
-            <section>
-                <h2 class="text-2xl font-semibold mb-4 section-title">Part 4: Biologics Dispensary Opportunity</h2>
-                <div class="overflow-x-auto">
-                    <table class="min-w-full divide-y divide-gray-200">
-                        <thead class="table-header">
-                            <tr>
-                                <th class="px-4 py-3 text-left text-xs uppercase tracking-wider">Molecule</th>
-                                <th class="px-4 py-3 text-left text-xs uppercase tracking-wider">Additional Margin /
-                                    Remuneration</th>
-                                <th class="px-4 py-3 text-center text-xs uppercase tracking-wider">Current Volume
-                                    (Biosimilar)</th>
-                                <th class="px-4 py-3 text-center text-xs uppercase tracking-wider">Potential Volume
-                                    (Biosimilar)</th>
-                                <th class="px-4 py-3 text-right text-xs uppercase tracking-wider">Est. Current (Yearly)
-                                </th>
-                                <th class="px-4 py-3 text-right text-xs uppercase tracking-wider">Est. Additional
-                                    (Yearly)</th>
-                            </tr>
-                        </thead>
-                        <tbody class="bg-white divide-y divide-gray-200" id="part4-body"></tbody>
-                    </table>
-                </div>
-            </section>
-        </div>
-        <div class="mt-8 p-4 bg-gray-100 rounded-lg">
-            <h3 class="text-lg font-semibold mb-2">Development Tools</h3>
-            <button onclick="testRealAI()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded">
-                Test REAL AI Connection
-            </button>
-            <p class="text-sm text-gray-600 mt-2">Click this to test if the serverless function is working</p>
-        </div>
-    </div>
-
-    <script>
-        // Generic calculation for most services
-        const standardCalc = (c, p, pfc, pfp, fr, tf) => {
-            const curVal = (fr + pfc) * c * tf;
-            const addVal = ((fr + pfp) * (p - c) * tf) + ((pfp - pfc) * c * tf);
-            return [curVal, addVal];
-        };
-
-        const servicesData = {
-            part1: [
-                { id: 'daa-eligible', name: 'DAA - eligible', fundedRateDesc: '$6.17 /wk', fundedRate: 6.17, patientFeeCurrent: 5, patientFeePotential: 7.70, unit: 'Patients', timeFactor: 52, currentVol: 80, potentialVol: 90, calc: standardCalc },
-                { id: 'daa-private', name: 'DAA - private', fundedRateDesc: 'N/A', fundedRate: 0, patientFeeCurrent: 5, patientFeePotential: 7.70, unit: 'Patients', timeFactor: 52, currentVol: 10, potentialVol: 20, calc: standardCalc },
-                { id: 'idaa', name: 'IDAA', fundedRateDesc: '$11.60 /wk', fundedRate: 11.60, patientFeeCurrent: 0, patientFeePotential: 0, unit: 'Patients', timeFactor: 52, currentVol: 2, potentialVol: 20, calc: standardCalc },
-                { id: 'staged-supply', name: 'Staged Supply - eligible', fundedRateDesc: '$13.61 /wk (avg)', fundedRate: 13.61, patientFeeCurrent: 0, patientFeePotential: 0, unit: 'Patients', timeFactor: 52, currentVol: 3, potentialVol: 15, calc: standardCalc }, // Simplified based on doc values
-                {
-                    id: 'medschecks', name: 'MedsChecks & Diabetes MedsChecks', isCombined: true, fields: [
-                        { id: 'mc', name: 'MedsChecks', fundedRateDesc: '$66.53', fundedRate: 66.53, currentVol: 5, potentialVol: 10 },
-                        { id: 'dmc', name: 'Diabetes MedsChecks', fundedRateDesc: '$99.79', fundedRate: 99.79, currentVol: 1, potentialVol: 10 }
-                    ], unit: 'per month', timeFactor: 12, calc: (vols, tf) => {
-                        let curVal = 0; let addVal = 0;
-                        Object.values(vols).forEach(v => {
-                            curVal += v.fr * v.c;
-                            addVal += v.fr * (v.p - v.c);
-                        });
-                        return [curVal * tf, addVal * tf];
-                    }
-                },
-                { id: 'hmr', name: 'HMRs', fundedRateDesc: '$222.77', fundedRate: 222.77, patientFeeCurrent: 0, patientFeePotential: 0, unit: '/month', timeFactor: 12, currentVol: 1, potentialVol: 30, calc: standardCalc },
-                { id: 'hmr-f1', name: 'HMR 1st Follow Up', fundedRateDesc: '$111.39', fundedRate: 111.39, patientFeeCurrent: 0, patientFeePotential: 0, unit: '/month', timeFactor: 12, currentVol: 0, potentialVol: 15, calc: standardCalc },
-                { id: 'hmr-f2', name: 'HMR 2nd Follow Up', fundedRateDesc: '$55.70', fundedRate: 55.70, patientFeeCurrent: 0, patientFeePotential: 0, unit: '/month', timeFactor: 12, currentVol: 0, potentialVol: 7, calc: standardCalc },
-                { id: 'rmmr', name: 'RMMRs', fundedRateDesc: '$112.65', fundedRate: 112.65, patientFeeCurrent: 0, patientFeePotential: 0, unit: 'Patients/yr', timeFactor: 1, currentVol: 0, potentialVol: 75, calc: standardCalc },
-                { id: 'rmmr-f1', name: 'RMMRs 1st Follow Up', fundedRateDesc: '$56.33', fundedRate: 56.33, patientFeeCurrent: 0, patientFeePotential: 0, unit: 'Patients/yr', timeFactor: 1, currentVol: 0, potentialVol: 15, calc: standardCalc },
-                { id: 'rmmr-f2', name: 'RMMRs 2nd Follow Up', fundedRateDesc: '$28.16', fundedRate: 28.16, patientFeeCurrent: 0, patientFeePotential: 0, unit: 'Patients/yr', timeFactor: 1, currentVol: 0, potentialVol: 5, calc: standardCalc },
-                {
-                    id: 'qum', name: 'Quality Use of Medicines', fundedRateDesc: '$125 base + $12.50/bed /qtr', fundedRate: 12.50, patientFeeCurrent: 0, patientFeePotential: 0, unit: 'Beds', timeFactor: 4, currentVol: 0, potentialVol: 75, calc: (c, p, pfc, pfp, fr, tf) => {
-                        const base = 125;
-                        const curVal = (c > 0 ? (base + fr * c) * tf : 0);
-                        const potVal = (p > 0 ? (base + fr * p) * tf : 0);
-                        return [curVal, potVal - curVal];
-                    }
-                },
-                { id: 'odt-oral', name: 'ODT supply (oral)', fundedRateDesc: '$5.66 /day', fundedRate: 5.66 * 7, patientFeeCurrent: 0, patientFeePotential: 0, unit: 'Patients', timeFactor: 52, currentVol: 5, potentialVol: 10, calc: standardCalc },
-                { id: 'odt-weekly', name: 'ODT WEEKLY admin (injectable)', fundedRateDesc: '$22.15 /injection', fundedRate: 22.15, patientFeeCurrent: 0, patientFeePotential: 0, unit: 'Patients', timeFactor: 52, currentVol: 0, potentialVol: 1, calc: standardCalc },
-                { id: 'odt-monthly', name: 'ODT MONTHLY admin (injectable)', fundedRateDesc: '$22.15 /injection', fundedRate: 22.15, patientFeeCurrent: 0, patientFeePotential: 0, unit: 'Patients', timeFactor: 12, currentVol: 0, potentialVol: 1, calc: standardCalc },
-                { id: 'thn', name: 'Take Home Naloxone (THN)', fundedRateDesc: '$18.25 profit', fundedRate: 18.25, patientFeeCurrent: 0, patientFeePotential: 0, unit: '/month', timeFactor: 12, currentVol: 0, potentialVol: 4, calc: standardCalc },
-            ],
-            part2: [
-                { id: 'covid', name: 'COVID-19 Vaccinations', fundedRateDesc: '$28.35', fundedRate: 28.35, patientFeeCurrent: 0, patientFeePotential: 0, unit: '/year', timeFactor: 1, currentVol: 500, potentialVol: 600, calc: standardCalc },
-                { id: 'nipvip', name: 'NIPVIP Vaccinations', fundedRateDesc: '$19.32', fundedRate: 19.32, patientFeeCurrent: 0, patientFeePotential: 0, unit: '/year', timeFactor: 1, currentVol: 50, potentialVol: 300, calc: standardCalc },
-                { id: 'flu-comm', name: 'Flu Community Patients', fundedRateDesc: 'N/A', fundedRate: 0, patientFeeCurrent: 29, patientFeePotential: 29, unit: '/year', timeFactor: 1, currentVol: 500, potentialVol: 700, calc: standardCalc },
-                { id: 'flu-corp', name: 'Flu Corporate Program', fundedRateDesc: 'N/A', fundedRate: 0, patientFeeCurrent: 20, patientFeePotential: 20, unit: '/year', timeFactor: 1, currentVol: 50, potentialVol: 70, calc: standardCalc },
-                { id: 'mmr', name: 'MMR', fundedRateDesc: 'N/A', fundedRate: 0, patientFeeCurrent: 20, patientFeePotential: 20, unit: '/year', timeFactor: 1, currentVol: 0, potentialVol: 10, calc: standardCalc },
-                { id: 'dtpa', name: 'dTpa', fundedRateDesc: 'N/A', fundedRate: 0, patientFeeCurrent: 55, patientFeePotential: 55, unit: '/year', timeFactor: 1, currentVol: 0, potentialVol: 50, calc: standardCalc },
-                { id: 'dtpa-polio', name: 'dTpa + poliovirus', fundedRateDesc: 'N/A', fundedRate: 0, patientFeeCurrent: 0, patientFeePotential: 55, unit: '/year', timeFactor: 1, currentVol: 0, potentialVol: 10, calc: standardCalc },
-                { id: 'polio', name: 'Poliomyelitis', fundedRateDesc: 'N/A', fundedRate: 0, patientFeeCurrent: 0, patientFeePotential: 40, unit: '/year', timeFactor: 1, currentVol: 0, potentialVol: 10, calc: standardCalc },
-                { id: 'cholera', name: 'Cholera', fundedRateDesc: 'N/A', fundedRate: 0, patientFeeCurrent: 0, patientFeePotential: 90, unit: '/year', timeFactor: 1, currentVol: 0, potentialVol: 5, calc: standardCalc },
-                { id: 'haemophilus', name: 'Haemophilus influenzae type B', fundedRateDesc: 'N/A', fundedRate: 0, patientFeeCurrent: 0, patientFeePotential: 45, unit: '/year', timeFactor: 1, currentVol: 0, potentialVol: 10, calc: standardCalc },
-                { id: 'meningococcal', name: 'Meningococcal', fundedRateDesc: 'N/A', fundedRate: 0, patientFeeCurrent: 20, patientFeePotential: 20, unit: '/year', timeFactor: 1, currentVol: 0, potentialVol: 10, calc: standardCalc },
-                { id: 'pneumococcal', name: 'Pneumococcal', fundedRateDesc: 'N/A', fundedRate: 0, patientFeeCurrent: 20, patientFeePotential: 20, unit: '/year', timeFactor: 1, currentVol: 0, potentialVol: 50, calc: standardCalc },
-                { id: 'hepa', name: 'Hepatitis A', fundedRateDesc: 'N/A', fundedRate: 0, patientFeeCurrent: 0, patientFeePotential: 70, unit: '/year', timeFactor: 1, currentVol: 0, potentialVol: 10, calc: standardCalc },
-                { id: 'shingles', name: 'Shingles', fundedRateDesc: 'N/A', fundedRate: 0, patientFeeCurrent: 20, patientFeePotential: 220, unit: '/year', timeFactor: 1, currentVol: 0, potentialVol: 20, calc: standardCalc },
-                { id: 'hepb', name: 'Hepatitis B', fundedRateDesc: 'N/A', fundedRate: 0, patientFeeCurrent: 20, patientFeePotential: 20, unit: '/year', timeFactor: 1, currentVol: 0, potentialVol: 20, calc: standardCalc },
-                { id: 'hpv', name: 'HPV', fundedRateDesc: 'N/A', fundedRate: 0, patientFeeCurrent: 20, patientFeePotential: 20, unit: '/year', timeFactor: 1, currentVol: 0, potentialVol: 100, calc: standardCalc },
-                { id: 'varicella', name: 'Varicella', fundedRateDesc: 'N/A', fundedRate: 0, patientFeeCurrent: 0, patientFeePotential: 65, unit: '/year', timeFactor: 1, currentVol: 0, potentialVol: 10, calc: standardCalc },
-                { id: 'rsv', name: 'RSV', fundedRateDesc: 'N/A', fundedRate: 0, patientFeeCurrent: 0, patientFeePotential: 300, unit: '/year', timeFactor: 1, currentVol: 0, potentialVol: 20, calc: standardCalc },
-            ],
-            part3: [
-                { id: 'app-enrol', name: 'App enrolments', fundedRateDesc: '$48/patient/yr', fundedRate: 48, patientFeeCurrent: 0, patientFeePotential: 0, unit: 'Active Patients', timeFactor: 1, currentVol: 100, potentialVol: 150, calc: standardCalc },
-                { id: 'uti', name: 'UTI Consultation', fundedRateDesc: 'N/A', fundedRate: 0, patientFeeCurrent: 25, patientFeePotential: 25, unit: '/month', timeFactor: 12, currentVol: 1, potentialVol: 4, calc: standardCalc },
-                { id: 'ocp', name: 'Resupply of OCP Consultation', fundedRateDesc: 'N/A', fundedRate: 0, patientFeeCurrent: 30, patientFeePotential: 30, unit: '/month', timeFactor: 12, currentVol: 1, potentialVol: 4, calc: standardCalc },
-                { id: 'skin', name: 'Minor Skin Conditions Consultation', fundedRateDesc: 'N/A', fundedRate: 0, patientFeeCurrent: 0, patientFeePotential: 25, unit: '/month', timeFactor: 12, currentVol: 0, potentialVol: 10, calc: standardCalc },
-                { id: 'travel', name: 'Travel Health Consultation', fundedRateDesc: 'N/A', fundedRate: 0, patientFeeCurrent: 35, patientFeePotential: 35, unit: '/month', timeFactor: 12, currentVol: 1, potentialVol: 4, calc: standardCalc },
-                { id: 'injection', name: 'Administering Medicines by Injection', fundedRateDesc: 'N/A', fundedRate: 0, patientFeeCurrent: 25, patientFeePotential: 25, unit: '/month', timeFactor: 12, currentVol: 1, potentialVol: 4, calc: standardCalc },
-                { id: 'absence-cert', name: 'Absence from Work Certificates', fundedRateDesc: 'N/A', fundedRate: 0, patientFeeCurrent: 35, patientFeePotential: 35, unit: '/month', timeFactor: 12, currentVol: 2, potentialVol: 10, calc: standardCalc },
-                { id: 'weight', name: 'Weight Management Programs', fundedRateDesc: 'N/A', fundedRate: 0, patientFeeCurrent: 0, patientFeePotential: 50, unit: '/month', timeFactor: 12, currentVol: 0, potentialVol: 5, calc: standardCalc },
-                { id: 'sleep', name: 'Sleep Studies', fundedRateDesc: 'N/A', fundedRate: 0, patientFeeCurrent: 0, patientFeePotential: 100, unit: '/month', timeFactor: 12, currentVol: 0, potentialVol: 2, calc: standardCalc },
-                { id: 'woundcare', name: 'Woundcare', fundedRateDesc: 'N/A', fundedRate: 0, patientFeeCurrent: 25, patientFeePotential: 25, unit: '/month', timeFactor: 12, currentVol: 0, potentialVol: 4, calc: standardCalc },
-                { id: 'delivery', name: 'Home deliveries', fundedRateDesc: 'N/A', fundedRate: 0, patientFeeCurrent: 0, patientFeePotential: 10, unit: '/month', timeFactor: 12, currentVol: 0, potentialVol: 20, calc: standardCalc },
-            ],
-            part4: [
-                { id: 'ada-margin', name: 'Adalimumab Additional Margin', fundedRateDesc: '$681.20/yr', fundedRate: 681.20, unit: 'Patients', timeFactor: 1, currentVol: 0, potentialVol: 3, calc: (c, p, pfc, pfp, fr, tf) => [fr * c * tf, fr * (p - c) * tf] },
-                { id: 'ada-program', name: 'Adalimumab: Pharmacy Program', fundedRateDesc: '$370/yr', fundedRate: 370, unit: 'Patients', timeFactor: 1, currentVol: 0, potentialVol: 3, calc: (c, p, pfc, pfp, fr, tf) => [fr * c * tf, fr * (p - c) * tf] },
-                { id: 'eta-margin', name: 'Etanercept NIS Saving', fundedRateDesc: '$790.27/yr', fundedRate: 790.27, unit: 'Patients', timeFactor: 1, currentVol: 0, potentialVol: 1, calc: (c, p, pfc, pfp, fr, tf) => [fr * c * tf, fr * (p - c) * tf] },
-                { id: 'eta-program', name: 'Etanercept: Pharmacy Program', fundedRateDesc: '$240/yr', fundedRate: 240, unit: 'Patients', timeFactor: 1, currentVol: 0, potentialVol: 1, calc: (c, p, pfc, pfp, fr, tf) => [fr * c * tf, fr * (p - c) * tf] },
-            ]
-        };
-
-        // Test function for our AI integration
-        // Replace your testAIConnection function with this:
-        async function testRealAI() {
-            console.log('Testing REAL AI integration...');
-
-            try {
-                // Use actual data from your calculator instead of test data
-                const realData = collectCurrentAnalysisData();
-
-                if (realData.length === 0) {
-                    alert('Please enter some data in the calculator first!');
-                    return;
-                }
-
-                const response = await fetch('/api/generate-plan', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        analysisData: realData,
-                        userPreferences: {
-                            timelineMonths: 6,
-                            focusAreas: ['High ROI services'],
-                            riskTolerance: 'medium'
-                        }
-                    })
-                });
-
-                const result = await response.json();
-                console.log('Real AI Response:', result);
-
-                if (result.success) {
-                    alert('🎉 REAL AI is working! Check console for full plan.');
-                    // Let's display a preview
-                    displayPlanPreview(result.plan);
-                } else {
-                    alert('❌ AI Error: ' + result.error);
-                }
-            } catch (error) {
-                console.error('Real AI test failed:', error);
-                alert('❌ Connection failed: ' + error.message);
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Opportunity Analysis Calculator</title>
+        <script src="https://cdn.tailwindcss.com"></script>
+        <link
+            href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+            rel="stylesheet"
+        />
+        <style>
+            body {
+                font-family: "Inter", sans-serif;
+                background-color: #f8fafc;
             }
-        }
 
-        function displayPlanPreview(plan) {
-            const preview = `
+            input[type="number"] {
+                -moz-appearance: textfield;
+                width: 70px;
+            }
+
+            input::-webkit-outer-spin-button,
+            input::-webkit-inner-spin-button {
+                -webkit-appearance: none;
+                margin: 0;
+            }
+
+            .table-header {
+                background-color: #f1f5f9;
+                color: #475569;
+                font-weight: 600;
+            }
+
+            .calc-input {
+                border: 1px solid #cbd5e1;
+                border-radius: 0.375rem;
+                padding: 0.5rem;
+                text-align: center;
+                transition: border-color 0.2s;
+            }
+
+            .calc-input:focus {
+                outline: none;
+                border-color: #4f46e5;
+                box-shadow: 0 0 0 1px #4f46e5;
+            }
+
+            .calc-input:disabled {
+                background-color: #f1f5f9;
+                cursor: not-allowed;
+            }
+
+            .result-cell {
+                font-weight: 500;
+                color: #1e293b;
+            }
+
+            .section-title {
+                color: #4338ca;
+            }
+
+            .total-card {
+                background-color: #eef2ff;
+                border-left: 4px solid #4f46e5;
+            }
+
+            .funded-cell {
+                color: #334155;
+                font-size: 0.875rem;
+            }
+        </style>
+    </head>
+
+    <body class="p-4 md:p-8">
+        <div class="max-w-screen-xl mx-auto bg-white p-6 rounded-2xl shadow-lg">
+            <header class="mb-8">
+                <h1 class="text-3xl font-bold text-gray-800">
+                    Opportunity Analysis Calculator
+                </h1>
+                <p class="text-gray-600 mt-2">
+                    Enter your pharmacy's patient fees and service volumes to
+                    see the estimated yearly financial opportunity.
+                </p>
+            </header>
+
+            <!-- Totals Section -->
+            <section
+                id="projected-opportunity"
+                class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10"
+            >
+                <div class="total-card p-5 rounded-lg">
+                    <h3 class="text-md font-semibold text-gray-600">
+                        Estimated Current Value (Yearly)
+                    </h3>
+                    <p
+                        id="total-current-value"
+                        class="text-3xl font-bold text-gray-900 mt-2"
+                    >
+                        $0.00
+                    </p>
+                </div>
+                <div class="total-card p-5 rounded-lg">
+                    <h3 class="text-md font-semibold text-gray-600">
+                        Estimated Additional Value (Yearly)
+                    </h3>
+                    <p
+                        id="total-additional-value"
+                        class="text-3xl font-bold text-gray-900 mt-2"
+                    >
+                        $0.00
+                    </p>
+                </div>
+                <div class="total-card p-5 rounded-lg">
+                    <h3 class="text-md font-semibold text-gray-600">
+                        Estimated Total Value (Yearly)
+                    </h3>
+                    <p
+                        id="total-potential-value"
+                        class="text-3xl font-bold text-gray-900 mt-2"
+                    >
+                        $0.00
+                    </p>
+                </div>
+            </section>
+
+            <div class="space-y-12">
+                <!-- Part 1: Government-Funded Programs -->
+                <section>
+                    <h2 class="text-2xl font-semibold mb-4 section-title">
+                        Part 1: Government-Funded Programs
+                    </h2>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="table-header">
+                                <tr>
+                                    <th
+                                        class="px-4 py-3 text-left text-xs uppercase tracking-wider"
+                                    >
+                                        Program
+                                    </th>
+                                    <th
+                                        class="px-4 py-3 text-left text-xs uppercase tracking-wider"
+                                    >
+                                        Funded Per Service
+                                    </th>
+                                    <th
+                                        class="px-4 py-3 text-center text-xs uppercase tracking-wider"
+                                    >
+                                        Patient Fee (Current / Potential)
+                                    </th>
+                                    <th
+                                        class="px-4 py-3 text-center text-xs uppercase tracking-wider"
+                                    >
+                                        Current Volume
+                                    </th>
+                                    <th
+                                        class="px-4 py-3 text-center text-xs uppercase tracking-wider"
+                                    >
+                                        Potential Volume
+                                    </th>
+                                    <th
+                                        class="px-4 py-3 text-right text-xs uppercase tracking-wider"
+                                    >
+                                        Est. Current (Yearly)
+                                    </th>
+                                    <th
+                                        class="px-4 py-3 text-right text-xs uppercase tracking-wider"
+                                    >
+                                        Est. Additional (Yearly)
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody
+                                class="bg-white divide-y divide-gray-200"
+                                id="part1-body"
+                            ></tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- Part 2: Vaccinations -->
+                <section>
+                    <h2 class="text-2xl font-semibold mb-4 section-title">
+                        Part 2: Vaccinations
+                    </h2>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="table-header">
+                                <tr>
+                                    <th
+                                        class="px-4 py-3 text-left text-xs uppercase tracking-wider"
+                                    >
+                                        Program
+                                    </th>
+                                    <th
+                                        class="px-4 py-3 text-left text-xs uppercase tracking-wider"
+                                    >
+                                        Funded Per Service
+                                    </th>
+                                    <th
+                                        class="px-4 py-3 text-center text-xs uppercase tracking-wider"
+                                    >
+                                        Patient Fee (Current / Potential)
+                                    </th>
+                                    <th
+                                        class="px-4 py-3 text-center text-xs uppercase tracking-wider"
+                                    >
+                                        Current Volume
+                                    </th>
+                                    <th
+                                        class="px-4 py-3 text-center text-xs uppercase tracking-wider"
+                                    >
+                                        Potential Volume
+                                    </th>
+                                    <th
+                                        class="px-4 py-3 text-right text-xs uppercase tracking-wider"
+                                    >
+                                        Est. Current (Yearly)
+                                    </th>
+                                    <th
+                                        class="px-4 py-3 text-right text-xs uppercase tracking-wider"
+                                    >
+                                        Est. Additional (Yearly)
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody
+                                class="bg-white divide-y divide-gray-200"
+                                id="part2-body"
+                            ></tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- Part 3: Pharmacy Programs & Services -->
+                <section>
+                    <h2 class="text-2xl font-semibold mb-4 section-title">
+                        Part 3: Pharmacy Programs & Services
+                    </h2>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="table-header">
+                                <tr>
+                                    <th
+                                        class="px-4 py-3 text-left text-xs uppercase tracking-wider"
+                                    >
+                                        Service
+                                    </th>
+                                    <th
+                                        class="px-4 py-3 text-left text-xs uppercase tracking-wider"
+                                    >
+                                        Funded / Other Value
+                                    </th>
+                                    <th
+                                        class="px-4 py-3 text-center text-xs uppercase tracking-wider"
+                                    >
+                                        Patient Fee (Current / Potential)
+                                    </th>
+                                    <th
+                                        class="px-4 py-3 text-center text-xs uppercase tracking-wider"
+                                    >
+                                        Current Volume
+                                    </th>
+                                    <th
+                                        class="px-4 py-3 text-center text-xs uppercase tracking-wider"
+                                    >
+                                        Potential Volume
+                                    </th>
+                                    <th
+                                        class="px-4 py-3 text-right text-xs uppercase tracking-wider"
+                                    >
+                                        Est. Current (Yearly)
+                                    </th>
+                                    <th
+                                        class="px-4 py-3 text-right text-xs uppercase tracking-wider"
+                                    >
+                                        Est. Additional (Yearly)
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody
+                                class="bg-white divide-y divide-gray-200"
+                                id="part3-body"
+                            ></tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- Part 4: Biologics Dispensary Opportunity -->
+                <section>
+                    <h2 class="text-2xl font-semibold mb-4 section-title">
+                        Part 4: Biologics Dispensary Opportunity
+                    </h2>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="table-header">
+                                <tr>
+                                    <th
+                                        class="px-4 py-3 text-left text-xs uppercase tracking-wider"
+                                    >
+                                        Molecule
+                                    </th>
+                                    <th
+                                        class="px-4 py-3 text-left text-xs uppercase tracking-wider"
+                                    >
+                                        Additional Margin / Remuneration
+                                    </th>
+                                    <th
+                                        class="px-4 py-3 text-center text-xs uppercase tracking-wider"
+                                    >
+                                        Current Volume (Biosimilar)
+                                    </th>
+                                    <th
+                                        class="px-4 py-3 text-center text-xs uppercase tracking-wider"
+                                    >
+                                        Potential Volume (Biosimilar)
+                                    </th>
+                                    <th
+                                        class="px-4 py-3 text-right text-xs uppercase tracking-wider"
+                                    >
+                                        Est. Current (Yearly)
+                                    </th>
+                                    <th
+                                        class="px-4 py-3 text-right text-xs uppercase tracking-wider"
+                                    >
+                                        Est. Additional (Yearly)
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody
+                                class="bg-white divide-y divide-gray-200"
+                                id="part4-body"
+                            ></tbody>
+                        </table>
+                    </div>
+                </section>
+            </div>
+            <div class="mt-8 p-4 bg-gray-100 rounded-lg">
+                <h3 class="text-lg font-semibold mb-2">Development Tools</h3>
+                <button
+                    onclick="testRealAI()"
+                    class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded"
+                >
+                    Test REAL AI Connection
+                </button>
+                <p class="text-sm text-gray-600 mt-2">
+                    Click this to test if the serverless function is working
+                </p>
+            </div>
+        </div>
+
+        <script>
+            // Generic calculation for most services
+            const standardCalc = (c, p, pfc, pfp, fr, tf) => {
+                const curVal = (fr + pfc) * c * tf;
+                const addVal = (fr + pfp) * (p - c) * tf + (pfp - pfc) * c * tf;
+                return [curVal, addVal];
+            };
+
+            const servicesData = {
+                part1: [
+                    {
+                        id: "daa-eligible",
+                        name: "DAA - eligible",
+                        fundedRateDesc: "$6.17 /wk",
+                        fundedRate: 6.17,
+                        patientFeeCurrent: 5,
+                        patientFeePotential: 7.7,
+                        unit: "Patients",
+                        timeFactor: 52,
+                        currentVol: 80,
+                        potentialVol: 90,
+                        calc: standardCalc,
+                    },
+                    {
+                        id: "daa-private",
+                        name: "DAA - private",
+                        fundedRateDesc: "N/A",
+                        fundedRate: 0,
+                        patientFeeCurrent: 5,
+                        patientFeePotential: 7.7,
+                        unit: "Patients",
+                        timeFactor: 52,
+                        currentVol: 10,
+                        potentialVol: 20,
+                        calc: standardCalc,
+                    },
+                    {
+                        id: "idaa",
+                        name: "IDAA",
+                        fundedRateDesc: "$11.60 /wk",
+                        fundedRate: 11.6,
+                        patientFeeCurrent: 0,
+                        patientFeePotential: 0,
+                        unit: "Patients",
+                        timeFactor: 52,
+                        currentVol: 2,
+                        potentialVol: 20,
+                        calc: standardCalc,
+                    },
+                    {
+                        id: "staged-supply",
+                        name: "Staged Supply - eligible",
+                        fundedRateDesc: "$13.61 /wk (avg)",
+                        fundedRate: 13.61,
+                        patientFeeCurrent: 0,
+                        patientFeePotential: 0,
+                        unit: "Patients",
+                        timeFactor: 52,
+                        currentVol: 3,
+                        potentialVol: 15,
+                        calc: standardCalc,
+                    }, // Simplified based on doc values
+                    {
+                        id: "medschecks",
+                        name: "MedsChecks & Diabetes MedsChecks",
+                        isCombined: true,
+                        fields: [
+                            {
+                                id: "mc",
+                                name: "MedsChecks",
+                                fundedRateDesc: "$66.53",
+                                fundedRate: 66.53,
+                                currentVol: 5,
+                                potentialVol: 10,
+                            },
+                            {
+                                id: "dmc",
+                                name: "Diabetes MedsChecks",
+                                fundedRateDesc: "$99.79",
+                                fundedRate: 99.79,
+                                currentVol: 1,
+                                potentialVol: 10,
+                            },
+                        ],
+                        unit: "per month",
+                        timeFactor: 12,
+                        calc: (vols, tf) => {
+                            let curVal = 0;
+                            let addVal = 0;
+                            Object.values(vols).forEach((v) => {
+                                curVal += v.fr * v.c;
+                                addVal += v.fr * (v.p - v.c);
+                            });
+                            return [curVal * tf, addVal * tf];
+                        },
+                    },
+                    {
+                        id: "hmr",
+                        name: "HMRs",
+                        fundedRateDesc: "$222.77",
+                        fundedRate: 222.77,
+                        patientFeeCurrent: 0,
+                        patientFeePotential: 0,
+                        unit: "/month",
+                        timeFactor: 12,
+                        currentVol: 1,
+                        potentialVol: 30,
+                        calc: standardCalc,
+                    },
+                    {
+                        id: "hmr-f1",
+                        name: "HMR 1st Follow Up",
+                        fundedRateDesc: "$111.39",
+                        fundedRate: 111.39,
+                        patientFeeCurrent: 0,
+                        patientFeePotential: 0,
+                        unit: "/month",
+                        timeFactor: 12,
+                        currentVol: 0,
+                        potentialVol: 15,
+                        calc: standardCalc,
+                    },
+                    {
+                        id: "hmr-f2",
+                        name: "HMR 2nd Follow Up",
+                        fundedRateDesc: "$55.70",
+                        fundedRate: 55.7,
+                        patientFeeCurrent: 0,
+                        patientFeePotential: 0,
+                        unit: "/month",
+                        timeFactor: 12,
+                        currentVol: 0,
+                        potentialVol: 7,
+                        calc: standardCalc,
+                    },
+                    {
+                        id: "rmmr",
+                        name: "RMMRs",
+                        fundedRateDesc: "$112.65",
+                        fundedRate: 112.65,
+                        patientFeeCurrent: 0,
+                        patientFeePotential: 0,
+                        unit: "Patients/yr",
+                        timeFactor: 1,
+                        currentVol: 0,
+                        potentialVol: 75,
+                        calc: standardCalc,
+                    },
+                    {
+                        id: "rmmr-f1",
+                        name: "RMMRs 1st Follow Up",
+                        fundedRateDesc: "$56.33",
+                        fundedRate: 56.33,
+                        patientFeeCurrent: 0,
+                        patientFeePotential: 0,
+                        unit: "Patients/yr",
+                        timeFactor: 1,
+                        currentVol: 0,
+                        potentialVol: 15,
+                        calc: standardCalc,
+                    },
+                    {
+                        id: "rmmr-f2",
+                        name: "RMMRs 2nd Follow Up",
+                        fundedRateDesc: "$28.16",
+                        fundedRate: 28.16,
+                        patientFeeCurrent: 0,
+                        patientFeePotential: 0,
+                        unit: "Patients/yr",
+                        timeFactor: 1,
+                        currentVol: 0,
+                        potentialVol: 5,
+                        calc: standardCalc,
+                    },
+                    {
+                        id: "qum",
+                        name: "Quality Use of Medicines",
+                        fundedRateDesc: "$125 base + $12.50/bed /qtr",
+                        fundedRate: 12.5,
+                        patientFeeCurrent: 0,
+                        patientFeePotential: 0,
+                        unit: "Beds",
+                        timeFactor: 4,
+                        currentVol: 0,
+                        potentialVol: 75,
+                        calc: (c, p, pfc, pfp, fr, tf) => {
+                            const base = 125;
+                            const curVal = c > 0 ? (base + fr * c) * tf : 0;
+                            const potVal = p > 0 ? (base + fr * p) * tf : 0;
+                            return [curVal, potVal - curVal];
+                        },
+                    },
+                    {
+                        id: "odt-oral",
+                        name: "ODT supply (oral)",
+                        fundedRateDesc: "$5.66 /day",
+                        fundedRate: 5.66 * 7,
+                        patientFeeCurrent: 0,
+                        patientFeePotential: 0,
+                        unit: "Patients",
+                        timeFactor: 52,
+                        currentVol: 5,
+                        potentialVol: 10,
+                        calc: standardCalc,
+                    },
+                    {
+                        id: "odt-weekly",
+                        name: "ODT WEEKLY admin (injectable)",
+                        fundedRateDesc: "$22.15 /injection",
+                        fundedRate: 22.15,
+                        patientFeeCurrent: 0,
+                        patientFeePotential: 0,
+                        unit: "Patients",
+                        timeFactor: 52,
+                        currentVol: 0,
+                        potentialVol: 1,
+                        calc: standardCalc,
+                    },
+                    {
+                        id: "odt-monthly",
+                        name: "ODT MONTHLY admin (injectable)",
+                        fundedRateDesc: "$22.15 /injection",
+                        fundedRate: 22.15,
+                        patientFeeCurrent: 0,
+                        patientFeePotential: 0,
+                        unit: "Patients",
+                        timeFactor: 12,
+                        currentVol: 0,
+                        potentialVol: 1,
+                        calc: standardCalc,
+                    },
+                    {
+                        id: "thn",
+                        name: "Take Home Naloxone (THN)",
+                        fundedRateDesc: "$18.25 profit",
+                        fundedRate: 18.25,
+                        patientFeeCurrent: 0,
+                        patientFeePotential: 0,
+                        unit: "/month",
+                        timeFactor: 12,
+                        currentVol: 0,
+                        potentialVol: 4,
+                        calc: standardCalc,
+                    },
+                ],
+                part2: [
+                    {
+                        id: "covid",
+                        name: "COVID-19 Vaccinations",
+                        fundedRateDesc: "$28.35",
+                        fundedRate: 28.35,
+                        patientFeeCurrent: 0,
+                        patientFeePotential: 0,
+                        unit: "/year",
+                        timeFactor: 1,
+                        currentVol: 500,
+                        potentialVol: 600,
+                        calc: standardCalc,
+                    },
+                    {
+                        id: "nipvip",
+                        name: "NIPVIP Vaccinations",
+                        fundedRateDesc: "$19.32",
+                        fundedRate: 19.32,
+                        patientFeeCurrent: 0,
+                        patientFeePotential: 0,
+                        unit: "/year",
+                        timeFactor: 1,
+                        currentVol: 50,
+                        potentialVol: 300,
+                        calc: standardCalc,
+                    },
+                    {
+                        id: "flu-comm",
+                        name: "Flu Community Patients",
+                        fundedRateDesc: "N/A",
+                        fundedRate: 0,
+                        patientFeeCurrent: 29,
+                        patientFeePotential: 29,
+                        unit: "/year",
+                        timeFactor: 1,
+                        currentVol: 500,
+                        potentialVol: 700,
+                        calc: standardCalc,
+                    },
+                    {
+                        id: "flu-corp",
+                        name: "Flu Corporate Program",
+                        fundedRateDesc: "N/A",
+                        fundedRate: 0,
+                        patientFeeCurrent: 20,
+                        patientFeePotential: 20,
+                        unit: "/year",
+                        timeFactor: 1,
+                        currentVol: 50,
+                        potentialVol: 70,
+                        calc: standardCalc,
+                    },
+                    {
+                        id: "mmr",
+                        name: "MMR",
+                        fundedRateDesc: "N/A",
+                        fundedRate: 0,
+                        patientFeeCurrent: 20,
+                        patientFeePotential: 20,
+                        unit: "/year",
+                        timeFactor: 1,
+                        currentVol: 0,
+                        potentialVol: 10,
+                        calc: standardCalc,
+                    },
+                    {
+                        id: "dtpa",
+                        name: "dTpa",
+                        fundedRateDesc: "N/A",
+                        fundedRate: 0,
+                        patientFeeCurrent: 55,
+                        patientFeePotential: 55,
+                        unit: "/year",
+                        timeFactor: 1,
+                        currentVol: 0,
+                        potentialVol: 50,
+                        calc: standardCalc,
+                    },
+                    {
+                        id: "dtpa-polio",
+                        name: "dTpa + poliovirus",
+                        fundedRateDesc: "N/A",
+                        fundedRate: 0,
+                        patientFeeCurrent: 0,
+                        patientFeePotential: 55,
+                        unit: "/year",
+                        timeFactor: 1,
+                        currentVol: 0,
+                        potentialVol: 10,
+                        calc: standardCalc,
+                    },
+                    {
+                        id: "polio",
+                        name: "Poliomyelitis",
+                        fundedRateDesc: "N/A",
+                        fundedRate: 0,
+                        patientFeeCurrent: 0,
+                        patientFeePotential: 40,
+                        unit: "/year",
+                        timeFactor: 1,
+                        currentVol: 0,
+                        potentialVol: 10,
+                        calc: standardCalc,
+                    },
+                    {
+                        id: "cholera",
+                        name: "Cholera",
+                        fundedRateDesc: "N/A",
+                        fundedRate: 0,
+                        patientFeeCurrent: 0,
+                        patientFeePotential: 90,
+                        unit: "/year",
+                        timeFactor: 1,
+                        currentVol: 0,
+                        potentialVol: 5,
+                        calc: standardCalc,
+                    },
+                    {
+                        id: "haemophilus",
+                        name: "Haemophilus influenzae type B",
+                        fundedRateDesc: "N/A",
+                        fundedRate: 0,
+                        patientFeeCurrent: 0,
+                        patientFeePotential: 45,
+                        unit: "/year",
+                        timeFactor: 1,
+                        currentVol: 0,
+                        potentialVol: 10,
+                        calc: standardCalc,
+                    },
+                    {
+                        id: "meningococcal",
+                        name: "Meningococcal",
+                        fundedRateDesc: "N/A",
+                        fundedRate: 0,
+                        patientFeeCurrent: 20,
+                        patientFeePotential: 20,
+                        unit: "/year",
+                        timeFactor: 1,
+                        currentVol: 0,
+                        potentialVol: 10,
+                        calc: standardCalc,
+                    },
+                    {
+                        id: "pneumococcal",
+                        name: "Pneumococcal",
+                        fundedRateDesc: "N/A",
+                        fundedRate: 0,
+                        patientFeeCurrent: 20,
+                        patientFeePotential: 20,
+                        unit: "/year",
+                        timeFactor: 1,
+                        currentVol: 0,
+                        potentialVol: 50,
+                        calc: standardCalc,
+                    },
+                    {
+                        id: "hepa",
+                        name: "Hepatitis A",
+                        fundedRateDesc: "N/A",
+                        fundedRate: 0,
+                        patientFeeCurrent: 0,
+                        patientFeePotential: 70,
+                        unit: "/year",
+                        timeFactor: 1,
+                        currentVol: 0,
+                        potentialVol: 10,
+                        calc: standardCalc,
+                    },
+                    {
+                        id: "shingles",
+                        name: "Shingles",
+                        fundedRateDesc: "N/A",
+                        fundedRate: 0,
+                        patientFeeCurrent: 20,
+                        patientFeePotential: 220,
+                        unit: "/year",
+                        timeFactor: 1,
+                        currentVol: 0,
+                        potentialVol: 20,
+                        calc: standardCalc,
+                    },
+                    {
+                        id: "hepb",
+                        name: "Hepatitis B",
+                        fundedRateDesc: "N/A",
+                        fundedRate: 0,
+                        patientFeeCurrent: 20,
+                        patientFeePotential: 20,
+                        unit: "/year",
+                        timeFactor: 1,
+                        currentVol: 0,
+                        potentialVol: 20,
+                        calc: standardCalc,
+                    },
+                    {
+                        id: "hpv",
+                        name: "HPV",
+                        fundedRateDesc: "N/A",
+                        fundedRate: 0,
+                        patientFeeCurrent: 20,
+                        patientFeePotential: 20,
+                        unit: "/year",
+                        timeFactor: 1,
+                        currentVol: 0,
+                        potentialVol: 100,
+                        calc: standardCalc,
+                    },
+                    {
+                        id: "varicella",
+                        name: "Varicella",
+                        fundedRateDesc: "N/A",
+                        fundedRate: 0,
+                        patientFeeCurrent: 0,
+                        patientFeePotential: 65,
+                        unit: "/year",
+                        timeFactor: 1,
+                        currentVol: 0,
+                        potentialVol: 10,
+                        calc: standardCalc,
+                    },
+                    {
+                        id: "rsv",
+                        name: "RSV",
+                        fundedRateDesc: "N/A",
+                        fundedRate: 0,
+                        patientFeeCurrent: 0,
+                        patientFeePotential: 300,
+                        unit: "/year",
+                        timeFactor: 1,
+                        currentVol: 0,
+                        potentialVol: 20,
+                        calc: standardCalc,
+                    },
+                ],
+                part3: [
+                    {
+                        id: "app-enrol",
+                        name: "App enrolments",
+                        fundedRateDesc: "$48/patient/yr",
+                        fundedRate: 48,
+                        patientFeeCurrent: 0,
+                        patientFeePotential: 0,
+                        unit: "Active Patients",
+                        timeFactor: 1,
+                        currentVol: 100,
+                        potentialVol: 150,
+                        calc: standardCalc,
+                    },
+                    {
+                        id: "uti",
+                        name: "UTI Consultation",
+                        fundedRateDesc: "N/A",
+                        fundedRate: 0,
+                        patientFeeCurrent: 25,
+                        patientFeePotential: 25,
+                        unit: "/month",
+                        timeFactor: 12,
+                        currentVol: 1,
+                        potentialVol: 4,
+                        calc: standardCalc,
+                    },
+                    {
+                        id: "ocp",
+                        name: "Resupply of OCP Consultation",
+                        fundedRateDesc: "N/A",
+                        fundedRate: 0,
+                        patientFeeCurrent: 30,
+                        patientFeePotential: 30,
+                        unit: "/month",
+                        timeFactor: 12,
+                        currentVol: 1,
+                        potentialVol: 4,
+                        calc: standardCalc,
+                    },
+                    {
+                        id: "skin",
+                        name: "Minor Skin Conditions Consultation",
+                        fundedRateDesc: "N/A",
+                        fundedRate: 0,
+                        patientFeeCurrent: 0,
+                        patientFeePotential: 25,
+                        unit: "/month",
+                        timeFactor: 12,
+                        currentVol: 0,
+                        potentialVol: 10,
+                        calc: standardCalc,
+                    },
+                    {
+                        id: "travel",
+                        name: "Travel Health Consultation",
+                        fundedRateDesc: "N/A",
+                        fundedRate: 0,
+                        patientFeeCurrent: 35,
+                        patientFeePotential: 35,
+                        unit: "/month",
+                        timeFactor: 12,
+                        currentVol: 1,
+                        potentialVol: 4,
+                        calc: standardCalc,
+                    },
+                    {
+                        id: "injection",
+                        name: "Administering Medicines by Injection",
+                        fundedRateDesc: "N/A",
+                        fundedRate: 0,
+                        patientFeeCurrent: 25,
+                        patientFeePotential: 25,
+                        unit: "/month",
+                        timeFactor: 12,
+                        currentVol: 1,
+                        potentialVol: 4,
+                        calc: standardCalc,
+                    },
+                    {
+                        id: "absence-cert",
+                        name: "Absence from Work Certificates",
+                        fundedRateDesc: "N/A",
+                        fundedRate: 0,
+                        patientFeeCurrent: 35,
+                        patientFeePotential: 35,
+                        unit: "/month",
+                        timeFactor: 12,
+                        currentVol: 2,
+                        potentialVol: 10,
+                        calc: standardCalc,
+                    },
+                    {
+                        id: "weight",
+                        name: "Weight Management Programs",
+                        fundedRateDesc: "N/A",
+                        fundedRate: 0,
+                        patientFeeCurrent: 0,
+                        patientFeePotential: 50,
+                        unit: "/month",
+                        timeFactor: 12,
+                        currentVol: 0,
+                        potentialVol: 5,
+                        calc: standardCalc,
+                    },
+                    {
+                        id: "sleep",
+                        name: "Sleep Studies",
+                        fundedRateDesc: "N/A",
+                        fundedRate: 0,
+                        patientFeeCurrent: 0,
+                        patientFeePotential: 100,
+                        unit: "/month",
+                        timeFactor: 12,
+                        currentVol: 0,
+                        potentialVol: 2,
+                        calc: standardCalc,
+                    },
+                    {
+                        id: "woundcare",
+                        name: "Woundcare",
+                        fundedRateDesc: "N/A",
+                        fundedRate: 0,
+                        patientFeeCurrent: 25,
+                        patientFeePotential: 25,
+                        unit: "/month",
+                        timeFactor: 12,
+                        currentVol: 0,
+                        potentialVol: 4,
+                        calc: standardCalc,
+                    },
+                    {
+                        id: "delivery",
+                        name: "Home deliveries",
+                        fundedRateDesc: "N/A",
+                        fundedRate: 0,
+                        patientFeeCurrent: 0,
+                        patientFeePotential: 10,
+                        unit: "/month",
+                        timeFactor: 12,
+                        currentVol: 0,
+                        potentialVol: 20,
+                        calc: standardCalc,
+                    },
+                ],
+                part4: [
+                    {
+                        id: "ada-margin",
+                        name: "Adalimumab Additional Margin",
+                        fundedRateDesc: "$681.20/yr",
+                        fundedRate: 681.2,
+                        unit: "Patients",
+                        timeFactor: 1,
+                        currentVol: 0,
+                        potentialVol: 3,
+                        calc: (c, p, pfc, pfp, fr, tf) => [
+                            fr * c * tf,
+                            fr * (p - c) * tf,
+                        ],
+                    },
+                    {
+                        id: "ada-program",
+                        name: "Adalimumab: Pharmacy Program",
+                        fundedRateDesc: "$370/yr",
+                        fundedRate: 370,
+                        unit: "Patients",
+                        timeFactor: 1,
+                        currentVol: 0,
+                        potentialVol: 3,
+                        calc: (c, p, pfc, pfp, fr, tf) => [
+                            fr * c * tf,
+                            fr * (p - c) * tf,
+                        ],
+                    },
+                    {
+                        id: "eta-margin",
+                        name: "Etanercept NIS Saving",
+                        fundedRateDesc: "$790.27/yr",
+                        fundedRate: 790.27,
+                        unit: "Patients",
+                        timeFactor: 1,
+                        currentVol: 0,
+                        potentialVol: 1,
+                        calc: (c, p, pfc, pfp, fr, tf) => [
+                            fr * c * tf,
+                            fr * (p - c) * tf,
+                        ],
+                    },
+                    {
+                        id: "eta-program",
+                        name: "Etanercept: Pharmacy Program",
+                        fundedRateDesc: "$240/yr",
+                        fundedRate: 240,
+                        unit: "Patients",
+                        timeFactor: 1,
+                        currentVol: 0,
+                        potentialVol: 1,
+                        calc: (c, p, pfc, pfp, fr, tf) => [
+                            fr * c * tf,
+                            fr * (p - c) * tf,
+                        ],
+                    },
+                ],
+            };
+
+            // Test function for our AI integration
+            async function testRealAI() {
+                console.log("Testing REAL AI integration...");
+
+                try {
+                    // Use actual data from your calculator instead of test data
+                    const realData = collectCurrentAnalysisData();
+
+                    if (realData.length === 0) {
+                        alert(
+                            "Please enter some data in the calculator first!",
+                        );
+                        return;
+                    }
+
+                    const response = await fetch("/api/generate-plan", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                        },
+                        body: JSON.stringify({
+                            analysisData: realData,
+                            userPreferences: {
+                                timelineMonths: 6,
+                                focusAreas: ["High ROI services"],
+                                riskTolerance: "medium",
+                            },
+                        }),
+                    });
+
+                    const result = await response.json();
+                    console.log("Real AI Response:", result);
+
+                    if (result.success) {
+                        alert(
+                            "🎉 REAL AI is working! Check console for full plan.",
+                        );
+                        // Let's display a preview
+                        displayPlanPreview(result.plan);
+                    } else {
+                        alert("❌ AI Error: " + result.error);
+                    }
+                } catch (error) {
+                    console.error("Real AI test failed:", error);
+                    alert("❌ Connection failed: " + error.message);
+                }
+            }
+
+            function displayPlanPreview(plan) {
+                const preview = `
             🏥 Your AI Pharmacy Plan is Ready!
 
             Investment: $${plan.financials.investmentRequired}
@@ -345,59 +1095,113 @@
             First Month: ${plan.timeline.milestones[0]}
             `;
 
-            console.log('📋 PLAN PREVIEW:', preview);
-            console.log('Full plan details:', plan);
-        }
+                console.log("📋 PLAN PREVIEW:", preview);
+                console.log("Full plan details:", plan);
+            }
 
-        const formatCurrency = (value) => new Intl.NumberFormat('en-AU', { style: 'currency', currency: 'AUD' }).format(value);
+            const formatCurrency = (value) =>
+                new Intl.NumberFormat("en-AU", {
+                    style: "currency",
+                    currency: "AUD",
+                }).format(value);
 
-        function calculateAll() {
-            let totalCurrent = 0, totalAdditional = 0;
+            function calculateAll() {
+                let totalCurrent = 0,
+                    totalAdditional = 0;
 
-            Object.values(servicesData).flat().forEach(service => {
-                let currentVal = 0, additionalVal = 0;
+                Object.values(servicesData)
+                    .flat()
+                    .forEach((service) => {
+                        let currentVal = 0,
+                            additionalVal = 0;
 
-                if (service.isCombined) {
-                    const vols = {};
-                    service.fields.forEach(field => {
-                        vols[field.id] = {
-                            c: parseFloat(document.getElementById(`current-${service.id}-${field.id}`).value) || 0,
-                            p: parseFloat(document.getElementById(`potential-${service.id}-${field.id}`).value) || 0,
-                            fr: field.fundedRate
-                        };
+                        if (service.isCombined) {
+                            const vols = {};
+                            service.fields.forEach((field) => {
+                                vols[field.id] = {
+                                    c:
+                                        parseFloat(
+                                            document.getElementById(
+                                                `current-${service.id}-${field.id}`,
+                                            ).value,
+                                        ) || 0,
+                                    p:
+                                        parseFloat(
+                                            document.getElementById(
+                                                `potential-${service.id}-${field.id}`,
+                                            ).value,
+                                        ) || 0,
+                                    fr: field.fundedRate,
+                                };
+                            });
+                            [currentVal, additionalVal] = service.calc(
+                                vols,
+                                service.timeFactor,
+                            );
+                        } else {
+                            const c =
+                                parseFloat(
+                                    document.getElementById(
+                                        `current-${service.id}`,
+                                    ).value,
+                                ) || 0;
+                            const p =
+                                parseFloat(
+                                    document.getElementById(
+                                        `potential-${service.id}`,
+                                    ).value,
+                                ) || 0;
+                            const pfc =
+                                parseFloat(
+                                    document.getElementById(`pfc-${service.id}`)
+                                        .value,
+                                ) || 0;
+                            const pfp =
+                                parseFloat(
+                                    document.getElementById(`pfp-${service.id}`)
+                                        .value,
+                                ) || 0;
+                            [currentVal, additionalVal] = service.calc(
+                                c,
+                                p,
+                                pfc,
+                                pfp,
+                                service.fundedRate,
+                                service.timeFactor,
+                            );
+                        }
+
+                        additionalVal = Math.max(0, additionalVal);
+                        document.getElementById(
+                            `current-val-${service.id}`,
+                        ).textContent = formatCurrency(currentVal);
+                        document.getElementById(
+                            `additional-val-${service.id}`,
+                        ).textContent = formatCurrency(additionalVal);
+                        totalCurrent += currentVal;
+                        totalAdditional += additionalVal;
                     });
-                    [currentVal, additionalVal] = service.calc(vols, service.timeFactor);
-                } else {
-                    const c = parseFloat(document.getElementById(`current-${service.id}`).value) || 0;
-                    const p = parseFloat(document.getElementById(`potential-${service.id}`).value) || 0;
-                    const pfc = parseFloat(document.getElementById(`pfc-${service.id}`).value) || 0;
-                    const pfp = parseFloat(document.getElementById(`pfp-${service.id}`).value) || 0;
-                    [currentVal, additionalVal] = service.calc(c, p, pfc, pfp, service.fundedRate, service.timeFactor);
-                }
 
-                additionalVal = Math.max(0, additionalVal);
-                document.getElementById(`current-val-${service.id}`).textContent = formatCurrency(currentVal);
-                document.getElementById(`additional-val-${service.id}`).textContent = formatCurrency(additionalVal);
-                totalCurrent += currentVal;
-                totalAdditional += additionalVal;
-            });
+                document.getElementById("total-current-value").textContent =
+                    formatCurrency(totalCurrent);
+                document.getElementById("total-additional-value").textContent =
+                    formatCurrency(totalAdditional);
+                document.getElementById("total-potential-value").textContent =
+                    formatCurrency(totalCurrent + totalAdditional);
+            }
 
-            document.getElementById('total-current-value').textContent = formatCurrency(totalCurrent);
-            document.getElementById('total-additional-value').textContent = formatCurrency(totalAdditional);
-            document.getElementById('total-potential-value').textContent = formatCurrency(totalCurrent + totalAdditional);
-        }
+            function generateTables() {
+                Object.keys(servicesData).forEach((partKey) => {
+                    const tbody = document.getElementById(`${partKey}-body`);
+                    if (!tbody) return;
 
-        function generateTables() {
-            Object.keys(servicesData).forEach(partKey => {
-                const tbody = document.getElementById(`${partKey}-body`);
-                if (!tbody) return;
+                    servicesData[partKey].forEach((service) => {
+                        const tr = document.createElement("tr");
+                        tr.className = "hover:bg-gray-50";
 
-                servicesData[partKey].forEach(service => {
-                    const tr = document.createElement('tr');
-                    tr.className = "hover:bg-gray-50";
-
-                    if (partKey === 'part4') { // Special layout for Part 4
-                        tr.innerHTML = `
+                        if (partKey === "part4") {
+                            // Special layout for Part 4
+                            tr.innerHTML = `
                     <td class="px-4 py-3 font-medium text-gray-900">${service.name}</td>
                     <td class="px-4 py-3 funded-cell" colspan="2">${service.fundedRateDesc}</td>
                     <td class="px-4 py-3 text-center"><input type="number" id="current-${service.id}" value="${service.currentVol}" class="calc-input"><span class="text-sm text-gray-500 ml-1">${service.unit}</span></td>
@@ -406,29 +1210,29 @@
                     <td id="additional-val-${service.id}" class="px-4 py-3 text-right result-cell tabular-nums"></td>
                     <input type="hidden" id="pfc-${service.id}" value="0"><input type="hidden" id="pfp-${service.id}" value="0">
                 `;
-                    } else if (service.isCombined) {
-                        tr.innerHTML = `
+                        } else if (service.isCombined) {
+                            tr.innerHTML = `
                     <td class="px-4 py-3 font-medium text-gray-900">${service.name}</td>
                     <td class="px-4 py-3" colspan="2">
-                         ${service.fields.map(f => `<div class="text-sm text-gray-600 my-1">${f.name}: <span class="font-semibold">${f.fundedRateDesc}</span></div>`).join('')}
+                         ${service.fields.map((f) => `<div class="text-sm text-gray-600 my-1">${f.name}: <span class="font-semibold">${f.fundedRateDesc}</span></div>`).join("")}
                     </td>
                     <td class="px-4 py-3 text-center">
-                        ${service.fields.map(f => `<div class="my-1"><input type="number" id="current-${service.id}-${f.id}" value="${f.currentVol}" class="calc-input"><span class="text-sm text-gray-500 ml-1">${service.unit}</span></div>`).join('')}
+                        ${service.fields.map((f) => `<div class="my-1"><input type="number" id="current-${service.id}-${f.id}" value="${f.currentVol}" class="calc-input"><span class="text-sm text-gray-500 ml-1">${service.unit}</span></div>`).join("")}
                     </td>
                     <td class="px-4 py-3 text-center">
-                         ${service.fields.map(f => `<div class="my-1"><input type="number" id="potential-${service.id}-${f.id}" value="${f.potentialVol}" class="calc-input"><span class="text-sm text-gray-500 ml-1">${service.unit}</span></div>`).join('')}
+                         ${service.fields.map((f) => `<div class="my-1"><input type="number" id="potential-${service.id}-${f.id}" value="${f.potentialVol}" class="calc-input"><span class="text-sm text-gray-500 ml-1">${service.unit}</span></div>`).join("")}
                     </td>
                     <td id="current-val-${service.id}" class="px-4 py-3 text-right result-cell tabular-nums align-top pt-5"></td>
                     <td id="additional-val-${service.id}" class="px-4 py-3 text-right result-cell tabular-nums align-top pt-5"></td>
                 `;
-                    } else {
-                        tr.innerHTML = `
+                        } else {
+                            tr.innerHTML = `
                     <td class="px-4 py-3 font-medium text-gray-900">${service.name}</td>
                     <td class="px-4 py-3 funded-cell">${service.fundedRateDesc}</td>
                     <td class="px-4 py-3 text-center">
                         <div class="flex items-center justify-center gap-1">
-                            <input type="number" id="pfc-${service.id}" value="${service.patientFeeCurrent}" class="calc-input" ${service.patientFeeCurrent === 0 && service.patientFeePotential === 0 ? 'disabled' : ''}> /
-                            <input type="number" id="pfp-${service.id}" value="${service.patientFeePotential}" class="calc-input" ${service.patientFeeCurrent === 0 && service.patientFeePotential === 0 ? 'disabled' : ''}>
+                            <input type="number" id="pfc-${service.id}" value="${service.patientFeeCurrent}" class="calc-input" ${service.patientFeeCurrent === 0 && service.patientFeePotential === 0 ? "disabled" : ""}> /
+                            <input type="number" id="pfp-${service.id}" value="${service.patientFeePotential}" class="calc-input" ${service.patientFeeCurrent === 0 && service.patientFeePotential === 0 ? "disabled" : ""}>
                         </div>
                     </td>
                     <td class="px-4 py-3 text-center"><input type="number" id="current-${service.id}" value="${service.currentVol}" class="calc-input"><span class="text-sm text-gray-500 ml-1">${service.unit}</span></td>
@@ -436,21 +1240,19 @@
                     <td id="current-val-${service.id}" class="px-4 py-3 text-right result-cell tabular-nums"></td>
                     <td id="additional-val-${service.id}" class="px-4 py-3 text-right result-cell tabular-nums"></td>
                 `;
-                    }
-                    tbody.appendChild(tr);
+                        }
+                        tbody.appendChild(tr);
+                    });
+                });
+            }
+
+            document.addEventListener("DOMContentLoaded", () => {
+                generateTables();
+                calculateAll();
+                document.querySelectorAll(".calc-input").forEach((input) => {
+                    input.addEventListener("input", calculateAll);
                 });
             });
-        }
-
-        document.addEventListener('DOMContentLoaded', () => {
-            generateTables();
-            calculateAll();
-            document.querySelectorAll('.calc-input').forEach(input => {
-                input.addEventListener('input', calculateAll);
-            });
-        });
-    </script>
-
-</body>
-
+        </script>
+    </body>
 </html>
