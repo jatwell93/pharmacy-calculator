@@ -1147,6 +1147,8 @@
                             <p class="mt-2 text-sm text-gray-700">${plan.financials.breakdown}</p>
                         </div>
 
+                        // In your displayPlan function, replace the timeline section with this:
+
                         <!-- Timeline -->
                         <div class="mb-6">
                             <h4 class="font-bold text-blue-800 mb-2">📅 Implementation Timeline</h4>
@@ -1188,7 +1190,10 @@
                         </div>
                     </div>
                 `;
+                // Add this at the END of your displayPlan function, after setting the innerHTML:
 
+                // Initialize Mermaid charts
+                // Replace your current Mermaid initialization with this:
 
                 // Initialize Mermaid charts
                 setTimeout(() => {
