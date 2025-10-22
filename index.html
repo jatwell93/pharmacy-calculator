@@ -364,41 +364,41 @@
         </div>
 
         <script>
-                        // Generic calculation for most services
-                        const standardCalc = (c, p, pfc, pfp, fr, tf) => {
-                            const curVal = (fr + pfc) * c * tf;
-                            const addVal = (fr + pfp) * (p - c) * tf + (pfp - pfc) * c * tf;
-                            return [curVal, addVal];
-                        };
+            // Generic calculation for most services
+            const standardCalc = (c, p, pfc, pfp, fr, tf) => {
+                const curVal = (fr + pfc) * c * tf;
+                const addVal = (fr + pfp) * (p - c) * tf + (pfp - pfc) * c * tf;
+                return [curVal, addVal];
+            };
 
-                        const servicesData = {
-                            part1: [
-                                {
-                                    id: "daa-eligible",
-                                    name: "DAA - eligible",
-                                    fundedRateDesc: "$6.17 /wk",
-                                    fundedRate: 6.17,
-                                    patientFeeCurrent: 5,
-                                    patientFeePotential: 7.7,
-                                    unit: "Patients",
-                                    timeFactor: 52,
-                                    currentVol: 80,
-                                    potentialVol: 90,
-                                    calc: standardCalc,
-                                },
-                                {
-                                    id: "daa-private",
-                                    name: "DAA - private",
-                                    fundedRateDesc: "N/A",
-                                    fundedRate: 0,
-                                    patientFeeCurrent: 5,
-                                    patientFeePotential: 7.7,
-                                    unit: "Patients",
-                                    timeFactor: 52,
-                                    currentVol: 10,
-                                    potentialVol: 20,
-                                    calc: standardCalc,
-                                },
+            const servicesData = {
+            part1: [
+                {
+                    id: "daa-eligible",
+                    name: "DAA - eligible",
+                    fundedRateDesc: "$6.17 /wk",
+                    fundedRate: 6.17,
+                    patientFeeCurrent: 5,
+                    patientFeePotential: 7.7,
+                    unit: "Patients",
+                    timeFactor: 52,
+                    currentVol: 80,
+                    potentialVol: 90,
+                    calc: standardCalc,
+                },
+                {
+                    id: "daa-private",
+                    name: "DAA - private",
+                    fundedRateDesc: "N/A",
+                    fundedRate: 0,
+                    patientFeeCurrent: 5,
+                    patientFeePotential: 7.7,
+                    unit: "Patients",
+                    timeFactor: 52,
+                    currentVol: 10,
+                    potentialVol: 20,
+                    calc: standardCalc,
+                },
                                 {
                                     id: "idaa",
                                     name: "IDAA",
@@ -1047,7 +1047,7 @@
                                     ],
                                 },
                             ],
-                        };
+                            };
 
                         // ==================== SAMPLE DATA TEST ====================
 
@@ -1122,15 +1122,15 @@
 
                         // ==================== AI PLAN DISPLAY ====================
 
-                        function displayPlan(plan) {
-                            const planSection = document.getElementById("ai-plan-section");
-                            const planResult = document.getElementById("plan-result");
+            function displayPlan(plan) {
+                const planSection = document.getElementById("ai-plan-section");
+                const planResult = document.getElementById("plan-result");
 
-                            // Create the plan HTML
-                            const cleanedGantt = plan.timeline.ganttChart.replace(
-                                /```mermaid\s*|\s*```/g,
-                                "",
-                            );
+                // Create the plan HTML
+                const cleanedGantt = plan.timeline.ganttChart.replace(
+                    /```mermaid\s*|\s*```/g,
+                    "",
+                );
                             planResult.innerHTML = `
                                 <div class="bg-white p-6 rounded-lg shadow-lg">
                                     <h3 class="text-2xl font-bold text-blue-900 mb-4">Your AI-Generated Pharmacy Action Plan</h3>
@@ -1226,11 +1226,11 @@
                 .classList.remove("hidden");
                         }
 
-                        async function testWithRealData() {
-                            console.log("Testing AI with real calculator data...");
+            async function testWithRealData() {
+                console.log("Testing AI with real calculator data...");
 
-                            try {
-                                const realData = collectCurrentAnalysisData();
+                try {
+                    const realData = collectCurrentAnalysisData();
 
                                 if (realData.length === 0) {
                                     alert(
@@ -1271,13 +1271,13 @@
                             }
                         }
 
-                        const formatCurrency = (value) =>
-                            new Intl.NumberFormat("en-AU", {
-                                style: "currency",
-                                currency: "AUD",
-                            }).format(value);
+            const formatCurrency = (value) =>
+                new Intl.NumberFormat("en-AU", {
+                    style: "currency",
+                    currency: "AUD",
+                }).format(value);
 
-                        function calculateAll() {
+            function calculateAll() {
                             let totalCurrent = 0,
                                 totalAdditional = 0;
 
@@ -1362,7 +1362,7 @@
                                 formatCurrency(totalCurrent + totalAdditional);
                         }
 
-                        function generateTables() {
+            function generateTables() {
                             Object.keys(servicesData).forEach((partKey) => {
                                 const tbody = document.getElementById(`${partKey}-body`);
                                 if (!tbody) return;
@@ -1420,7 +1420,7 @@
 
                         // ==================== DATA COLLECTION FUNCTION ====================
 
-                        function collectCurrentAnalysisData() {
+            function collectCurrentAnalysisData() {
                             const analysisData = [];
 
                             // Loop through all services in all parts
@@ -1560,18 +1560,18 @@
                             return analysisData;
                         }
 
-                        document.addEventListener("DOMContentLoaded", () => {
-                            generateTables();
-                            calculateAll();
-                            document.querySelectorAll(".calc-input").forEach((input) => {
-                                input.addEventListener("input", calculateAll);
-                            });
-                        });
+            document.addEventListener("DOMContentLoaded", () => {
+                generateTables();
+                calculateAll();
+                document.querySelectorAll(".calc-input").forEach((input) => {
+                    input.addEventListener("input", calculateAll);
+                });
+            });
 
-                        function downloadPlan() {
-                            // Placeholder for download functionality (implement as needed)
-                            alert("Download functionality not implemented yet.");
-                        }
+            function downloadPlan() {
+                // Placeholder for download functionality (implement as needed)
+                alert("Download functionality not implemented yet.");
+            }
         </script>
 
         <!-- AI Plan Display Section -->
