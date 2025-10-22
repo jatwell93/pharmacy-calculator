@@ -85,6 +85,8 @@ CREATE A PLAN WITH THIS EXACT JSON STRUCTURE:
   }
 }
 
+IMPORTANT: Respond ONLY with valid JSON matching this structure. Do not include any markdown, extra text, or explanations.
+
 KEY REQUIREMENTS:
 - Australian pharmacy regulations and CPA programs
 - Realistic timelines (staff training takes 2-4 weeks)
@@ -164,9 +166,12 @@ async function callOpenRouterAI(prompt) {
 
 function parseAIResponse(aiResponse) {
   try {
-    // The AI might wrap the JSON in markdown code blocks, so clean it
-    const cleanedResponse = aiResponse.replace(/```json\s*|\s*```/g, "");
-    const plan = JSON.parse(cleanedResponse);
+    // Extract the JSON object from the response using regex
+    const jsonMatch = aiResponse.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) {
+      throw new Error("No JSON object found in response");
+    }
+    const plan = JSON.parse(jsonMatch[0]);
 
     // Validate we got the basic structure
     if (!plan.timeline || !plan.actions || !plan.financials) {
