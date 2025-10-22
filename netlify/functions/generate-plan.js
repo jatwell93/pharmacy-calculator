@@ -45,21 +45,52 @@ exports.handler = async function (event, context) {
 // ==================== AI PROMPT ENGINEERING ====================
 
 function createPharmacyPrompt(analysisData, userPreferences) {
+  //filter for only growth services
+  const growthServices = analysisData.filter(
+    (service) => service.additionalValue > 0 && service.growthPercentage > 0,
+  );
+  //Sort by biggest opportunities
   const topOpportunities = analysisData
     .sort((a, b) => b.additionalValue - a.additionalValue)
     .slice(0, 5);
 
-  return `You are an expert Australian pharmacy business consultant. Create a 6-month action plan.
+  return `You are an expert Australian pharmacy business consultant with 20+ years experience.
+Create a DETAILED 6-month action plan specifically tailored to this pharmacy's unique opportunity profile.
 
-OPPORTUNITY ANALYSIS:
+CRITICAL DATA ANALYSIS:
+The pharmacy has ${growthServices.length} services with growth potential.
+Top ${topOpportunities.length} revenue opportunities:
+
 ${topOpportunities
   .map(
-    (service) =>
-      `- ${service.name}: Current $${service.currentValue} → Potential $${service.potentialValue} (Opportunity: $${service.additionalValue})`,
+    (service, index) =>
+      `${index + 1}. ${service.name}:
+   - Current: $${service.currentValue.toLocaleString()}/year
+   - Potential: $${service.potentialValue.toLocaleString()}/year
+   - Opportunity: $${service.additionalValue.toLocaleString()} (${service.growthPercentage}% growth)
+   - PRIORITY: ${service.additionalValue > 50000 ? "HIGH" : service.additionalValue > 20000 ? "MEDIUM" : "LOW"}`,
   )
-  .join("\n")}
+  .join("\n\n")}
+TOTAL IDENTIFIED OPPORTUNITY: $${analysisData.reduce((sum, s) => sum + s.additionalValue, 0).toLocaleString()}
 
-TOTAL OPPORTUNITY: $${analysisData.reduce((sum, s) => sum + s.additionalValue, 0)}
+CREATE A HIGHLY DETAILED PLAN WITH THIS EXACT JSON STRUCTURE:
+{
+  "timeline": {
+    "ganttChart": "detailed mermaid gantt syntax with specific tasks for each major service",
+    "milestones": ["Month 1: Specific milestone", "Month 2: Specific milestone", ...]
+  },
+  "actions": {
+    "staffing": ["Specific staffing action 1", "Specific staffing action 2", ...],
+    "marketing": ["Specific marketing action 1", "Specific marketing action 2", ...],
+    "operations": ["Specific operations action 1", "Specific operations action 2", ...],
+    "compliance": ["Specific compliance action 1", "Specific compliance action 2", ...]
+  },
+  "financials": {
+    "investmentRequired": 15000,
+    "projectedROI": 3.2,
+    "breakdown": "Detailed breakdown of costs and expected returns"
+  }
+}
 
 PHARMACY CONTEXT:
 - Timeline: 6 months
@@ -87,11 +118,14 @@ CREATE A PLAN WITH THIS EXACT JSON STRUCTURE:
 
 IMPORTANT: Respond ONLY with valid JSON matching this structure. Do not include any markdown, extra text, or explanations.
 
-KEY REQUIREMENTS:
-- Australian pharmacy regulations and CPA programs
-- Realistic timelines (staff training takes 2-4 weeks)
-- Focus on sustainable growth, not just quick wins
-- Include specific, actionable steps`;
+REQUIREMENTS:
+- Focus on the HIGH and MEDIUM priority services first
+- Include specific Australian pharmacy regulations (CPA, accreditation)
+- Provide measurable targets and timelines
+- Consider staff training requirements for each service
+- Include patient acquisition strategies
+- Address operational changes needed
+- Be realistic about implementation complexity`;
 }
 
 // ==================== AI API CALL ====================
@@ -108,7 +142,7 @@ async function callOpenRouterAI(prompt) {
   console.log("🔍 DEBUG: First 200 chars of prompt:", prompt.substring(0, 200));
 
   const requestBody = {
-    model: "cognitivecomputations/dolphin-mistral-24b-venice-edition:free",
+    model: "nousresearch/deephermes-3-llama-3-8b-preview:free",
     messages: [{ role: "user", content: prompt }],
     max_tokens: 2000,
     temperature: 0.7,

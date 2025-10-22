@@ -5,6 +5,7 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>Opportunity Analysis Calculator</title>
         <script src="https://cdn.tailwindcss.com"></script>
+        <script src="https://cdn.jsdelivr.net/npm/mermaid@10.6.1/dist/mermaid.min.js"></script>
         <link
             href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
             rel="stylesheet"
@@ -1146,19 +1147,25 @@
                             <p class="mt-2 text-sm text-gray-700">${plan.financials.breakdown}</p>
                         </div>
 
+                        // In your displayPlan function, replace the timeline section with this:
+
                         <!-- Timeline -->
                         <div class="mb-6">
                             <h4 class="font-bold text-blue-800 mb-2">📅 Implementation Timeline</h4>
-                            <div class="bg-gray-100 p-4 rounded-lg">
-                                <pre class="text-sm whitespace-pre-wrap">${plan.timeline.ganttChart}</pre>
+
+                            <!-- Mermaid Chart Container -->
+                            <div id="gantt-chart" class="mermaid bg-white p-4 rounded-lg border">
+                                ${plan.timeline.ganttChart}
                             </div>
-                            <ul class="mt-3 space-y-1">
+
+                            <!-- Milestones -->
+                            <ul class="mt-4 space-y-2">
                                 ${plan.timeline.milestones
                                     .map(
                                         (milestone) =>
-                                            `<li class="flex items-start">
-                                        <span class="text-green-500 mr-2">✓</span>
-                                        <span>${milestone}</span>
+                                            `<li class="flex items-start bg-blue-50 p-3 rounded-lg">
+                                        <span class="text-green-500 mr-3 mt-1">✓</span>
+                                        <span class="text-gray-700">${milestone}</span>
                                      </li>`,
                                     )
                                     .join("")}
@@ -1183,6 +1190,29 @@
                         </div>
                     </div>
                 `;
+                // Add this at the END of your displayPlan function, after setting the innerHTML:
+
+                // Initialize Mermaid charts
+                setTimeout(() => {
+                    if (typeof mermaid !== "undefined") {
+                        mermaid.initialize({
+                            startOnLoad: true,
+                            theme: "default",
+                            gantt: {
+                                barHeight: 20,
+                                fontSize: 14,
+                                useWidth: 800,
+                            },
+                        });
+                        mermaid.init(
+                            undefined,
+                            document.querySelectorAll(".mermaid"),
+                        );
+                        console.log("Mermaid charts initialized");
+                    } else {
+                        console.error("Mermaid library not loaded");
+                    }
+                }, 100);
 
                 planResult.classList.remove("hidden");
 
