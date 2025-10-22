@@ -1195,24 +1195,48 @@
                 // Initialize Mermaid charts
                 setTimeout(() => {
                     if (typeof mermaid !== "undefined") {
-                        mermaid.initialize({
-                            startOnLoad: true,
-                            theme: "default",
-                            gantt: {
-                                barHeight: 20,
-                                fontSize: 14,
-                                useWidth: 800,
-                            },
-                        });
-                        mermaid.init(
-                            undefined,
-                            document.querySelectorAll(".mermaid"),
-                        );
-                        console.log("Mermaid charts initialized");
+                        try {
+                            mermaid.initialize({
+                                startOnLoad: true,
+                                theme: "default",
+                                gantt: {
+                                    barHeight: 20,
+                                    fontSize: 12,
+                                    useWidth: 900,
+                                },
+                            });
+
+                            // Try to render all mermaid charts
+                            const mermaidElements =
+                                document.querySelectorAll(".mermaid");
+                            mermaidElements.forEach((element, index) => {
+                                try {
+                                    mermaid.init(undefined, element);
+                                    console.log(
+                                        `Mermaid chart ${index + 1} rendered successfully`,
+                                    );
+                                } catch (mermaidError) {
+                                    console.error(
+                                        `Mermaid chart ${index + 1} failed:`,
+                                        mermaidError,
+                                    );
+                                    // Show the raw text as fallback
+                                    element.innerHTML = `<div class="bg-red-50 p-4 rounded border border-red-200">
+                        <p class="text-red-700 font-semibold">Chart rendering failed</p>
+                        <pre class="text-sm mt-2 whitespace-pre-wrap">${element.textContent}</pre>
+                    </div>`;
+                                }
+                            });
+                        } catch (initError) {
+                            console.error(
+                                "Mermaid initialization failed:",
+                                initError,
+                            );
+                        }
                     } else {
                         console.error("Mermaid library not loaded");
                     }
-                }, 100);
+                }, 500); // Increased delay to ensure DOM is ready
 
                 planResult.classList.remove("hidden");
 
