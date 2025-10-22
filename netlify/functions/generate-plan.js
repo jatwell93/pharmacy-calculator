@@ -45,87 +45,62 @@ exports.handler = async function (event, context) {
 // ==================== AI PROMPT ENGINEERING ====================
 
 function createPharmacyPrompt(analysisData, userPreferences) {
-  //filter for only growth services
   const growthServices = analysisData.filter(
     (service) => service.additionalValue > 0 && service.growthPercentage > 0,
   );
-  //Sort by biggest opportunities
-  const topOpportunities = analysisData
+
+  const topOpportunities = growthServices
     .sort((a, b) => b.additionalValue - a.additionalValue)
-    .slice(0, 5);
+    .slice(0, 10); // Increased to top 10
 
-  return `You are an expert Australian pharmacy business consultant with 20+ years experience.
-Create a DETAILED 6-month action plan specifically tailored to this pharmacy's unique opportunity profile.
+  return `CRITICAL: You are an expert Australian pharmacy business consultant creating a DETAILED 6-month implementation plan.
 
-CRITICAL DATA ANALYSIS:
-The pharmacy has ${growthServices.length} services with growth potential.
-Top ${topOpportunities.length} revenue opportunities:
+DATA ANALYSIS - ${growthServices.length} GROWTH OPPORTUNITIES:
 
 ${topOpportunities
   .map(
     (service, index) =>
-      `${index + 1}. ${service.name}:
-   - Current: $${service.currentValue.toLocaleString()}/year
-   - Potential: $${service.potentialValue.toLocaleString()}/year
-   - Opportunity: $${service.additionalValue.toLocaleString()} (${service.growthPercentage}% growth)
-   - PRIORITY: ${service.additionalValue > 50000 ? "HIGH" : service.additionalValue > 20000 ? "MEDIUM" : "LOW"}`,
+      `## ${index + 1}. ${service.name}
+   - CURRENT: $${service.currentValue.toLocaleString()}/year
+   - TARGET: $${service.potentialValue.toLocaleString()}/year
+   - OPPORTUNITY: $${service.additionalValue.toLocaleString()} (${service.growthPercentage}% growth)
+   - PRIORITY: ${service.additionalValue > 50000 ? "🔥 HIGH" : service.additionalValue > 20000 ? "🟡 MEDIUM" : "🟢 LOW"}`,
   )
   .join("\n\n")}
-TOTAL IDENTIFIED OPPORTUNITY: $${analysisData.reduce((sum, s) => sum + s.additionalValue, 0).toLocaleString()}
 
-CREATE A HIGHLY DETAILED PLAN WITH THIS EXACT JSON STRUCTURE:
+TOTAL OPPORTUNITY: $${analysisData.reduce((sum, s) => sum + s.additionalValue, 0).toLocaleString()}
+
+CREATE AN EXTREMELY DETAILED PLAN WITH THIS EXACT JSON STRUCTURE:
+
 {
   "timeline": {
-    "ganttChart": "detailed mermaid gantt syntax with specific tasks for each major service",
-    "milestones": ["Month 1: Specific milestone", "Month 2: Specific milestone", ...]
+    "ganttChart": "gantt\\n    title Pharmacy Growth Implementation Timeline\\n    dateFormat YYYY-MM-DD\\n    axisFormat %b %Y\\n    \\n    section High Priority Services\\n    [Service Name] Implementation :[crit/milestone/active/done], [id], [start_date], [duration]\\n    \\n    section Medium Priority Services\\n    [Service Name] Rollout :[crit/milestone/active/done], [id], [start_date], [duration]\\n    \\n    section Staff & Training\\n    [Training Topic] :[crit/milestone/active/done], [id], [start_date], [duration]",
+    "milestones": ["Week 2: Complete [specific training]", "Month 1: Launch [specific service]", ...]
   },
   "actions": {
-    "staffing": ["Specific staffing action 1", "Specific staffing action 2", ...],
-    "marketing": ["Specific marketing action 1", "Specific marketing action 2", ...],
-    "operations": ["Specific operations action 1", "Specific operations action 2", ...],
-    "compliance": ["Specific compliance action 1", "Specific compliance action 2", ...]
+    "staffing": ["Hire [role] for [specific service] - [hours/week] - $[salary]", "Train [number] staff on [specific skill] - [duration] - $[cost]", ...],
+    "marketing": ["[Channel]: [specific campaign] targeting [audience] - $[budget]", "[Activity]: [specific action] with [expected results]", ...],
+    "operations": ["Implement [system/process] for [specific service] - [timeline]", "Purchase [equipment/software] - $[cost] - [ROI timeframe]", ...],
+    "compliance": ["[Accreditation]: [specific requirement] - [deadline]", "[Documentation]: [specific system] - [compliance standard]", ...]
   },
   "financials": {
-    "investmentRequired": 15000,
-    "projectedROI": 3.2,
-    "breakdown": "Detailed breakdown of costs and expected returns"
+    "investmentRequired": [detailed calculation based on services],
+    "projectedROI": [realistic calculation],
+    "breakdown": "Detailed line-item breakdown:\\n- Staff: $[amount] for [details]\\n- Marketing: $[amount] for [details]\\n- Equipment: $[amount] for [details]\\n- Training: $[amount] for [details]\\n- Total: $[total]"
   }
 }
 
-PHARMACY CONTEXT:
-- Timeline: 6 months
-- Focus: High-ROI professional services
-- Location: Australian community pharmacy
+NON-NEGOTIABLE REQUIREMENTS:
+1. MUST reference specific services from the data above (DAA, HMRs, Vaccinations, etc.)
+2. MUST include dollar amounts, timelines, and specific actions
+3. MUST create detailed Gantt chart with at least 15 tasks across multiple sections
+4. MUST include at least 8 staffing actions, 6 marketing actions, 5 operations actions
+5. MUST calculate investment based on actual service implementation costs
+6. MUST provide month-by-month milestones with specific deliverables
+7. MUST consider Australian pharmacy regulations and CPA requirements
+8. MUST be realistic about implementation complexity and timelines
 
-CREATE A PLAN WITH THIS EXACT JSON STRUCTURE:
-{
-  "timeline": {
-    "ganttChart": "mermaid gantt syntax here",
-    "milestones": ["Month 1: Complete staff training", "Month 2: Launch marketing campaign"]
-  },
-  "actions": {
-    "staffing": ["Hire additional pharmacist", "Train staff on DAA services"],
-    "marketing": ["Local GP engagement", "Patient education campaign"],
-    "operations": ["Update software systems", "Create patient follow-up process"],
-    "compliance": ["Review CPA guidelines", "Ensure documentation standards"]
-  },
-  "financials": {
-    "investmentRequired": 15000,
-    "projectedROI": 3.2,
-    "breakdown": "Text description of costs and returns"
-  }
-}
-
-IMPORTANT: Respond ONLY with valid JSON matching this structure. Do not include any markdown, extra text, or explanations.
-
-REQUIREMENTS:
-- Focus on the HIGH and MEDIUM priority services first
-- Include specific Australian pharmacy regulations (CPA, accreditation)
-- Provide measurable targets and timelines
-- Consider staff training requirements for each service
-- Include patient acquisition strategies
-- Address operational changes needed
-- Be realistic about implementation complexity`;
+FAILURE TO FOLLOW THESE REQUIREMENTS WILL RESULT IN POOR PHARMACY OUTCOMES.`;
 }
 
 // ==================== AI API CALL ====================
@@ -200,16 +175,17 @@ async function callOpenRouterAI(prompt) {
 
 function parseAIResponse(aiResponse) {
   try {
-    // Extract the JSON object from the response using regex
-    const jsonMatch = aiResponse.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) {
-      throw new Error("No JSON object found in response");
-    }
-    const plan = JSON.parse(jsonMatch[0]);
+    const cleanedResponse = aiResponse.replace(/```json\s*|\s*```/g, "");
+    const plan = JSON.parse(cleanedResponse);
 
     // Validate we got the basic structure
     if (!plan.timeline || !plan.actions || !plan.financials) {
       throw new Error("AI response missing required sections");
+    }
+
+    // Fix Mermaid syntax if needed
+    if (plan.timeline.ganttChart) {
+      plan.timeline.ganttChart = fixMermaidSyntax(plan.timeline.ganttChart);
     }
 
     return plan;
@@ -218,6 +194,47 @@ function parseAIResponse(aiResponse) {
     console.log("Raw AI response:", aiResponse);
     throw new Error("AI returned an invalid format. Please try again.");
   }
+}
+
+// New function to fix common Mermaid syntax issues
+function fixMermaidSyntax(mermaidText) {
+  let fixed = mermaidText;
+
+  // Remove any markdown code blocks
+  fixed = fixed.replace(/```mermaid\s*|\s*```/g, "");
+
+  // Ensure it starts with proper gantt declaration
+  if (!fixed.includes("gantt")) {
+    fixed =
+      "gantt\n    title Pharmacy Implementation Timeline\n    dateFormat YYYY-MM-DD\n" +
+      fixed;
+  }
+
+  // Fix common formatting issues
+  fixed = fixed.replace(/^\s*section\s+/gm, "    section ");
+  fixed = fixed.replace(/^\s*task\s+/gm, "    ");
+  fixed = fixed.replace(/:\s*(done|active|crit)/g, " :$1");
+
+  // Ensure each line is properly indented
+  fixed = fixed
+    .split("\n")
+    .map((line) => {
+      if (line.trim().startsWith("section")) {
+        return "    " + line.trim();
+      } else if (
+        line.trim().length > 0 &&
+        !line.trim().startsWith("gantt") &&
+        !line.trim().startsWith("title") &&
+        !line.trim().startsWith("dateFormat")
+      ) {
+        return "        " + line.trim();
+      }
+      return line;
+    })
+    .join("\n");
+
+  console.log("🔍 DEBUG: Fixed Mermaid syntax:", fixed);
+  return fixed;
 }
 
 // ==================== FALLBACK PLAN ====================
