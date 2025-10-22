@@ -100,7 +100,7 @@ PHARMACY CONTEXT:
 CREATE A PLAN WITH THIS EXACT JSON STRUCTURE:
 {
   "timeline": {
-    "ganttChart": "gantt\ntitle Pharmacy Growth Plan\ndateFormat YYYY-MM-DD\naxisFormat %b %Y\nsection Staff & Training\nPharmacist Training :crit, training, 2024-01-01, 30d\nSystem Setup :after training, 14d\n\nsection Service Launch\nDAA Program Launch :milestone, m1, 2024-02-15, 1d\nVaccination Services :after m1, 60d\n\nsection Marketing\nGP Engagement :2024-01-15, 45d\nPatient Outreach :2024-03-01, 90d",
+    "ganttChart": "mermaid gantt syntax here",
     "milestones": ["Month 1: Complete staff training", "Month 2: Launch marketing campaign"]
   },
   "actions": {
