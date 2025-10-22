@@ -108,7 +108,7 @@ async function callOpenRouterAI(prompt) {
   console.log("🔍 DEBUG: First 200 chars of prompt:", prompt.substring(0, 200));
 
   const requestBody = {
-    model: "meta-llama/llama-3.3-70b-instruct:free",
+    model: "cognitivecomputations/dolphin-mistral-24b-venice-edition:free",
     messages: [{ role: "user", content: prompt }],
     max_tokens: 2000,
     temperature: 0.7,
