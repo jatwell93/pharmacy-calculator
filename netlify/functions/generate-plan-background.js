@@ -1,15 +1,27 @@
-// netlify/functions/generate-plan.js
-// Non-background wrapper (returns jobId immediately) copied from background implementation.
-// This function starts async processing and returns the jobId in the response body so clients
-// can poll the status endpoint. It mirrors generate-plan-background but ensures the HTTP response
-// contains a parsable JSON body in dev environments.
+// netlify/functions/generate-plan-background.js
 
+// Retry configuration constants
 const MAX_RETRIES = 3;
 const RETRY_DELAY = 1000; // Base delay in milliseconds (1 second)
 
 const { v4: uuidv4 } = require("uuid");
-const { initializeApp } = require("firebase/app");
-const { getDatabase, ref, set } = require("firebase/database");
+// Use local dev DB helper when Firebase env not configured
+let initializeApp, getDatabase, ref, set;
+if (!process.env.FIREBASE_DATABASE_URL) {
+  console.log("Local dev: using file-backed local database");
+  const localDb = require("../../dev/localDatabase");
+  initializeApp = localDb.initializeApp;
+  getDatabase = localDb.getDatabase;
+  ref = localDb.ref;
+  set = localDb.set;
+} else {
+  const firebaseAppModule = require("firebase/app");
+  const firebaseDbModule = require("firebase/database");
+  initializeApp = firebaseAppModule.initializeApp;
+  getDatabase = firebaseDbModule.getDatabase;
+  ref = firebaseDbModule.ref;
+  set = firebaseDbModule.set;
+}
 
 exports.handler = async function (event, context) {
   // Set proper headers for JSON response
@@ -74,7 +86,6 @@ exports.handler = async function (event, context) {
     // Support local development when Firebase env vars are not set.
     // Default to the imported Firebase helpers, but fall back to a local file DB helper.
     let database;
-    // default to imported firebase helpers
     let dbRef = ref;
     let dbSet = set;
 
@@ -93,7 +104,6 @@ exports.handler = async function (event, context) {
       database = getDatabase(app);
     } else {
       // Use local file-backed DB helper for dev when Firebase is not configured.
-      // The helper exposes a compatible subset: initializeApp, getDatabase, ref, set, get
       const localDb = require("../../dev/localDatabase");
       const app = localDb.initializeApp({});
       database = localDb.getDatabase(app);
@@ -179,15 +189,14 @@ exports.handler = async function (event, context) {
 function createPharmacyPrompt(structuredPayload) {
   const systemMessage = `You are an operations consultant for small healthcare providers. Use the JSON payload below and produce a complete implementation plan suitable for handing to a store manager and a pharmacist. Be explicit about calculations. Avoid speculative claims. Stick to the data and state assumptions.`;
 
-  const userMessage = `From the JSON payload, output a valid JSON object with exactly these top-level keys:
-- "executive_summary": a string (max 6 sentences)
-- "plan": an array of initiatives; each initiative must include: id, title, priority (1-5), owner_role, start_week, duration_weeks, tasks (array of {task_id, title, owner, est_hours, acceptance_criteria}), one_time_cost, recurring_annual_cost, expected_monthly_revenue_lift, ROI (string showing arithmetic), confidence (0-100%), risk_score (0-10), top 2 mitigations.
-- "mermaid_gantt": a string containing a small mermaid gantt diagram that uses weeks as units that a front-end can render.
-- "financial_breakdown": Use the provided financial_breakdown in the payload; verify sums and show arithmetic as provided. Do not compute new totals; use exact numbers from the payload. For payback, show the string arithmetic like "${payload.financial_breakdown.overall.one_time_total} / ${payload.financial_breakdown.overall.monthly_revenue_lift_total} months". For overall ROI: ${payload.financial_breakdown.overall_roi}.
-- "validation": Validate: summaryMetrics revenue totals must equal sum of included topDrivers + otherItemsSummary (revenue only). Show step-by-step: e.g., HMRs 6460 + ... = 12132. Flag: No per-service costs—use totalInvestment for overall ROI/payback. Ignore invalid fields like recurringCostAnnual. Use exact numbers from JSON; no assumptions on per-service costs/margins. If any numeric field required for ROI or payback is missing or null, state \`insufficient data\` instead of estimating.
-- "notes": optional additional notes, string.
+  const userMessage = `From the JSON payload, output:
+- "executive_summary" (max 6 sentences)
+- "plan" (array of initiatives; each initiative must include: id, title, priority (1-5), owner_role, start_week, duration_weeks, tasks (array of {task_id, title, owner, est_hours, acceptance_criteria}), one_time_cost, recurring_annual_cost, expected_monthly_revenue_lift, ROI (show arithmetic), confidence (0-100%), risk_score (0-10), top 2 mitigations).
+- "mermaid_gantt" - a small mermaid gantt diagram that uses weeks as units that a front-end can render.
+- "financial_breakdown": verify totals, sum of one_time_costs, recurring, and compute payback_period_months = one_time_cost / monthly_revenue_lift (per initiative and overall). Show the arithmetic for each computed number.
+- "validation": run simple checks and list any inconsistencies (e.g., ROI > 1000x, negative costs).
 
-Do not wrap the output in markdown code blocks. Output only valid JSON.
+Return valid JSON only (no extra commentary) in a top-level object with keys: executive_summary, plan, mermaid_gantt, financial_breakdown, validation, notes.
 
 JSON:
 ${JSON.stringify(structuredPayload, null, 2)}`;
@@ -214,7 +223,7 @@ async function callOpenRouterAI(prompt, retryCount = 0) {
   console.log("🔍 DEBUG: First 200 chars of prompt:", prompt.substring(0, 200));
 
   const requestBody = {
-    model: "deepseek/deepseek-r1-distill-llama-70b:free",
+    model: "ibm-granite/granite-4.0-h-micro",
     messages: [
       {
         role: "system",

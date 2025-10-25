@@ -1,0 +1,38 @@
+{
+  "name": "pharmacy-calculator",
+  "version": "1.0.0",
+  "description": "Pharmacy Opportunity Calculator with AI-powered action plan generation",
+  "main": "index.html",
+  "scripts": {
+    "dev": "node dev/local-server.js",
+    "start": "node dev/local-server.js",
+    "netlify-dev": "netlify dev",
+    "test": "node test/calculations.test.js",
+    "test-api": "node -e \"console.log('OPENROUTER_API_KEY is', process.env.OPENROUTER_API_KEY ? 'SET ✓' : 'NOT SET ✗')\""
+  },
+  "keywords": [
+    "pharmacy",
+    "calculator",
+    "healthcare",
+    "ai",
+    "business-planning"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "firebase": "^10.14.1",
+    "uuid": "^10.0.0"
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "devDependencies": {
+    "@eslint/css": "^0.13.0",
+    "@eslint/js": "^9.38.0",
+    "@eslint/json": "^0.13.2",
+    "dotenv": "^17.2.3",
+    "eslint": "^9.38.0",
+    "eslint-plugin-react": "^7.37.5",
+    "globals": "^16.4.0"
+  }
+}
