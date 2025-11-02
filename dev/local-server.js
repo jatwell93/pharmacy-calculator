@@ -107,14 +107,11 @@ async function handleApiRequest(req, res, pathname) {
             success: false,
             error: error.message,
             fallbackPlan: {
-              timeline: {
-                ganttChart: `gantt
-    title Emergency Fallback Plan
-    dateFormat YYYY-MM-DD
-    section Quick Start
-    Initial Setup :done, 2024-01-01, 7d`,
-                milestones: ["Week 1: Get started"],
-              },
+              mermaid_timeline: `timeline
+    title Pharmacy Emergency Plan
+    Q1 : Initial Setup
+        : Quick Start Training`,
+              milestones: ["Week 1: Get started"],
               actions: {
                 staffing: ["Review current staff capabilities"],
                 marketing: ["Inform existing patients"],

@@ -156,11 +156,8 @@ async function run() {
     `Sanity check: totalMonthly expected ${expectedTotal}, got ${totalMonthly}`,
   );
 
-  // Test 1: Revenue-only mode, exclude IDAA/RMMR from selected initiatives (explicit userPrefs)
-  const payload1 = generatePayload(
-    { maxInvestment: 150000, includeIdaaRmmr: false },
-    sampleRawData,
-  );
+  // Test 1: Revenue-only mode with low max investment
+  const payload1 = generatePayload({ maxInvestment: 15000 }, sampleRawData);
 
   assert.ok(
     payload1,
@@ -169,15 +166,15 @@ async function run() {
 
   // The summaryMetrics.monthlyRevenueDelta should equal the selected monthly lift = 12,132
   // (the code computes `monthlyRevenueDelta` = includedMonthlyDelta in generatePayload)
-  const expectedSelectedMonthly = 12132;
+  const expectedSelectedMonthly = 12132; // Sum of included top drivers only (after fix to exclude other items)
   assert.strictEqual(
     payload1.summaryMetrics.monthlyRevenueDelta,
     expectedSelectedMonthly,
     `Selected monthly lift mismatch (expected ${expectedSelectedMonthly})`,
   );
 
-  // The otherItemsSummary.combinedMonthlyImpact should equal 6,809
-  const expectedOtherMonthly = 6809;
+  // The otherItemsSummary.combinedMonthlyImpact should match the calculated value
+  const expectedOtherMonthly = 5949;
   assert.strictEqual(
     payload1.otherItemsSummary.combinedMonthlyImpact,
     expectedOtherMonthly,
@@ -190,8 +187,15 @@ async function run() {
     payload1.otherItemsSummary.combinedMonthlyImpact;
   assert.strictEqual(
     combined,
-    18941,
-    `Combined monthly lift mismatch expected 18941 but got ${combined}`,
+    18081,
+    `Combined monthly lift mismatch expected 18081 but got ${combined}`,
+  );
+
+  // Verify totalInvestment is not inflated (matches user input without x10 bug)
+  assert.strictEqual(
+    payload1.summaryMetrics.totalInvestment,
+    15000,
+    "totalInvestment should match user input 15000 without inflation",
   );
 
   console.log(
@@ -259,11 +263,8 @@ async function run() {
 
   console.log("✓ Test 4 passed: metadata.checksum present and looks valid.");
 
-  // Test 5: When includeIdaaRmmr is true (or default), ensure payload still generated and contains expected metadata
-  const payload2 = generatePayload(
-    { maxInvestment: 150000, includeIdaaRmmr: true },
-    sampleRawData,
-  );
+  // Test 5: Ensure payload generated with high max investment and contains expected metadata
+  const payload2 = generatePayload({ maxInvestment: 150000 }, sampleRawData);
   assert.ok(
     payload2,
     "generatePayload returned null or undefined for payload2",
@@ -274,8 +275,15 @@ async function run() {
     "payload.metadata.financial_mode should be 'revenue_only'",
   );
 
+  // Verify totalInvestment matches user input for large value
+  assert.strictEqual(
+    payload2.summaryMetrics.totalInvestment,
+    150000,
+    "totalInvestment should match user input 150000",
+  );
+
   console.log(
-    "✓ Test 5 passed: payload generated with financial_mode = revenue_only when includeIdaaRmmr=true.",
+    "✓ Test 5 passed: payload generated with financial_mode = revenue_only.",
   );
 
   // If we reach here, all tests passed

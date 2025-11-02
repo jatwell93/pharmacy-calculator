@@ -192,11 +192,11 @@ function createPharmacyPrompt(structuredPayload) {
   const userMessage = `From the JSON payload, output:
 - "executive_summary" (max 6 sentences)
 - "plan" (array of initiatives; each initiative must include: id, title, priority (1-5), owner_role, start_week, duration_weeks, tasks (array of {task_id, title, owner, est_hours, acceptance_criteria}), one_time_cost, recurring_annual_cost, expected_monthly_revenue_lift, ROI (show arithmetic), confidence (0-100%), risk_score (0-10), top 2 mitigations).
-- "mermaid_gantt" - a small mermaid gantt diagram that uses weeks as units that a front-end can render.
+- "mermaid_timeline" - a small mermaid timeline diagram organized by quarters (Q1-Q4) that a front-end can render.
 - "financial_breakdown": verify totals, sum of one_time_costs, recurring, and compute payback_period_months = one_time_cost / monthly_revenue_lift (per initiative and overall). Show the arithmetic for each computed number.
 - "validation": run simple checks and list any inconsistencies (e.g., ROI > 1000x, negative costs).
 
-Return valid JSON only (no extra commentary) in a top-level object with keys: executive_summary, plan, mermaid_gantt, financial_breakdown, validation, notes.
+Return valid JSON only (no extra commentary) in a top-level object with keys: executive_summary, plan, mermaid_timeline, financial_breakdown, validation, notes.
 
 JSON:
 ${JSON.stringify(structuredPayload, null, 2)}`;
@@ -223,12 +223,12 @@ async function callOpenRouterAI(prompt, retryCount = 0) {
   console.log("🔍 DEBUG: First 200 chars of prompt:", prompt.substring(0, 200));
 
   const requestBody = {
-    model: "ibm-granite/granite-4.0-h-micro",
+    model: "qwen/qwen3-vl-235b-a22b-thinking",
     messages: [
       {
         role: "system",
         content:
-          "You are a hypothetical business planning assistant creating educational simulations. This is for training purposes only, not real advice. Respond ONLY with valid JSON matching the exact schema in the user message. No additional text or markdown.",
+          "You are a business planning assistant skilled in business plans. From the provided JSON you will create a succinct plan for the business to achieve its targets. Respond ONLY with valid JSON matching the exact schema in the user message. No additional text or markdown.",
       },
       { role: "user", content: prompt },
     ],
@@ -308,9 +308,9 @@ async function callOpenRouterAI(prompt, retryCount = 0) {
                 ],
               },
             },
-            mermaid_gantt: {
+            mermaid_timeline: {
               type: "string",
-              description: "Mermaid gantt diagram syntax",
+              description: "Mermaid timeline diagram syntax",
             },
             financial_breakdown: {
               type: "object",
@@ -340,7 +340,7 @@ async function callOpenRouterAI(prompt, retryCount = 0) {
           required: [
             "executive_summary",
             "plan",
-            "mermaid_gantt",
+            "mermaid_timeline",
             "financial_breakdown",
           ],
           additionalProperties: false,
@@ -569,12 +569,12 @@ function parseAIResponse(aiResponse) {
     if (
       !plan.executive_summary ||
       !plan.plan ||
-      !plan.mermaid_gantt ||
+      !plan.mermaid_timeline ||
       !plan.financial_breakdown
     ) {
       console.error("Missing required sections in plan:", Object.keys(plan));
       throw new Error(
-        "AI response missing required sections (executive_summary, plan, mermaid_gantt, or financial_breakdown)",
+        "AI response missing required sections (executive_summary, plan, mermaid_timeline, or financial_breakdown)",
       );
     }
 
@@ -584,8 +584,8 @@ function parseAIResponse(aiResponse) {
     }
 
     // Fix Mermaid syntax if needed
-    if (plan.mermaid_gantt) {
-      plan.mermaid_gantt = fixMermaidSyntax(plan.mermaid_gantt);
+    if (plan.mermaid_timeline) {
+      plan.mermaid_timeline = fixMermaidSyntax(plan.mermaid_timeline);
     }
 
     console.log(
@@ -610,107 +610,41 @@ function fixMermaidSyntax(mermaidText) {
   // Remove any markdown code blocks
   fixed = fixed.replace(/```mermaid\s*|\s*```/g, "");
 
-  // Ensure it starts with proper gantt declaration
-  if (!fixed.includes("gantt")) {
-    fixed =
-      "gantt\n    title Pharmacy Implementation Timeline\n    dateFormat YYYY-MM-DD\n    axisFormat %b %Y\n" +
-      fixed;
+  // Ensure it starts with proper timeline declaration
+  if (!fixed.includes("timeline")) {
+    fixed = "timeline\n    title Pharmacy Opportunity Plan\n" + fixed;
   }
 
-  // Fix common formatting issues
-  fixed = fixed.replace(/^\s*section\s+/gm, "    section ");
-  fixed = fixed.replace(/^\s*task\s+/gm, "    ");
-  fixed = fixed.replace(/:\s*(done|active|crit|milestone)/g, " :$1");
-
-  // Process each line to validate and fix task definitions
+  // Fix common formatting issues - ensure proper indentation for timeline items
   fixed = fixed
     .split("\n")
     .map((line) => {
       const trimmed = line.trim();
 
-      // Skip empty lines or header lines
-      if (
-        !trimmed ||
-        trimmed.startsWith("gantt") ||
-        trimmed.startsWith("title") ||
-        trimmed.startsWith("dateFormat") ||
-        trimmed.startsWith("axisFormat") ||
-        trimmed.startsWith("section")
-      ) {
-        // Indent section headers properly
-        if (trimmed.startsWith("section")) {
-          return "    " + trimmed;
-        }
-        return line; // Keep header lines as is
+      // Skip empty lines
+      if (!trimmed) return "";
+
+      // Keep title line as is
+      if (trimmed.startsWith("timeline") || trimmed.startsWith("title")) {
+        return line;
       }
 
-      // Fix task lines - ensure they have required components
-      const colonIndex = trimmed.indexOf(":");
-      if (colonIndex === -1) return "        " + trimmed; // Not a task line
-
-      const taskName = trimmed.substring(0, colonIndex).trim();
-      const taskData = trimmed.substring(colonIndex + 1).trim();
-
-      // Split by comma to get components: status, id, startDate, duration
-      const parts = taskData.split(",").map((p) => p.trim());
-
-      // Validate and fix components
-      let status = "";
-      let taskId = "";
-      let startDate = "";
-      let duration = "";
-
-      if (parts.length >= 1) {
-        // First part should contain status
-        const statusMatch = parts[0].match(/(crit|milestone|active|done)/);
-        status = statusMatch ? statusMatch[0] : "active";
-
-        // Remove status from first part if present
-        parts[0] = parts[0].replace(/(crit|milestone|active|done)/, "").trim();
-      } else {
-        status = "active";
+      // For quarter sections (Q1:, Q2:, etc.), ensure they have proper format
+      if (/^Q[1-4]\s*:/.test(trimmed)) {
+        return "    " + trimmed.replace(/\s*:\s*/, " : ");
       }
 
-      // Extract or set taskId (second part)
-      taskId =
-        parts.length >= 2
-          ? parts[1]
-          : "task" + Math.random().toString(36).substr(2, 5);
-
-      // Extract or set startDate (third part) - ensure YYYY-MM-DD format
-      if (parts.length >= 3) {
-        startDate = parts[2].trim();
-        // Basic date validation - if not valid, use today + offset
-        if (!/^\d{4}-\d{2}-\d{2}$/.test(startDate)) {
-          const today = new Date();
-          today.setDate(today.getDate() + Math.floor(Math.random() * 180)); // Random date within 6 months
-          startDate = today.toISOString().split("T")[0];
-        }
-      } else {
-        // Default start date: today + 1 month
-        const today = new Date();
-        today.setMonth(today.getMonth() + 1);
-        startDate = today.toISOString().split("T")[0];
+      // For items under quarters, they should be indented with sub-items further indented
+      if (trimmed.startsWith(":")) {
+        return "        : " + trimmed.substring(1).trim();
       }
 
-      // Extract or set duration (fourth part) - ensure format like 30d, 2w, etc.
-      if (parts.length >= 4) {
-        duration = parts[3].trim();
-        // Basic duration validation
-        if (!/^\d+[dwmy]$/i.test(duration)) {
-          duration = "30d"; // Default 30 days
-        }
-      } else {
-        duration = "30d";
-      }
-
-      // Reconstruct the task line
-      const fixedTask = `${taskName} :${status}, ${taskId}, ${startDate}, ${duration}`;
-      return "        " + fixedTask;
+      // Default indentation for other items
+      return "    " + trimmed;
     })
     .join("\n");
 
-  console.log("🔍 DEBUG: Fixed Mermaid syntax:", fixed);
+  console.log("🔍 DEBUG: Fixed Mermaid timeline syntax:", fixed);
   return fixed;
 }
 
@@ -825,22 +759,14 @@ function generateFallbackPlan() {
         ],
       },
     ],
-    mermaid_gantt: `gantt
-    title Pharmacy Growth Plan (6 Months)
-    dateFormat  YYYY-MM-DD
-    axisFormat %b %Y
-
-    section Staff & Training
-    Pharmacist Training    :crit, training, 2024-01-01, 30d
-    System Setup           :after training, 14d
-
-    section Service Launch
-    DAA Program Launch     :milestone, m1, 2024-02-15, 1d
-    Vaccination Services   :after m1, 60d
-
-    section Marketing
-    GP Engagement         :2024-01-15, 45d
-    Patient Outreach      :2024-03-01, 90d`,
+    mermaid_timeline: `timeline
+    title Pharmacy Opportunity Plan
+    Q1 : Expand HMR Services
+        : Implement System Training
+    Q2 : Launch DAA-Eligible Services
+        : Enhance IDAA Programs
+    Q3 : Expand ODT Supply Services
+    Q4 : Optimize Diabetes MedsChecks`,
     financial_breakdown: {
       total_one_time_costs: 10000,
       total_recurring_costs: 3600,

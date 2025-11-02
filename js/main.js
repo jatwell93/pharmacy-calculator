@@ -1,7 +1,13 @@
 // Main Application Entry Point
 // This file initializes the application and sets up global functions
 
-import { generateTables, setupEventListeners, downloadPlan } from "./ui.js";
+import {
+  generateTables,
+  setupEventListeners,
+  downloadPlan,
+  displayProvenance,
+  copyDebugInfo,
+} from "./ui.js";
 import { calculateAll } from "./calculations.js";
 import {
   testWithSampleData,
@@ -12,6 +18,7 @@ import {
   copyPayloadForChatGPT,
   generatePlan,
 } from "./aiIntegration.js";
+import { appendDisclaimerTo } from "./disclaimer.js";
 
 /**
  * Initialize the application when DOM is ready
@@ -21,6 +28,12 @@ function initializeApp() {
 
   // Generate all service tables
   generateTables();
+
+  // Display provenance information
+  displayProvenance();
+
+  // Render disclaimer
+  appendDisclaimerTo("#disclaimer");
 
   // Perform initial calculations
   calculateAll();
@@ -43,3 +56,4 @@ window.proceedWithGeneration = proceedWithGeneration;
 window.copyPayloadForChatGPT = copyPayloadForChatGPT;
 window.generatePlan = generatePlan;
 window.downloadPlan = downloadPlan;
+window.copyDebugInfo = copyDebugInfo;

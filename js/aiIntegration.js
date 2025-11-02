@@ -21,11 +21,12 @@ export async function testWithSampleData() {
         // Indicate revenue-only financial mode for clarity to the AI
         financial_mode: "revenue_only",
       },
+      // Summary metrics: Aggregated figures for the selected top drivers only. Monthly values are computed as (annual delta / 12); estimatedAnnualDelta = monthlyRevenueDelta * 12. In revenue_only mode, ignore any cost fields.
       summaryMetrics: {
         currentMonthlyRevenue: 8000,
         projectedMonthlyRevenue: 15000,
-        monthlyRevenueDelta: 7000,
-        estimatedAnnualDelta: 84000,
+        selectedMonthlyRevenueDelta: 7000, // Monthly revenue lift from top-6 selected drivers only; annual = this * 12
+        estimatedAnnualDelta: 84000, // Not used in revenue_only mode; included for completeness
         // In revenue_only mode, include the total investment rather than per-service cost aggregates
         totalInvestment: 100000,
       },
@@ -36,7 +37,7 @@ export async function testWithSampleData() {
           currentValue: 25487,
           targetValue: 64911,
           unit: "patients/month",
-          monthlyRevenueImpact: 3287,
+          monthlyRevenueImpact: 3287, // Monthly gross revenue lift from this service (annual = this * 12)
           assumptions: "avg revenue per pack $40",
         },
         {
@@ -45,7 +46,7 @@ export async function testWithSampleData() {
           currentValue: 3809,
           targetValue: 5012,
           unit: "vaccines/month",
-          monthlyRevenueImpact: 101,
+          monthlyRevenueImpact: 101, // Monthly gross revenue lift from this service (annual = this * 12)
           assumptions: "avg revenue per vaccine $35",
         },
       ],
@@ -473,6 +474,29 @@ function validateAndCorrectPlan(plan, originalPayload) {
       return { issues, corrections };
     }
 
+    // Validate totalInvestment against user input
+    const userInputInvestment =
+      (originalPayload.userInputs &&
+        originalPayload.userInputs.totalInvestment) ||
+      (originalPayload.userPreferences &&
+        originalPayload.userPreferences.maxInvestment);
+    if (userInputInvestment && typeof userInputInvestment === "number") {
+      const payloadInvestment =
+        originalPayload.summaryMetrics.totalInvestment || 0;
+      if (payloadInvestment > 0) {
+        const diffPercentage =
+          Math.abs(payloadInvestment - userInputInvestment) /
+          userInputInvestment;
+        if (diffPercentage > 0.01) {
+          // 1% threshold
+          issues.push(
+            `Total investment validation: Payload has ${payloadInvestment.toLocaleString()}, user input ${userInputInvestment.toLocaleString()} (${(diffPercentage * 100).toFixed(2)}% difference). Check for scaling bugs.`,
+          );
+          corrections.totalInvestment = userInputInvestment; // Suggest correction
+        }
+      }
+    }
+
     // Verify financial totals
     let totalOneTime = 0;
     let totalRecurring = 0;
@@ -488,8 +512,8 @@ function validateAndCorrectPlan(plan, originalPayload) {
     // Respect financial_mode (e.g., "revenue_only") from the original payload. In revenue_only mode skip per-service cost checks.
     const financialMode =
       originalPayload.metadata && originalPayload.metadata.financial_mode;
-    const expectedMonthlyDelta =
-      originalPayload.summaryMetrics.monthlyRevenueDelta || 0;
+    const expectedSelectedMonthlyDelta =
+      originalPayload.summaryMetrics.selectedMonthlyRevenueDelta || 0; // Revenue lift from selected top drivers only
 
     if (financialMode === "revenue_only") {
       // In revenue_only mode, validate revenue totals only (skip one-time / recurring per-service checks)
@@ -693,10 +717,6 @@ export function previewPlan() {
     timeHorizonMonths:
       parseInt(document.getElementById("time-horizon").value) || 12,
     preferredDepth: document.getElementById("detail-level").value || "detailed",
-    includeIdaaRmmr:
-      (document.getElementById("include-idaa-rmmr") &&
-        document.getElementById("include-idaa-rmmr").checked) ||
-      false,
   };
 
   const payload = generatePayload(userPrefs);
@@ -753,10 +773,6 @@ export function copyPayloadForChatGPT() {
     timeHorizonMonths:
       parseInt(document.getElementById("time-horizon").value) || 12,
     preferredDepth: document.getElementById("detail-level").value || "detailed",
-    includeIdaaRmmr:
-      (document.getElementById("include-idaa-rmmr") &&
-        document.getElementById("include-idaa-rmmr").checked) ||
-      false,
   };
 
   const payload = generatePayload(userPrefs);
@@ -770,11 +786,11 @@ export function copyPayloadForChatGPT() {
   const userMessage = `From the JSON payload, output:
 - "executive_summary" (max 6 sentences)
 - "plan" (array of initiatives; each initiative must include: id, title, priority (1-5), owner_role, start_week, duration_weeks, tasks (array of {task_id, title, owner, est_hours, acceptance_criteria}), one_time_cost, recurring_annual_cost, expected_monthly_revenue_lift, ROI (show arithmetic), confidence (0-100%), risk_score (0-10), top 2 mitigations).
-- "mermaid_gantt" - a small mermaid gantt diagram that uses weeks as units that a front-end can render.
+- "mermaid_timeline" - a small mermaid timeline diagram organized by quarters (Q1-Q4) that a front-end can render.
 - "financial_breakdown": verify totals, sum of one_time_costs, recurring, and compute payback_period_months = one_time_cost / monthly_revenue_lift (per initiative and overall). Show the arithmetic for each computed number.
 - "validation": run simple checks and list any inconsistencies (e.g., ROI > 1000x, negative costs).
 
-Return valid JSON only (no extra commentary) in a top-level object with keys: executive_summary, plan, mermaid_gantt, financial_breakdown, validation, notes.
+Return valid JSON only (no extra commentary) in a top-level object with keys: executive_summary, plan, mermaid_timeline, financial_breakdown, validation, notes.
 
 JSON:
 ${JSON.stringify(payload, null, 2)}`;

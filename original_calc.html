@@ -1156,8 +1156,8 @@
                            <h4 class="font-bold text-blue-800 mb-2">📅 Implementation Timeline</h4>
 
                             <!-- Mermaid Chart Container -->
-                            <div id="gantt-chart" class="mermaid bg-white p-4 rounded-lg border">
-                                ${plan.timeline.ganttChart}
+                            <div id="timeline-chart" class="mermaid bg-white p-4 rounded-lg border">
+                                ${plan.mermaid_timeline}
                            </div>
 
                             <!-- Milestones -->
@@ -1201,11 +1201,6 @@
                             mermaid.initialize({
                                 startOnLoad: true,
                                 theme: "default",
-                                gantt: {
-                                    barHeight: 20,
-                                    fontSize: 12,
-                                    useWidth: 900,
-                                },
                             });
 
                             // Try to render all mermaid charts
@@ -1609,3 +1604,4 @@
         </section>
     </body>
 </html>
+<tbody></tbody>

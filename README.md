@@ -2,12 +2,17 @@
 
 A comprehensive web-based calculator for Australian pharmacies to analyze financial opportunities across government-funded programs, vaccinations, pharmacy services, and biologics dispensary operations.
 
-## 🏗️ Project Structure
+## Project Structure
 
 ```
 pharmacy-calculator/
 ├── index.html              # Main HTML structure (clean, no inline scripts/styles)
+├── original_calc.html      # Original calculator version (archived)
 ├── README.md              # This file
+├── DEBUG_GUIDE.md         # Debugging and development guide
+├── package.json           # Node.js dependencies and scripts
+├── .gitignore             # Git ignore rules
+├── eslint.config.mjs      # ESLint configuration
 ├── netlify.toml           # Netlify deployment configuration
 ├── css/
 │   └── styles.css         # All custom CSS styles
@@ -17,11 +22,20 @@ pharmacy-calculator/
 │   ├── calculations.js   # Calculation logic and utilities
 │   ├── ui.js             # DOM manipulation and table generation
 │   └── aiIntegration.js  # AI-powered action plan generation
-└── netlify/
-    └── functions/         # Serverless API functions (if any)
+├── dev/
+│   ├── local-server.js    # Local development server
+│   └── localDatabase.js   # File-backed database for local testing
+├── test/
+│   └── calculations.test.js # Unit tests for calculations
+├── netlify/
+│   └── functions/         # Serverless API functions
+│       ├── generate-plan.js
+│       ├── generate-plan-background.js
+│       └── check-plan-status.js
+└── .netlify/              # Netlify build output (auto-generated)
 ```
 
-## 📋 Features
+## Features
 
 - **Part 1: Government-Funded Programs**
   - DAA (Dose Administration Aid) services
@@ -51,7 +65,7 @@ pharmacy-calculator/
   - Additional margin calculations
   - Pharmacy program remuneration
 
-## 🚀 Getting Started
+## Get Started
 
 ### Local Development
 
@@ -61,16 +75,17 @@ pharmacy-calculator/
    cd pharmacy-calculator
    ```
 
-2. Open `index.html` in a modern web browser, or use a local server:
+2. Install dependencies:
    ```bash
-   # Using Python
-   python -m http.server 8000
-
-   # Using Node.js
-   npx http-server
+   npm install
    ```
 
-3. Navigate to `http://localhost:8000` in your browser
+3. Start the local development server:
+   ```bash
+   npm run dev
+   ```
+
+4. Navigate to `http://localhost:8888` in your browser (or the URL shown in the console)
 
 ### Deployment
 
@@ -80,7 +95,25 @@ This project is configured for deployment on Netlify:
 2. Build settings are handled automatically via `netlify.toml`
 3. Deploy!
 
-## 💻 Code Organization
+#### Environment Variables
+
+For the AI features to work in production, set the following environment variables in your Netlify dashboard:
+
+- `OPENROUTER_API_KEY`: Your OpenRouter API key (required for AI plan generation). Obtain from [openrouter.ai](https://openrouter.ai/)
+
+Optional Firebase configuration (recommended for production use; if not set, a local file-based database is used for development, which is not suitable for production):
+
+- `FIREBASE_API_KEY`
+- `FIREBASE_AUTH_DOMAIN`
+- `FIREBASE_DATABASE_URL`
+- `FIREBASE_PROJECT_ID`
+- `FIREBASE_STORAGE_BUCKET`
+- `FIREBASE_MESSAGING_SENDER_ID`
+- `FIREBASE_APP_ID`
+
+You can find these values in your Firebase project settings.
+
+## Code Organization
 
 ### `js/serviceData.js`
 Contains all service definitions organized by category (part1-4). Each service includes:
@@ -116,7 +149,7 @@ Application initialization:
 - DOM ready event handling
 - Global function exposure for inline handlers
 
-## 🎨 Styling
+## Styling
 
 All styles are in `css/styles.css`:
 - Base styles and typography
@@ -127,7 +160,7 @@ All styles are in `css/styles.css`:
 
 Uses **Tailwind CSS** via CDN for utility classes.
 
-## 📊 How to Use
+## How to Use
 
 1. **Enter Current Data**: Input your pharmacy's current service volumes
 2. **Set Potential Targets**: Enter growth targets in "Potential Volume" fields
@@ -149,7 +182,7 @@ The calculator includes AI-powered action plan generation:
    - Staffing and training recommendations
    - Marketing strategies
 
-## 🔧 Customization
+## Customisation
 
 ### Adding a New Service
 
@@ -176,24 +209,93 @@ The calculator includes AI-powered action plan generation:
 
 Edit the calculation functions in `js/calculations.js` or create custom calc functions in `js/serviceData.js` for specific services.
 
-## 📱 Browser Support
 
-- Chrome/Edge (latest)
-- Firefox (latest)
-- Safari (latest)
-- Requires ES6 module support
+## License
 
-## 📄 License
+Mozilla Public License Version 2.0
 
-[Add your license information here]
+## Contributing
 
-## 🤝 Contributing
+We welcome all types of contributions including bug reports, feature suggestions, documentation improvements, and code changes.
 
-[Add contribution guidelines here]
+To contribute, please follow these steps:
 
-## 📞 Support
+1. Fork the repository and create a new branch for your changes.
+2. Ensure your changes follow the existing code style.
+3. Test your changes thoroughly.
+4. Open a Pull Request (PR) describing your changes in detail.
 
-For questions or support, please [add contact information].
+When submitting a PR, please use the following template to provide all necessary information:
+
+```markdown
+<!--- Provide a general summary of your changes in the Title above -->
+
+## Description
+<!--- Describe your changes in detail -->
+
+## Motivation and Context
+<!--- Why is this change required? What problem does it solve? -->
+<!--- If it fixes an open issue, please link to the issue here. -->
+
+## How has this been tested?
+<!--- Please describe in detail how you tested your changes. -->
+<!--- Include details of your testing environment, tests ran, and effects -->
+
+## Screenshots (if appropriate):
+
+## Types of changes
+<!--- What types of changes does your code introduce? Put an `x` in all the boxes that apply: -->
+- [ ] Bug fix (non-breaking change which fixes an issue)
+- [ ] New feature (non-breaking change which adds functionality)
+- [ ] Breaking change (fix or feature that would cause existing functionality to not work as expected)
+
+## Checklist:
+<!--- Go over all the following points, and put an `x` in all the boxes that apply. -->
+- [ ] My code follows the code style of this project.
+- [ ] My change requires a change to the documentation.
+- [ ] I have updated the documentation accordingly.
+- [ ] I have added tests to cover my changes.
+- [ ] All new and existing tests passed.
+```
+
+By following this guide, you help maintain the quality and stability of the project. If you have any questions, feel free to open an issue or reach out.
+
+## Support
+
+### Reporting Issues
+
+If you encounter any problems or bugs while using this calculator, please open a new issue on GitHub.
+To help us resolve your issue faster, please use the template below when creating your report:
+
+```markdown
+## Who is the bug affecting?
+<!-- Ex. All supervisors, Sally Supervisor, Level 1 CCs -->
+
+## What is affected by this bug?
+<!-- Ex. AI response, editing services, wrong calculations -->
+
+## When does this occur?
+<!-- Ex. On form submission, after upgrade, intermittently -->
+
+## Where does it happen?
+<!-- Ex. Settings page, RMMR section, Firefox browser -->
+
+## How do we replicate the issue?
+<!-- Please be as specific as possible. Use dashes (-) or numbers (1.) to create a list of steps -->
+
+## Expected behavior (i.e. solution)
+<!-- What should have happened? -->
+
+## Other Comments
+```
+
+**Process:**
+1. Go to the [Issues tab](https://github.com/jatwell93/pharmacy-calculator/issues)) of this repository.
+2. Click “New issue”.
+3. Copy and fill in the above template.
+4. Provide as much detail as possible, including screenshots or logs if helpful.
+
+Thank you for helping improve this project!
 
 ---
 

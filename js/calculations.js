@@ -1,6 +1,8 @@
 // Calculation Functions
 // This file contains all calculation logic for the pharmacy calculator
 
+/* global process */
+
 import { servicesData } from "./serviceData.js";
 
 /**
@@ -46,6 +48,27 @@ export function calculateAll() {
           };
         });
         [currentVal, additionalVal] = service.calc(vols, service.timeFactor);
+      } else if (service.customLayout) {
+        // Handle custom layout services (e.g., staged-supply, hmr)
+        if (service.id === "staged-supply") {
+          const patientPickups = [];
+          for (let i = 1; i <= 15; i++) {
+            const letter = String.fromCharCode(64 + i).toLowerCase();
+            const pickup = document.getElementById(
+              `staged-supply-patient-${letter}`,
+            ).value;
+            patientPickups.push(pickup);
+          }
+          [currentVal, additionalVal] = service.calc(patientPickups);
+        } else if (service.id === "hmr") {
+          const volume =
+            parseFloat(document.getElementById("hmr-current").value) || 0;
+          const thirdPartyPercent =
+            parseFloat(document.getElementById("hmr-3rd-party-pct").value) || 0;
+          [currentVal, additionalVal] = service.calc(volume, thirdPartyPercent);
+        } else if (service.id === "adalimumab" || service.id === "etanercept") {
+          [currentVal, additionalVal] = service.calc();
+        }
       } else {
         // Handle regular services
         const c =
@@ -250,19 +273,9 @@ export function generatePayload(userPreferences = {}, rawDataOverride = null) {
   );
 
   // Determine included initiatives: top 6 by impact.
-  // Default behaviour: include IDAA and RMMR unless the user explicitly disables them.
   const top6Ids = rankedByImpact.slice(0, 6).map((d) => d.id);
-  const includeIdaaRmmr =
-    userPreferences.includeIdaaRmmr === undefined
-      ? true
-      : !!userPreferences.includeIdaaRmmr;
   processedData.forEach((item) => {
-    if (includeIdaaRmmr) {
-      item.included = top6Ids.includes(item.id);
-    } else {
-      item.included =
-        top6Ids.includes(item.id) && item.id !== "idaa" && item.id !== "rmmr";
-    }
+    item.included = top6Ids.includes(item.id);
   });
 
   // Take top 8 drivers, or all if fewer than 8
@@ -277,11 +290,10 @@ export function generatePayload(userPreferences = {}, rawDataOverride = null) {
     totalMonthlyDelta -
     topDrivers.reduce((sum, d) => sum + d.monthlyRevenueImpact, 0);
 
-  // Calculate monthly delta for included initiatives only
-  const includedMonthlyDelta =
-    topDrivers
-      .filter((d) => d.included)
-      .reduce((sum, d) => sum + d.monthlyRevenueImpact, 0) + otherMonthlyImpact;
+  // Calculate monthly delta for included initiatives only (excludes other items to match top drivers only)
+  const includedMonthlyDelta = topDrivers
+    .filter((d) => d.included)
+    .reduce((sum, d) => sum + d.monthlyRevenueImpact, 0);
 
   // Validate revenue sums
   const computedRevenueSum = includedMonthlyDelta;
@@ -488,12 +500,12 @@ export function generatePayload(userPreferences = {}, rawDataOverride = null) {
             .update(checksumSource)
             .digest("hex")
             .slice(0, 8); // shorten to 8 hex chars like the FNV fallback for compactness
-        } catch (e) {
+        } catch {
           // If Node crypto usage fails for any reason, we'll fallback below.
           checksum = null;
         }
       }
-    } catch (e) {
+    } catch {
       // ignore and fall through to fallback
       checksum = null;
     }
@@ -505,7 +517,7 @@ export function generatePayload(userPreferences = {}, rawDataOverride = null) {
     }
 
     payload.metadata.checksum = checksum;
-  } catch (e) {
+  } catch {
     // If checksum calculation fails for any reason, set to null but do not block payload generation.
     payload.metadata.checksum = null;
   }

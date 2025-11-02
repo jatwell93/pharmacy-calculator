@@ -144,4 +144,8 @@ dist
 ### Remix+Netlify ###
 /.netlify
 
+# Development and test directories (not needed in production)
+dev/
+test/
+
 # End of https://www.toptal.com/developers/gitignore/api/node,remix+netlify
