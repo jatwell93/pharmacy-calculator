@@ -1,6 +1,6 @@
 # Pharmacy Calculator - Opportunity Analysis Tool
 
-A comprehensive web-based calculator for Australian pharmacies to analyze financial opportunities across government-funded programs, vaccinations, pharmacy services, and biologics dispensary operations.
+A comprehensive web-based calculator for Australian pharmacies to analyze financial opportunities across government-funded programs, vaccinations, pharmacy services, and biologics dispensary operations. The project's goal is to offer an open source transparent platform for pharmacies to analsze their financial opportunities under the new CPA 8.
 
 ## Project Structure
 
@@ -290,7 +290,7 @@ To help us resolve your issue faster, please use the template below when creatin
 ```
 
 **Process:**
-1. Go to the [Issues tab](https://github.com/jatwell93/pharmacy-calculator/issues)) of this repository.
+1. Go to the [Issues tab](https://github.com/jatwell93/pharmacy-calculator/issues) of this repository.
 2. Click “New issue”.
 3. Copy and fill in the above template.
 4. Provide as much detail as possible, including screenshots or logs if helpful.

@@ -9,6 +9,11 @@
         <script src="https://cdn.tailwindcss.com"></script>
         <script src="https://cdn.jsdelivr.net/npm/mermaid@10.6.1/dist/mermaid.min.js"></script>
         <link
+            href="https://cdn.jsdelivr.net/npm/flowbite@3.1.2/dist/flowbite.min.css"
+            rel="stylesheet"
+        />
+
+        <link
             href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
             rel="stylesheet"
         />
@@ -475,6 +480,438 @@
             >
                 Download Plan
             </button>
+
+            <div class="max-w-screen-sm mx-auto bg-white p-6 rounded-2xl shadow-lg">
+            <h2 class="text-2xl font-semibold mb-4 section-title text-center">
+                Frequently Asked Questions
+            </h2>
+
+            <div
+                id="faq-accordion"
+                data-accordion="open"
+                class="w-full max-w-3xl mx-auto"
+                data-active-classes="bg-blue-100 dark:bg-gray-800 text-blue-600 dark:text-white"
+            >
+                <!-- How do I use the calculator? -->
+                <h2 id="faq-heading-1">
+                    <button
+                        type="button"
+                        class="flex items-center justify-between w-full p-5 font-medium text-gray-500 border border-b-0 border-gray-200 rounded-t-xl focus:ring-4 focus:ring-gray-200 hover:bg-gray-100 gap-3"
+                        data-accordion-target="#faq-body-1"
+                        aria-expanded="true"
+                        aria-controls="faq-body-1"
+                    >
+                        How do I use the calculator?
+                        <svg
+                            data-accordion-icon
+                            class="w-3 h-3 rotate-180 shrink-0"
+                            aria-hidden="true"
+                            xmlns="http://www.w3.org/2000/svg"
+                            fill="none"
+                            viewBox="0 0 10 6"
+                        >
+                            <path
+                                stroke="currentColor"
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M9 5 5 1 1 5"
+                            />
+                        </svg>
+                    </button>
+                </h2>
+                <div
+                    id="faq-body-1"
+                    class="p-5 border border-b-0 border-gray-200 rounded-b-xl text-gray-600"
+                    aria-labelledby="faq-heading-1"
+                >
+                    <p>
+                        Enter your pharmacy’s current service volumes in the
+                        "Current Volume" fields. Set your growth targets in the
+                        "Potential Volume" fields. Adjust patient fees where
+                        applicable. The calculator will automatically display
+                        estimated yearly financial opportunities and additional
+                        values. You can also generate customized implementation
+                        plans using the AI-powered feature.
+                    </p>
+                </div>
+
+                <!-- What services are included? -->
+                <h2 id="faq-heading-2">
+                    <button
+                        type="button"
+                        class="flex items-center justify-between w-full p-5 font-medium text-gray-500 border border-b-0 border-gray-200 focus:ring-4 focus:ring-gray-200 hover:bg-gray-100 gap-3"
+                        data-accordion-target="#faq-body-2"
+                        aria-expanded="false"
+                        aria-controls="faq-body-2"
+                    >
+                        What kind of services are included in the calculator?
+                        <svg
+                            data-accordion-icon
+                            class="w-3 h-3 rotate-180 shrink-0"
+                            aria-hidden="true"
+                            xmlns="http://www.w3.org/2000/svg"
+                            fill="none"
+                            viewBox="0 0 10 6"
+                        >
+                            <path
+                                stroke="currentColor"
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M9 5 5 1 1 5"
+                            />
+                        </svg>
+                    </button>
+                </h2>
+                <div
+                    id="faq-body-2"
+                    class="hidden p-5 border border-b-0 border-gray-200 rounded-b-xl text-gray-600"
+                    aria-labelledby="faq-heading-2"
+                >
+                    <p>
+                        The calculator covers four main categories:
+                        Government-Funded Programs, Vaccinations, Pharmacy
+                        Program Services, and Biologics Dispensary Services.
+                    </p>
+                </div>
+
+                <!-- What if I don't provide a service? -->
+                <h2 id="faq-heading-3">
+                    <button
+                        type="button"
+                        class="flex items-center justify-between w-full p-5 font-medium text-gray-500 border border-b-0 border-gray-200 focus:ring-4 focus:ring-gray-200 hover:bg-gray-100 gap-3"
+                        data-accordion-target="#faq-body-3"
+                        aria-expanded="false"
+                        aria-controls="faq-body-3"
+                    >
+                        What if I don't provide a particular service?
+                        <svg
+                            data-accordion-icon
+                            class="w-3 h-3 rotate-180 shrink-0"
+                            aria-hidden="true"
+                            xmlns="http://www.w3.org/2000/svg"
+                            fill="none"
+                            viewBox="0 0 10 6"
+                        >
+                            <path
+                                stroke="currentColor"
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M9 5 5 1 1 5"
+                            />
+                        </svg>
+                    </button>
+                </h2>
+                <div
+                    id="faq-body-3"
+                    class="hidden p-5 border border-b-0 border-gray-200 rounded-b-xl text-gray-600"
+                    aria-labelledby="faq-heading-3"
+                >
+                    <p>
+                        If a service is not provided by your pharmacy, leave the
+                        volume or patient count fields empty or zero. The
+                        calculator will exclude those services from your
+                        estimates.
+                    </p>
+                </div>
+
+                <!-- What do Current Volume and Potential Volume mean? -->
+                <h2 id="faq-heading-4">
+                    <button
+                        type="button"
+                        class="flex items-center justify-between w-full p-5 font-medium text-gray-500 border border-b-0 border-gray-200 focus:ring-4 focus:ring-gray-200 hover:bg-gray-100 gap-3"
+                        data-accordion-target="#faq-body-4"
+                        aria-expanded="false"
+                        aria-controls="faq-body-4"
+                    >
+                        What do the terms "Current Volume" and "Potential
+                        Volume" mean?
+                        <svg
+                            data-accordion-icon
+                            class="w-3 h-3 rotate-180 shrink-0"
+                            aria-hidden="true"
+                            xmlns="http://www.w3.org/2000/svg"
+                            fill="none"
+                            viewBox="0 0 10 6"
+                        >
+                            <path
+                                stroke="currentColor"
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M9 5 5 1 1 5"
+                            />
+                        </svg>
+                    </button>
+                </h2>
+                <div
+                    id="faq-body-4"
+                    class="hidden p-5 border border-b-0 border-gray-200 rounded-b-xl text-gray-600"
+                    aria-labelledby="faq-heading-4"
+                >
+                    <p>
+                        <strong>Current Volume</strong> refers to the number of
+                        patients or services currently provided.
+                        <strong>Potential Volume</strong> is your target or goal
+                        for growth in each service area.
+                    </p>
+                </div>
+
+                <!-- How to interpret results? -->
+                <h2 id="faq-heading-5">
+                    <button
+                        type="button"
+                        class="flex items-center justify-between w-full p-5 font-medium text-gray-500 border border-b-0 border-gray-200 focus:ring-4 focus:ring-gray-200 hover:bg-gray-100 gap-3"
+                        data-accordion-target="#faq-body-5"
+                        aria-expanded="false"
+                        aria-controls="faq-body-5"
+                    >
+                        How do I interpret the results?
+                        <svg
+                            data-accordion-icon
+                            class="w-3 h-3 rotate-180 shrink-0"
+                            aria-hidden="true"
+                            xmlns="http://www.w3.org/2000/svg"
+                            fill="none"
+                            viewBox="0 0 10 6"
+                        >
+                            <path
+                                stroke="currentColor"
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M9 5 5 1 1 5"
+                            />
+                        </svg>
+                    </button>
+                </h2>
+                <div
+                    id="faq-body-5"
+                    class="hidden p-5 border border-b-0 border-gray-200 rounded-b-xl text-gray-600"
+                    aria-labelledby="faq-heading-5"
+                >
+                    <p>
+                        <strong>Estimated Current Value Yearly</strong> is
+                        yearly revenue based on current service volumes.<br />
+                        <strong>Estimated Additional Value Yearly</strong> is
+                        the additional revenue possible by reaching your growth
+                        targets.<br />
+                        <strong>Estimated Total Value Yearly</strong> is the sum
+                        of current and additional values.
+                    </p>
+                </div>
+
+                <!-- Can I customize or add new services? -->
+                <h2 id="faq-heading-6">
+                    <button
+                        type="button"
+                        class="flex items-center justify-between w-full p-5 font-medium text-gray-500 border border-b-0 border-gray-200 focus:ring-4 focus:ring-gray-200 hover:bg-gray-100 gap-3"
+                        data-accordion-target="#faq-body-6"
+                        aria-expanded="false"
+                        aria-controls="faq-body-6"
+                    >
+                        Can I customize or add new services?
+                        <svg
+                            data-accordion-icon
+                            class="w-3 h-3 rotate-180 shrink-0"
+                            aria-hidden="true"
+                            xmlns="http://www.w3.org/2000/svg"
+                            fill="none"
+                            viewBox="0 0 10 6"
+                        >
+                            <path
+                                stroke="currentColor"
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M9 5 5 1 1 5"
+                            />
+                        </svg>
+                    </button>
+                </h2>
+                <div
+                    id="faq-body-6"
+                    class="hidden p-5 border border-b-0 border-gray-200 rounded-b-xl text-gray-600"
+                    aria-labelledby="faq-heading-6"
+                >
+                    <p>
+                        Yes! If you have technical knowledge, you can edit the
+                        service definitions and calculation logic in the code.
+                        Refer to the README of the <a
+                            href="https://github.com/jatwell93/pharmacy-calculator/"
+                            target="_blank"
+                            class="text-blue-600 hover:underline"
+                            >Github repository</a for instructions.
+                    </p>
+                </div>
+
+                <!-- Error or bug reporting -->
+                <h2 id="faq-heading-7">
+                    <button
+                        type="button"
+                        class="flex items-center justify-between w-full p-5 font-medium text-gray-500 border border-b-0 border-gray-200 focus:ring-4 focus:ring-gray-200 hover:bg-gray-100 gap-3"
+                        data-accordion-target="#faq-body-7"
+                        aria-expanded="false"
+                        aria-controls="faq-body-7"
+                    >
+                        I noticed an error with the calculation or have a bug to
+                        report, what should I do?
+                        <svg
+                            data-accordion-icon
+                            class="w-3 h-3 rotate-180 shrink-0"
+                            aria-hidden="true"
+                            xmlns="http://www.w3.org/2000/svg"
+                            fill="none"
+                            viewBox="0 0 10 6"
+                        >
+                            <path
+                                stroke="currentColor"
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M9 5 5 1 1 5"
+                            />
+                        </svg>
+                    </button>
+                </h2>
+                <div
+                    id="faq-body-7"
+                    class="hidden p-5 border border-t-0 border-gray-200 rounded-b-xl text-gray-600"
+                    aria-labelledby="faq-heading-7"
+                >
+                    <p>
+                        If you encounter any issues, please open a new issue on
+                        GitHub using the provided bug report template:
+                    </p>
+                    <pre
+                        class="bg-gray-100 p-4 rounded text-sm overflow-x-auto"
+                    >
+            ## Who is the bug affecting?
+            <!-- Ex. All supervisors, Sally Supervisor, Level 1 CCs -->
+
+            ## What is affected by this bug?
+            <!-- Ex. AI response, editing services, wrong calculations -->
+
+            ## When does this occur?
+            <!-- Ex. On form submission, after upgrade, intermittently -->
+
+            ## Where does it happen?
+            <!-- Ex. Settings page, RMMR section, Firefox browser -->
+
+            ## How do we replicate the issue?
+            <!-- Please be as specific as possible. Use dashes (-) or numbers (1.) to list steps -->
+
+            ## Expected behavior (i.e. solution)
+            <!-- What should have happened? -->
+
+            ## Other Comments
+                </pre>
+                    <p>
+                        1. Go to the
+                        <a
+                            href="https://github.com/jatwell93/pharmacy-calculator/issues"
+                            target="_blank"
+                            class="text-blue-600 hover:underline"
+                            >Issues tab</a
+                        >
+                        on GitHub.<br />
+                        2. Click "New issue".<br />
+                        3. Copy and fill in the above template.<br />
+                        4. Provide detailed information, screenshots, or logs if
+                        possible.
+                    </p>
+                </div>
+
+                <!-- Is it suitable for pharmacies outside Australia? -->
+                <h2 id="faq-heading-8">
+                    <button
+                        type="button"
+                        class="flex items-center justify-between w-full p-5 font-medium text-gray-500 border border-t-0 border-gray-200 focus:ring-4 focus:ring-gray-200 hover:bg-gray-100 gap-3"
+                        data-accordion-target="#faq-body-8"
+                        aria-expanded="false"
+                        aria-controls="faq-body-8"
+                    >
+                        Is this calculator suitable for pharmacies outside
+                        Australia?
+                        <svg
+                            data-accordion-icon
+                            class="w-3 h-3 rotate-180 shrink-0"
+                            aria-hidden="true"
+                            xmlns="http://www.w3.org/2000/svg"
+                            fill="none"
+                            viewBox="0 0 10 6"
+                        >
+                            <path
+                                stroke="currentColor"
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M9 5 5 1 1 5"
+                            />
+                        </svg>
+                    </button>
+                </h2>
+                <div
+                    id="faq-body-8"
+                    class="hidden p-5 border border-t-0 border-gray-200 rounded-b-xl text-gray-600"
+                    aria-labelledby="faq-heading-8"
+                >
+                    <p>
+                        The calculator uses Australian program rates and
+                        structures taken from the <a
+                            href="https://www.health.gov.au/topics/primary-care/what-we-do/8cpa?language=en"
+                            target="_blank"
+                            class="text-blue-600 hover:underline"
+                            >Eighth Community Pharmacy Agreement (8CPA)</a>, so results may not be accurate for other
+                        countries. Verify rates before applying to
+                        non-Australian pharmacies.
+                    </p>
+                </div>
+
+                <!-- Can I use this calculator offline or locally? -->
+                <h2 id="faq-heading-9">
+                    <button
+                        type="button"
+                        class="flex items-center justify-between w-full p-5 font-medium text-gray-500 border border-t-0 border-gray-200 focus:ring-4 focus:ring-gray-200 rounded-b-xl hover:bg-gray-100 gap-3"
+                        data-accordion-target="#faq-body-9"
+                        aria-expanded="false"
+                        aria-controls="faq-body-9"
+                    >
+                        Can I use this calculator offline or locally?
+                        <svg
+                            data-accordion-icon
+                            class="w-3 h-3 rotate-180 shrink-0"
+                            aria-hidden="true"
+                            xmlns="http://www.w3.org/2000/svg"
+                            fill="none"
+                            viewBox="0 0 10 6"
+                        >
+                            <path
+                                stroke="currentColor"
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M9 5 5 1 1 5"
+                            />
+                        </svg>
+                    </button>
+                </h2>
+                <div
+                    id="faq-body-9"
+                    class="hidden p-5 border border-t-0 border-gray-200 rounded-b-xl text-gray-600"
+                    aria-labelledby="faq-heading-9"
+                >
+                    <p>
+                        You can clone the repository and run the calculator
+                        locally by following the README instructions. Some AI
+                        features may require internet access and API keys.
+                    </p>
+                </div>
+            </div>
+            </div>
+
             <section
                 id="disclaimer"
                 class="disclaimer mt-8 p-6 bg-gray-50 rounded-lg"
@@ -483,5 +920,6 @@
 
         <!-- JavaScript Modules -->
         <script type="module" src="js/main.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/flowbite@3.1.2/dist/flowbite.min.js"></script>
     </body>
 </html>

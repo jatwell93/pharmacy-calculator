@@ -128,16 +128,18 @@ export function collectCurrentAnalysisData() {
       if (service.isCombined) {
         // Handle combined services like MedsChecks
         service.fields.forEach((field) => {
-          const currentVol =
-            parseFloat(
-              document.getElementById(`current-${service.id}-${field.id}`)
-                .value,
-            ) || 0;
-          const potentialVol =
-            parseFloat(
-              document.getElementById(`potential-${service.id}-${field.id}`)
-                .value,
-            ) || 0;
+          const currentElement = document.getElementById(
+            `current-${service.id}-${field.id}`,
+          );
+          const currentVol = currentElement
+            ? parseFloat(currentElement.value) || 0
+            : 0;
+          const potentialElement = document.getElementById(
+            `potential-${service.id}-${field.id}`,
+          );
+          const potentialVol = potentialElement
+            ? parseFloat(potentialElement.value) || 0
+            : 0;
 
           // Only include services with actual growth potential
           if (
@@ -166,13 +168,16 @@ export function collectCurrentAnalysisData() {
         });
       } else {
         // Handle regular services
-        const currentVol =
-          parseFloat(document.getElementById(`current-${service.id}`).value) ||
-          0;
-        const potentialVol =
-          parseFloat(
-            document.getElementById(`potential-${service.id}`).value,
-          ) || 0;
+        const currentElement = document.getElementById(`current-${service.id}`);
+        const currentVol = currentElement
+          ? parseFloat(currentElement.value) || 0
+          : 0;
+        const potentialElement = document.getElementById(
+          `potential-${service.id}`,
+        );
+        const potentialVol = potentialElement
+          ? parseFloat(potentialElement.value) || 0
+          : 0;
         const currentValElement = document.getElementById(
           `current-val-${service.id}`,
         );
@@ -301,19 +306,16 @@ export function generatePayload(userPreferences = {}, rawDataOverride = null) {
     (sum, item) => sum + item.monthlyRevenueImpact,
     0,
   );
-  if (
-    Math.abs(
-      computedRevenueSum -
-        (originalRevenueSum -
-          topDrivers
-            .filter((d) => !d.included)
-            .reduce((sum, d) => sum + d.monthlyRevenueImpact, 0)),
-    ) > 1
-  ) {
+  const excludedSum = topDrivers
+    .filter((d) => !d.included)
+    .reduce((sum, d) => sum + d.monthlyRevenueImpact, 0);
+  const expectedRevenueSum = originalRevenueSum - excludedSum;
+  if (Math.abs(computedRevenueSum - expectedRevenueSum) > 1) {
     console.warn(
       "⚠️ Revenue sum mismatch in generatePayload:",
       computedRevenueSum,
       "vs expected",
+      expectedRevenueSum,
     );
   }
 

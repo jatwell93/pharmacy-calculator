@@ -351,6 +351,7 @@ export function setupEventListeners() {
 }
 
 function getImplementationDifficulty(serviceType) {
+  if (!serviceType) return "Moderate";
   const easy = ["vaccinations", "app enrollments", "consultations"];
   const moderate = ["hmrs", "daas", "staged supply"];
   const complex = ["rmmrs", "biosimilars"];

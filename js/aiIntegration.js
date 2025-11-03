@@ -517,9 +517,9 @@ function validateAndCorrectPlan(plan, originalPayload) {
 
     if (financialMode === "revenue_only") {
       // In revenue_only mode, validate revenue totals only (skip one-time / recurring per-service checks)
-      if (Math.abs(totalMonthlyLift - expectedMonthlyDelta) > 500) {
+      if (Math.abs(totalMonthlyLift - expectedSelectedMonthlyDelta) > 500) {
         issues.push(
-          `Total monthly revenue lift mismatch: calculated ${totalMonthlyLift.toLocaleString()}, expected ${expectedMonthlyDelta.toLocaleString()}`,
+          `Total monthly revenue lift mismatch: calculated ${totalMonthlyLift.toLocaleString()}, expected ${expectedSelectedMonthlyDelta.toLocaleString()}`,
         );
       }
     } else {
@@ -540,9 +540,9 @@ function validateAndCorrectPlan(plan, originalPayload) {
         );
       }
 
-      if (Math.abs(totalMonthlyLift - expectedMonthlyDelta) > 500) {
+      if (Math.abs(totalMonthlyLift - expectedSelectedMonthlyDelta) > 500) {
         issues.push(
-          `Total monthly revenue lift mismatch: calculated ${totalMonthlyLift.toLocaleString()}, expected ${expectedMonthlyDelta.toLocaleString()}`,
+          `Total monthly revenue lift mismatch: calculated ${totalMonthlyLift.toLocaleString()}, expected ${expectedSelectedMonthlyDelta.toLocaleString()}`,
         );
       }
     }
