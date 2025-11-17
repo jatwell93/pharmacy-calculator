@@ -1,10 +1,6 @@
 /**
  * test/calculations.test.js
  *
- * Simple Node-run test file (no test framework required).
- * - Imports the ES module `generatePayload` from the app.
- * - Runs a few deterministic, DOM-less tests by passing `rawDataOverride`.
- *
  * Usage:
  *   node test/calculations.test.js
  *
