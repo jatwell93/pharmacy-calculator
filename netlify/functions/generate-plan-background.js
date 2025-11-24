@@ -5,22 +5,37 @@ const MAX_RETRIES = 3;
 const RETRY_DELAY = 1000; // Base delay in milliseconds (1 second)
 
 const { v4: uuidv4 } = require("uuid");
-// Use local dev DB helper when Firebase env not configured
+
+// Determine if we're in development (local Netlify Dev or local execution)
+// In development, ALWAYS use local file-backed database instead of Firebase
+// to avoid issues with Firebase security rules or missing credentials
+const isProduction = process.env.NETLIFY === "true" && process.env.CONTEXT === "production";
+const forceLocalDb = process.env.FORCE_LOCAL_DB === "true"; // Allow explicit override
+
+// Use local dev DB helper for development
 let initializeApp, getDatabase, ref, set;
-if (!process.env.FIREBASE_DATABASE_URL) {
-  console.log("Local dev: using file-backed local database");
+if (!isProduction && !process.env.FIREBASE_DATABASE_URL) {
+  console.log("🔧 Development mode: using file-backed local database");
   const localDb = require("../../dev/localDatabase");
   initializeApp = localDb.initializeApp;
   getDatabase = localDb.getDatabase;
   ref = localDb.ref;
   set = localDb.set;
-} else {
+} else if (isProduction && process.env.FIREBASE_DATABASE_URL && !forceLocalDb) {
+  console.log("🔐 Production mode: using Firebase Realtime Database");
   const firebaseAppModule = require("firebase/app");
   const firebaseDbModule = require("firebase/database");
   initializeApp = firebaseAppModule.initializeApp;
   getDatabase = firebaseDbModule.getDatabase;
   ref = firebaseDbModule.ref;
   set = firebaseDbModule.set;
+} else {
+  console.log("⚙️  Development/Override mode: using local file-backed database (forceLocalDb=" + forceLocalDb + ")");
+  const localDb = require("../../dev/localDatabase");
+  initializeApp = localDb.initializeApp;
+  getDatabase = localDb.getDatabase;
+  ref = localDb.ref;
+  set = localDb.set;
 }
 
 exports.handler = async function (event, context) {
@@ -83,13 +98,11 @@ exports.handler = async function (event, context) {
 
     const jobId = uuidv4();
 
-    // Support local development when Firebase env vars are not set.
-    // Default to the imported Firebase helpers, but fall back to a local file DB helper.
+    // Initialize database using the already-configured helper (from top of file)
+    // The module-level logic already determines if we're using Firebase or local DB
     let database;
-    let dbRef = ref;
-    let dbSet = set;
-
-    if (process.env.FIREBASE_DATABASE_URL) {
+    if (isProduction && process.env.FIREBASE_DATABASE_URL && !forceLocalDb) {
+      // Production Firebase mode
       const firebaseConfig = {
         apiKey: process.env.FIREBASE_API_KEY,
         authDomain: process.env.FIREBASE_AUTH_DOMAIN,
@@ -102,15 +115,17 @@ exports.handler = async function (event, context) {
 
       const app = initializeApp(firebaseConfig);
       database = getDatabase(app);
+      console.log("📱 Using Firebase Realtime Database");
     } else {
-      // Use local file-backed DB helper for dev when Firebase is not configured.
+      // Development mode: always use local file-backed database
       const localDb = require("../../dev/localDatabase");
       const app = localDb.initializeApp({});
       database = localDb.getDatabase(app);
-      dbRef = localDb.ref;
-      dbSet = localDb.set;
-      console.log("Using local dev database for job storage");
+      console.log("✅ Using local file-backed database for job:", jobId);
     }
+
+    let dbRef = ref;
+    let dbSet = set;
 
     await dbSet(dbRef(database, `plans/${jobId}`), {
       status: "pending",
@@ -135,14 +150,14 @@ exports.handler = async function (event, context) {
         // 3. Parse the plan
         const plan = parseAIResponse(aiResponse);
 
-        await set(ref(database, `plans/${jobId}`), {
+        await dbSet(dbRef(database, `plans/${jobId}`), {
           status: "complete",
           plan,
           completedAt: new Date().toISOString(),
         });
       } catch (error) {
         console.error("Background error for job", jobId, ":", error);
-        await set(ref(database, `plans/${jobId}`), {
+        await dbSet(dbRef(database, `plans/${jobId}`), {
           status: "error",
           error: error.message,
         });

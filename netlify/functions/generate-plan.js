@@ -84,21 +84,36 @@ exports.handler = async function (event, context) {
     let dbRef = ref;
     let dbSet = set;
 
-    if (process.env.FIREBASE_DATABASE_URL) {
-      const firebaseConfig = {
-        apiKey: process.env.FIREBASE_API_KEY,
-        authDomain: process.env.FIREBASE_AUTH_DOMAIN,
-        databaseURL: process.env.FIREBASE_DATABASE_URL,
-        projectId: process.env.FIREBASE_PROJECT_ID,
-        storageBucket: process.env.FIREBASE_STORAGE_BUCKET,
-        messagingSenderId: process.env.FIREBASE_MESSAGING_SENDER_ID,
-        appId: process.env.FIREBASE_APP_ID,
-      };
+    // Check if we're in development mode or if Firebase is available and properly configured
+    // For local development, always use the local database to avoid Firebase permission issues
+    const isDevelopment = process.env.NODE_ENV === "development" || process.env.NETLIFY === undefined;
 
-      const app = initializeApp(firebaseConfig);
-      database = getDatabase(app);
+    if (!isDevelopment && process.env.FIREBASE_DATABASE_URL) {
+      try {
+        const firebaseConfig = {
+          apiKey: process.env.FIREBASE_API_KEY,
+          authDomain: process.env.FIREBASE_AUTH_DOMAIN,
+          databaseURL: process.env.FIREBASE_DATABASE_URL,
+          projectId: process.env.FIREBASE_PROJECT_ID,
+          storageBucket: process.env.FIREBASE_STORAGE_BUCKET,
+          messagingSenderId: process.env.FIREBASE_MESSAGING_SENDER_ID,
+          appId: process.env.FIREBASE_APP_ID,
+        };
+
+        const app = initializeApp(firebaseConfig);
+        database = getDatabase(app);
+        console.log("Using Firebase database for job storage");
+      } catch (firebaseError) {
+        console.warn("Firebase initialization failed, falling back to local database:", firebaseError.message);
+        const localDb = require("../../dev/localDatabase");
+        const app = localDb.initializeApp({});
+        database = localDb.getDatabase(app);
+        dbRef = localDb.ref;
+        dbSet = localDb.set;
+        console.log("Using local dev database for job storage (Firebase fallback)");
+      }
     } else {
-      // Use local file-backed DB helper for dev when Firebase is not configured.
+      // Use local file-backed DB helper for dev or when Firebase is not configured.
       // The helper exposes a compatible subset: initializeApp, getDatabase, ref, set, get
       const localDb = require("../../dev/localDatabase");
       const app = localDb.initializeApp({});
@@ -131,14 +146,14 @@ exports.handler = async function (event, context) {
         // 3. Parse the plan
         const plan = parseAIResponse(aiResponse);
 
-        await set(ref(database, `plans/${jobId}`), {
+        await dbSet(dbRef(database, `plans/${jobId}`), {
           status: "complete",
           plan,
           completedAt: new Date().toISOString(),
         });
       } catch (error) {
         console.error("Background error for job", jobId, ":", error);
-        await set(ref(database, `plans/${jobId}`), {
+        await dbSet(dbRef(database, `plans/${jobId}`), {
           status: "error",
           error: error.message,
         });

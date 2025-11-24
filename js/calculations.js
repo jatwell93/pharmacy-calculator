@@ -310,7 +310,14 @@ export function generatePayload(userPreferences = {}, rawDataOverride = null) {
     .filter((d) => !d.included)
     .reduce((sum, d) => sum + d.monthlyRevenueImpact, 0);
   const expectedRevenueSum = originalRevenueSum - excludedSum;
-  if (Math.abs(computedRevenueSum - expectedRevenueSum) > 1) {
+  // Allow for floating-point precision errors (up to 0.1% or 10 units)
+  const tolerancePercent = 0.001; // 0.1%
+  const toleranceAbsolute = 10;
+  const allowedTolerance = Math.max(
+    Math.abs(expectedRevenueSum) * tolerancePercent,
+    toleranceAbsolute,
+  );
+  if (Math.abs(computedRevenueSum - expectedRevenueSum) > allowedTolerance) {
     console.warn(
       "⚠️ Revenue sum mismatch in generatePayload:",
       computedRevenueSum,

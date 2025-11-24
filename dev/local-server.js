@@ -10,8 +10,9 @@ const fs = require("fs");
 const path = require("path");
 const url = require("url");
 
-// Import the Netlify function directly
+// Import the Netlify functions directly
 const generatePlanFunction = require("../netlify/functions/generate-plan.js");
+const checkPlanStatusFunction = require("../netlify/functions/check-plan-status.js");
 
 const PORT = 8888;
 const ROOT_DIR = path.join(__dirname, "..");
@@ -128,6 +129,45 @@ async function handleApiRequest(req, res, pathname) {
         );
       }
     });
+  } else if (pathname.startsWith("/api/check-plan-status/")) {
+    // Extract jobId from path (e.g., /api/check-plan-status/{jobId})
+    const jobId = pathname.split("/").pop();
+    
+    try {
+      console.log("📨 Received API request to check plan status for jobId:", jobId);
+
+      // Create a mock Netlify event object
+      const event = {
+        httpMethod: req.method,
+        headers: req.headers,
+        path: pathname,
+      };
+
+      // Create a mock context object
+      const context = {};
+
+      // Call the status check function
+      console.log("🔍 Checking plan status...");
+      const response = await checkPlanStatusFunction.handler(event, context);
+
+      console.log("📤 Status check response:", response.statusCode);
+
+      // Send the response
+      res.writeHead(response.statusCode, {
+        "Content-Type": "application/json",
+        ...response.headers,
+      });
+      res.end(response.body);
+    } catch (error) {
+      console.error("❌ Error checking status:", error);
+      res.writeHead(500, { "Content-Type": "application/json" });
+      res.end(
+        JSON.stringify({
+          status: "error",
+          message: error.message,
+        }),
+      );
+    }
   } else {
     res.writeHead(404, { "Content-Type": "application/json" });
     res.end(JSON.stringify({ error: "API endpoint not found" }));

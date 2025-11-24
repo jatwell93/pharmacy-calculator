@@ -5,6 +5,7 @@
 
 import { servicesData } from "./serviceData.js";
 import { calculateAll } from "./calculations.js";
+import { downloadPlanHTML, downloadPlanPDF, downloadPlanCSV } from "./downloadPlan.js";
 
 /**
  * Generate all service tables dynamically
@@ -368,6 +369,9 @@ function getImplementationDifficulty(serviceType) {
  * @param {Object} plan - The AI-generated plan object
  */
 export function displayPlan(plan) {
+  // Store plan globally for download functionality
+  window.currentPlan = plan;
+
   const planResult = document.getElementById("plan-result");
 
   // Build initiatives HTML
@@ -589,10 +593,94 @@ export function hideLoading() {
 }
 
 /**
- * Download plan functionality (placeholder)
+ * Download plan functionality with multiple format options
  */
 export function downloadPlan() {
-  alert("Download functionality not implemented yet.");
+  const planResult = document.getElementById("plan-result");
+  if (!planResult || planResult.classList.contains("hidden")) {
+    alert("No plan to download. Please generate a plan first.");
+    return;
+  }
+
+  // Extract plan data from the displayed result
+  const plan = window.currentPlan;
+  if (!plan) {
+    alert("Plan data not found. Please generate a plan first.");
+    return;
+  }
+
+  // Create a modal with download options
+  const modal = document.createElement("div");
+  modal.className =
+    "fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50";
+  modal.innerHTML = `
+    <div class="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+      <h3 class="text-xl font-bold text-gray-900 mb-4">Download Plan</h3>
+      <p class="text-gray-600 text-sm mb-6">Choose your preferred format:</p>
+      
+      <div class="space-y-3">
+        <button
+          class="w-full px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition"
+          onclick="downloadPlanAsHTML()"
+        >
+          📄 Download as HTML
+        </button>
+        
+        <button
+          class="w-full px-4 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition"
+          onclick="downloadPlanAsPDF()"
+        >
+          📕 Download as PDF (Print)
+        </button>
+        
+        <button
+          class="w-full px-4 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition"
+          onclick="downloadPlanAsCSV()"
+        >
+          📊 Download Calculator Data (CSV)
+        </button>
+        
+        <button
+          class="w-full px-4 py-3 bg-gray-400 hover:bg-gray-500 text-white rounded-lg font-medium transition"
+          onclick="closePlanDownloadModal()"
+        >
+          Cancel
+        </button>
+      </div>
+      
+      <p class="text-xs text-gray-500 mt-6 text-center">
+        HTML: Best for sharing and viewing<br>
+        PDF: Best for printing and archiving<br>
+        CSV: Data only, for spreadsheet analysis
+      </p>
+    </div>
+  `;
+
+  document.body.appendChild(modal);
+  window.currentDownloadModal = modal;
+
+  // Expose download functions to window
+  window.downloadPlanAsHTML = () => {
+    downloadPlanHTML(plan);
+    closePlanDownloadModal();
+  };
+
+  window.downloadPlanAsPDF = () => {
+    downloadPlanPDF(plan);
+    closePlanDownloadModal();
+  };
+
+  window.downloadPlanAsCSV = () => {
+    downloadPlanCSV(plan);
+    closePlanDownloadModal();
+  };
+
+  window.closePlanDownloadModal = () => {
+    const m = window.currentDownloadModal;
+    if (m && m.parentNode) {
+      m.parentNode.removeChild(m);
+    }
+  };
 }
 
 /**

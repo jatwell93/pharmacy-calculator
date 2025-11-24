@@ -18,13 +18,31 @@ import {
   copyPayloadForChatGPT,
   generatePlan,
 } from "./aiIntegration.js";
+import {
+  downloadPlanHTML,
+  downloadPlanPDF,
+  downloadPlanCSV,
+} from "./downloadPlan.js";
 import { appendDisclaimerTo } from "./disclaimer.js";
+import { initializeAnonymousAuth } from "./firebaseInit.js";
 
 /**
  * Initialize the application when DOM is ready
  */
-function initializeApp() {
+async function initializeApp() {
   console.log("Initializing Pharmacy Calculator...");
+
+  // Initialize Firebase authentication first (non-blocking - errors are caught)
+  try {
+    await initializeAnonymousAuth();
+    console.log("✓ Firebase authentication initialized");
+  } catch (error) {
+    console.warn(
+      "⚠ Firebase authentication failed, some features may not work:",
+      error.message
+    );
+    // Continue with app initialization even if Firebase fails
+  }
 
   // Generate all service tables
   generateTables();
@@ -56,4 +74,7 @@ window.proceedWithGeneration = proceedWithGeneration;
 window.copyPayloadForChatGPT = copyPayloadForChatGPT;
 window.generatePlan = generatePlan;
 window.downloadPlan = downloadPlan;
+window.downloadPlanHTML = downloadPlanHTML;
+window.downloadPlanPDF = downloadPlanPDF;
+window.downloadPlanCSV = downloadPlanCSV;
 window.copyDebugInfo = copyDebugInfo;

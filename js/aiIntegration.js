@@ -403,9 +403,16 @@ export async function testWithRealData() {
 async function pollForPlan(jobId) {
   const maxPolls = 30; // Max 2.5 minutes (5s * 30)
   let pollCount = 0;
+  let hasResolved = false;
 
   return new Promise((resolve) => {
     const interval = setInterval(async () => {
+      // Prevent multiple resolutions
+      if (hasResolved) {
+        clearInterval(interval);
+        return;
+      }
+
       pollCount++;
       try {
         const statusResponse = await fetch(`/api/check-plan-status/${jobId}`);
@@ -416,6 +423,7 @@ async function pollForPlan(jobId) {
 
         if (statusData.status === "complete") {
           clearInterval(interval);
+          hasResolved = true;
 
           // Validate and correct the plan
           const validation = validateAndCorrectPlan(
@@ -435,23 +443,38 @@ async function pollForPlan(jobId) {
               : "");
 
           displayPlan(statusData.plan);
+          hideLoading();
           resolve();
         } else if (statusData.status === "error") {
           clearInterval(interval);
+          hasResolved = true;
+          hideLoading();
           alert("❌ Plan generation failed: " + statusData.error);
           resolve();
         } else if (pollCount >= maxPolls) {
           clearInterval(interval);
+          hasResolved = true;
+          hideLoading();
           alert("❌ Polling timeout - plan took too long");
           resolve();
         }
       } catch (error) {
         console.error("Polling error:", error);
-        if (pollCount >= maxPolls) {
+        // Check for 404 specifically - endpoint may not exist in this environment
+        if (error.message.includes("404")) {
           clearInterval(interval);
-          alert("❌ Polling failed: " + error.message);
+          hasResolved = true;
+          hideLoading();
+          alert("❌ Status endpoint not found. The plan generation may still be running. Please check back in a moment.");
+          resolve();
+        } else if (pollCount >= maxPolls) {
+          clearInterval(interval);
+          hasResolved = true;
+          hideLoading();
+          alert("❌ Polling failed after " + pollCount + " attempts: " + error.message);
           resolve();
         }
+        // For other transient errors, continue polling
       }
     }, 5000); // Poll every 5 seconds
   });
