@@ -25,6 +25,21 @@
         <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js"></script>
         <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js"></script>
         <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database.js"></script>
+
+        <!-- Load Firebase config from environment variables -->
+        <script>
+            // Set Firebase configuration from environment variables
+            // This is injected at build/runtime and should never be hardcoded
+            window.firebaseConfig = {
+                apiKey: import.meta.env.VITE_FIREBASE_API_KEY || null,
+                authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || null,
+                databaseURL: import.meta.env.VITE_FIREBASE_DATABASE_URL || null,
+                projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || null,
+                storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || null,
+                messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || null,
+                appId: import.meta.env.VITE_FIREBASE_APP_ID || null,
+            };
+        </script>
     </head>
 
     <body class="p-4 md:p-8">
@@ -79,217 +94,338 @@
                 </div>
             </section>
 
-            <div class="space-y-12">
+            <!-- Service Parts Accordion -->
+            <div id="parts-accordion" data-accordion="open" class="space-y-3">
                 <!-- Part 1: Government-Funded Programs -->
-                <section>
-                    <h2 class="text-2xl font-semibold mb-4 section-title">
-                        Part 1: Government-Funded Programs
+                <div class="border border-gray-200 rounded-lg">
+                    <h2 id="part1-heading">
+                        <button
+                            type="button"
+                            class="flex items-center justify-between w-full p-5 font-semibold text-gray-900 bg-gray-50 hover:bg-gray-100 border-b border-gray-200 rounded-t-lg gap-3"
+                            data-accordion-target="#part1-body"
+                            aria-expanded="false"
+                            aria-controls="part1-body"
+                        >
+                            Part 1: Government-Funded Programs
+                            <svg
+                                data-accordion-icon
+                                class="w-5 h-5 shrink-0"
+                                aria-hidden="true"
+                                xmlns="http://www.w3.org/2000/svg"
+                                fill="none"
+                                viewBox="0 0 10 6"
+                            >
+                                <path
+                                    stroke="currentColor"
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    stroke-width="2"
+                                    d="M9 5 5 1 1 5"
+                                />
+                            </svg>
+                        </button>
                     </h2>
-                    <div class="overflow-x-auto">
-                        <table class="min-w-full divide-y divide-gray-200">
-                            <thead class="table-header">
-                                <tr>
-                                    <th
-                                        class="px-4 py-3 text-left text-xs uppercase tracking-wider"
-                                    >
-                                        Program
-                                    </th>
-                                    <th
-                                        class="px-4 py-3 text-left text-xs uppercase tracking-wider"
-                                    >
-                                        Funded Per Service
-                                    </th>
-                                    <th
-                                        class="px-4 py-3 text-center text-xs uppercase tracking-wider"
-                                    >
-                                        Patient Fee (Current / Potential)
-                                    </th>
-                                    <th
-                                        class="px-4 py-3 text-center text-xs uppercase tracking-wider"
-                                    >
-                                        Current Volume
-                                    </th>
-                                    <th
-                                        class="px-4 py-3 text-center text-xs uppercase tracking-wider"
-                                    >
-                                        Potential Volume
-                                    </th>
-                                    <th
-                                        class="px-4 py-3 text-right text-xs uppercase tracking-wider"
-                                    >
-                                        Est. Current (Yearly)
-                                    </th>
-                                    <th
-                                        class="px-4 py-3 text-right text-xs uppercase tracking-wider"
-                                    >
-                                        Est. Additional (Yearly)
-                                    </th>
-                                </tr>
-                            </thead>
-                            <tbody
-                                class="bg-white divide-y divide-gray-200"
-                                id="part1-body"
-                            ></tbody>
-                        </table>
+                    <div
+                        id="part1-body"
+                        class="hidden p-5 border-t border-gray-200 rounded-b-lg"
+                        aria-labelledby="part1-heading"
+                    >
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="table-header">
+                                    <tr>
+                                        <th
+                                            class="px-4 py-3 text-left text-xs uppercase tracking-wider"
+                                        >
+                                            Program
+                                        </th>
+                                        <th
+                                            class="px-4 py-3 text-left text-xs uppercase tracking-wider"
+                                        >
+                                            Funded Per Service
+                                        </th>
+                                        <th
+                                            class="px-4 py-3 text-center text-xs uppercase tracking-wider"
+                                        >
+                                            Patient Fee (Current / Potential)
+                                        </th>
+                                        <th
+                                            class="px-4 py-3 text-center text-xs uppercase tracking-wider"
+                                        >
+                                            Current Volume
+                                        </th>
+                                        <th
+                                            class="px-4 py-3 text-center text-xs uppercase tracking-wider"
+                                        >
+                                            Potential Volume
+                                        </th>
+                                        <th
+                                            class="px-4 py-3 text-right text-xs uppercase tracking-wider"
+                                        >
+                                            Est. Current (Yearly)
+                                        </th>
+                                        <th
+                                            class="px-4 py-3 text-right text-xs uppercase tracking-wider"
+                                        >
+                                            Est. Additional (Yearly)
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody
+                                    class="bg-white divide-y divide-gray-200"
+                                    id="part1-rows"
+                                ></tbody>
+                            </table>
+                        </div>
                     </div>
-                </section>
+                </div>
 
                 <!-- Part 2: Vaccinations -->
-                <section>
-                    <h2 class="text-2xl font-semibold mb-4 section-title">
-                        Part 2: Vaccinations
+                <div class="border border-gray-200 rounded-lg">
+                    <h2 id="part2-heading">
+                        <button
+                            type="button"
+                            class="flex items-center justify-between w-full p-5 font-semibold text-gray-900 bg-gray-50 hover:bg-gray-100 border-b border-gray-200 rounded-t-lg gap-3"
+                            data-accordion-target="#part2-body"
+                            aria-expanded="false"
+                            aria-controls="part2-body"
+                        >
+                            Part 2: Vaccinations
+                            <svg
+                                data-accordion-icon
+                                class="w-5 h-5 shrink-0"
+                                aria-hidden="true"
+                                xmlns="http://www.w3.org/2000/svg"
+                                fill="none"
+                                viewBox="0 0 10 6"
+                            >
+                                <path
+                                    stroke="currentColor"
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    stroke-width="2"
+                                    d="M9 5 5 1 1 5"
+                                />
+                            </svg>
+                        </button>
                     </h2>
-                    <div class="overflow-x-auto">
-                        <table class="min-w-full divide-y divide-gray-200">
-                            <thead class="table-header">
-                                <tr>
-                                    <th
-                                        class="px-4 py-3 text-left text-xs uppercase tracking-wider"
-                                    >
-                                        Program
-                                    </th>
-                                    <th
-                                        class="px-4 py-3 text-left text-xs uppercase tracking-wider"
-                                    >
-                                        Funded Per Service
-                                    </th>
-                                    <th
-                                        class="px-4 py-3 text-center text-xs uppercase tracking-wider"
-                                    >
-                                        Patient Fee (Current / Potential)
-                                    </th>
-                                    <th
-                                        class="px-4 py-3 text-center text-xs uppercase tracking-wider"
-                                    >
-                                        Current Volume
-                                    </th>
-                                    <th
-                                        class="px-4 py-3 text-center text-xs uppercase tracking-wider"
-                                    >
-                                        Potential Volume
-                                    </th>
-                                    <th
-                                        class="px-4 py-3 text-right text-xs uppercase tracking-wider"
-                                    >
-                                        Est. Current (Yearly)
-                                    </th>
-                                    <th
-                                        class="px-4 py-3 text-right text-xs uppercase tracking-wider"
-                                    >
-                                        Est. Additional (Yearly)
-                                    </th>
-                                </tr>
-                            </thead>
-                            <tbody
-                                class="bg-white divide-y divide-gray-200"
-                                id="part2-body"
-                            ></tbody>
-                        </table>
+                    <div
+                        id="part2-body"
+                        class="hidden p-5 border-t border-gray-200 rounded-b-lg"
+                        aria-labelledby="part2-heading"
+                    >
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="table-header">
+                                    <tr>
+                                        <th
+                                            class="px-4 py-3 text-left text-xs uppercase tracking-wider"
+                                        >
+                                            Program
+                                        </th>
+                                        <th
+                                            class="px-4 py-3 text-left text-xs uppercase tracking-wider"
+                                        >
+                                            Funded Per Service
+                                        </th>
+                                        <th
+                                            class="px-4 py-3 text-center text-xs uppercase tracking-wider"
+                                        >
+                                            Patient Fee (Current / Potential)
+                                        </th>
+                                        <th
+                                            class="px-4 py-3 text-center text-xs uppercase tracking-wider"
+                                        >
+                                            Current Volume
+                                        </th>
+                                        <th
+                                            class="px-4 py-3 text-center text-xs uppercase tracking-wider"
+                                        >
+                                            Potential Volume
+                                        </th>
+                                        <th
+                                            class="px-4 py-3 text-right text-xs uppercase tracking-wider"
+                                        >
+                                            Est. Current (Yearly)
+                                        </th>
+                                        <th
+                                            class="px-4 py-3 text-right text-xs uppercase tracking-wider"
+                                        >
+                                            Est. Additional (Yearly)
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody
+                                    class="bg-white divide-y divide-gray-200"
+                                    id="part2-rows"
+                                ></tbody>
+                            </table>
+                        </div>
                     </div>
-                </section>
+                </div>
 
                 <!-- Part 3: Pharmacy Programs & Services -->
-                <section>
-                    <h2 class="text-2xl font-semibold mb-4 section-title">
-                        Part 3: Pharmacy Programs & Services
+                <div class="border border-gray-200 rounded-lg">
+                    <h2 id="part3-heading">
+                        <button
+                            type="button"
+                            class="flex items-center justify-between w-full p-5 font-semibold text-gray-900 bg-gray-50 hover:bg-gray-100 border-b border-gray-200 rounded-t-lg gap-3"
+                            data-accordion-target="#part3-body"
+                            aria-expanded="false"
+                            aria-controls="part3-body"
+                        >
+                            Part 3: Pharmacy Programs & Services
+                            <svg
+                                data-accordion-icon
+                                class="w-5 h-5 shrink-0"
+                                aria-hidden="true"
+                                xmlns="http://www.w3.org/2000/svg"
+                                fill="none"
+                                viewBox="0 0 10 6"
+                            >
+                                <path
+                                    stroke="currentColor"
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    stroke-width="2"
+                                    d="M9 5 5 1 1 5"
+                                />
+                            </svg>
+                        </button>
                     </h2>
-                    <div class="overflow-x-auto">
-                        <table class="min-w-full divide-y divide-gray-200">
-                            <thead class="table-header">
-                                <tr>
-                                    <th
-                                        class="px-4 py-3 text-left text-xs uppercase tracking-wider"
-                                    >
-                                        Service
-                                    </th>
-                                    <th
-                                        class="px-4 py-3 text-left text-xs uppercase tracking-wider"
-                                    >
-                                        Funded / Other Value
-                                    </th>
-                                    <th
-                                        class="px-4 py-3 text-center text-xs uppercase tracking-wider"
-                                    >
-                                        Patient Fee (Current / Potential)
-                                    </th>
-                                    <th
-                                        class="px-4 py-3 text-center text-xs uppercase tracking-wider"
-                                    >
-                                        Current Volume
-                                    </th>
-                                    <th
-                                        class="px-4 py-3 text-center text-xs uppercase tracking-wider"
-                                    >
-                                        Potential Volume
-                                    </th>
-                                    <th
-                                        class="px-4 py-3 text-right text-xs uppercase tracking-wider"
-                                    >
-                                        Est. Current (Yearly)
-                                    </th>
-                                    <th
-                                        class="px-4 py-3 text-right text-xs uppercase tracking-wider"
-                                    >
-                                        Est. Additional (Yearly)
-                                    </th>
-                                </tr>
-                            </thead>
-                            <tbody
-                                class="bg-white divide-y divide-gray-200"
-                                id="part3-body"
-                            ></tbody>
-                        </table>
+                    <div
+                        id="part3-body"
+                        class="hidden p-5 border-t border-gray-200 rounded-b-lg"
+                        aria-labelledby="part3-heading"
+                    >
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="table-header">
+                                    <tr>
+                                        <th
+                                            class="px-4 py-3 text-left text-xs uppercase tracking-wider"
+                                        >
+                                            Service
+                                        </th>
+                                        <th
+                                            class="px-4 py-3 text-left text-xs uppercase tracking-wider"
+                                        >
+                                            Funded / Other Value
+                                        </th>
+                                        <th
+                                            class="px-4 py-3 text-center text-xs uppercase tracking-wider"
+                                        >
+                                            Patient Fee (Current / Potential)
+                                        </th>
+                                        <th
+                                            class="px-4 py-3 text-center text-xs uppercase tracking-wider"
+                                        >
+                                            Current Volume
+                                        </th>
+                                        <th
+                                            class="px-4 py-3 text-center text-xs uppercase tracking-wider"
+                                        >
+                                            Potential Volume
+                                        </th>
+                                        <th
+                                            class="px-4 py-3 text-right text-xs uppercase tracking-wider"
+                                        >
+                                            Est. Current (Yearly)
+                                        </th>
+                                        <th
+                                            class="px-4 py-3 text-right text-xs uppercase tracking-wider"
+                                        >
+                                            Est. Additional (Yearly)
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody
+                                    class="bg-white divide-y divide-gray-200"
+                                    id="part3-rows"
+                                ></tbody>
+                            </table>
+                        </div>
                     </div>
-                </section>
+                </div>
 
                 <!-- Part 4: Biologics Dispensary Opportunity -->
-                <section>
-                    <h2 class="text-2xl font-semibold mb-4 section-title">
-                        Part 4: Biologics Dispensary Opportunity
+                <div class="border border-gray-200 rounded-lg">
+                    <h2 id="part4-heading">
+                        <button
+                            type="button"
+                            class="flex items-center justify-between w-full p-5 font-semibold text-gray-900 bg-gray-50 hover:bg-gray-100 border-b border-gray-200 rounded-t-lg gap-3"
+                            data-accordion-target="#part4-body"
+                            aria-expanded="false"
+                            aria-controls="part4-body"
+                        >
+                            Part 4: Biologics Dispensary Opportunity
+                            <svg
+                                data-accordion-icon
+                                class="w-5 h-5 shrink-0"
+                                aria-hidden="true"
+                                xmlns="http://www.w3.org/2000/svg"
+                                fill="none"
+                                viewBox="0 0 10 6"
+                            >
+                                <path
+                                    stroke="currentColor"
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    stroke-width="2"
+                                    d="M9 5 5 1 1 5"
+                                />
+                            </svg>
+                        </button>
                     </h2>
-                    <div class="overflow-x-auto">
-                        <table class="min-w-full divide-y divide-gray-200">
-                            <thead class="table-header">
-                                <tr>
-                                    <th
-                                        class="px-4 py-3 text-left text-xs uppercase tracking-wider"
-                                    >
-                                        Molecule
-                                    </th>
-                                    <th
-                                        class="px-4 py-3 text-left text-xs uppercase tracking-wider"
-                                    >
-                                        Additional Margin / Remuneration
-                                    </th>
-                                    <th
-                                        class="px-4 py-3 text-center text-xs uppercase tracking-wider"
-                                    >
-                                        Current Volume (Biosimilar)
-                                    </th>
-                                    <th
-                                        class="px-4 py-3 text-center text-xs uppercase tracking-wider"
-                                    >
-                                        Potential Volume (Biosimilar)
-                                    </th>
-                                    <th
-                                        class="px-4 py-3 text-right text-xs uppercase tracking-wider"
-                                    >
-                                        Est. Current (Yearly)
-                                    </th>
-                                    <th
-                                        class="px-4 py-3 text-right text-xs uppercase tracking-wider"
-                                    >
-                                        Est. Additional (Yearly)
-                                    </th>
-                                </tr>
-                            </thead>
-                            <tbody
-                                class="bg-white divide-y divide-gray-200"
-                                id="part4-body"
-                            ></tbody>
-                        </table>
+                    <div
+                        id="part4-body"
+                        class="hidden p-5 border-t border-gray-200 rounded-b-lg"
+                        aria-labelledby="part4-heading"
+                    >
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="table-header">
+                                    <tr>
+                                        <th
+                                            class="px-4 py-3 text-left text-xs uppercase tracking-wider"
+                                        >
+                                            Molecule
+                                        </th>
+                                        <th
+                                            class="px-4 py-3 text-left text-xs uppercase tracking-wider"
+                                        >
+                                            Additional Margin / Remuneration
+                                        </th>
+                                        <th
+                                            class="px-4 py-3 text-center text-xs uppercase tracking-wider"
+                                        >
+                                            Current Volume (Biosimilar)
+                                        </th>
+                                        <th
+                                            class="px-4 py-3 text-center text-xs uppercase tracking-wider"
+                                        >
+                                            Potential Volume (Biosimilar)
+                                        </th>
+                                        <th
+                                            class="px-4 py-3 text-right text-xs uppercase tracking-wider"
+                                        >
+                                            Est. Current (Yearly)
+                                        </th>
+                                        <th
+                                            class="px-4 py-3 text-right text-xs uppercase tracking-wider"
+                                        >
+                                            Est. Additional (Yearly)
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody
+                                    class="bg-white divide-y divide-gray-200"
+                                    id="part4-rows"
+                                ></tbody>
+                            </table>
+                        </div>
                     </div>
-                </section>
+                </div>
             </div>
 
             <!-- Definitions Section -->

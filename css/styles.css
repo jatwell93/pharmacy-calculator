@@ -120,3 +120,9 @@ input::-webkit-inner-spin-button {
 .mb-3 {
     margin-bottom: 1rem;
 }
+
+/* Accordion Icon Animation */
+[data-accordion-icon] {
+    transition: transform 0.3s ease-in-out;
+}
+

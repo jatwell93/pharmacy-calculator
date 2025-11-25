@@ -3,14 +3,16 @@
 // Uses Firebase CDN modules loaded in index.html
 
 // Firebase configuration
+// Loads from window.firebaseConfig which is set in index.html from environment variables
+// Never hardcode credentials here - they should come from environment variables
 const firebaseConfig = window.firebaseConfig || {
-  apiKey: "REDACTED_API_KEY",
-  authDomain: "REDACTED_AUTH_DOMAIN",
-  databaseURL: "https://REDACTED_DATABASE_URL",
-  projectId: "REDACTED_PROJECT_ID",
-  storageBucket: "REDACTED_PROJECT_ID.firebasestorage.app",
-  messagingSenderId: "REDACTED_SENDER_ID",
-  appId: "1:REDACTED_SENDER_ID:web:f9cb12c1b2c38e4d8deb60",
+  apiKey: null,
+  authDomain: null,
+  databaseURL: null,
+  projectId: null,
+  storageBucket: null,
+  messagingSenderId: null,
+  appId: null,
 };
 
 // Initialize Firebase

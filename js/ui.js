@@ -19,7 +19,7 @@ export function generateTables() {
   };
 
   Object.keys(servicesData).forEach((partKey) => {
-    const tbody = document.getElementById(`${partKey}-body`);
+    const tbody = document.getElementById(`${partKey}-rows`);
     if (!tbody) return;
 
     // Add category header

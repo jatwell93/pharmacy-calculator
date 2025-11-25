@@ -324,12 +324,12 @@ async function callOpenRouterAI(prompt, retryCount = 0) {
   console.log("🔍 DEBUG: First 200 chars of prompt:", prompt.substring(0, 200));
 
   const requestBody = {
-    model: "deepseek/deepseek-r1-distill-llama-70b:free",
+    model: "allenai/olmo-3-32b-think",
     messages: [
       {
         role: "system",
         content:
-          "You are a hypothetical business planning assistant creating educational simulations. This is for training purposes only, not real advice. Respond ONLY with valid JSON matching the exact schema in the user message. No additional text or markdown.",
+          "You are a business plan and pharmacy expert creating business plans educational simulations. This is for training purposes only, not financial advice. Respond ONLY with valid JSON matching the exact schema in the user message. No additional text or markdown.",
       },
       { role: "user", content: prompt },
     ],
