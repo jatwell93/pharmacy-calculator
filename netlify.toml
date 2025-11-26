@@ -1,10 +1,27 @@
-     [build]
-       publish = "."
+[build]
+  publish = "."
+  command = "npm run build"
 
-     [[redirects]]
-       from = "/api/*"
-       to = "/.netlify/functions/:splat"
-       status = 200
+[build.environment]
+  NODE_VERSION = "18"
 
-     [functions.generate-plan-background]
-       timeout = 900  # Up to 15 min (900s)
+# Functions directory
+[functions]
+  directory = "netlify/functions"
+
+# Template replacement for Firebase config
+[[redirects]]
+  from = "/env-config.js"
+  to = "/.netlify/env-config.js"
+  status = 200
+
+# SPA fallback for client-side routing
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+# Environment variables that need to be set in Netlify dashboard:
+# FIREBASE_API_KEY, FIREBASE_AUTH_DOMAIN, FIREBASE_DATABASE_URL, FIREBASE_PROJECT_ID
+# FIREBASE_STORAGE_BUCKET, FIREBASE_MESSAGING_SENDER_ID, FIREBASE_APP_ID
+# OPENROUTER_API_KEY

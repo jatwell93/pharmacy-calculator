@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "node dev/local-server.js",
     "start": "node dev/local-server.js",
+    "build": "node build-env.js",
     "netlify-dev": "netlify dev",
     "test": "node test/calculations.test.js",
     "test-api": "node -e \"console.log('OPENROUTER_API_KEY is', process.env.OPENROUTER_API_KEY ? 'SET ✓' : 'NOT SET ✗')\""

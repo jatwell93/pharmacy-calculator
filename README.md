@@ -97,12 +97,10 @@ This project is configured for deployment on Netlify:
 
 #### Environment Variables
 
-For the AI features to work in production, set the following environment variables in your Netlify dashboard:
-
+**Required for AI Features:**
 - `OPENROUTER_API_KEY`: Your OpenRouter API key (required for AI plan generation). Obtain from [openrouter.ai](https://openrouter.ai/)
 
-Optional Firebase configuration (recommended for production use; if not set, a local file-based database is used for development, which is not suitable for production):
-
+**Required for Production Database (Firebase):**
 - `FIREBASE_API_KEY`
 - `FIREBASE_AUTH_DOMAIN`
 - `FIREBASE_DATABASE_URL`
@@ -111,7 +109,50 @@ Optional Firebase configuration (recommended for production use; if not set, a l
 - `FIREBASE_MESSAGING_SENDER_ID`
 - `FIREBASE_APP_ID`
 
-You can find these values in your Firebase project settings.
+##### Setting Up Firebase (Required for Production)
+
+1. **Create a Firebase Project:**
+   - Go to [Firebase Console](https://console.firebase.google.com/)
+   - Click "Create a project" and follow the setup wizard
+   - Choose your Google account and project name
+
+2. **Enable Realtime Database:**
+   - In your Firebase project dashboard, go to "Realtime Database"
+   - Click "Create Database"
+   - Choose your region (e.g., `us-central`)
+   - Start in **test mode** (you can secure it later)
+   - Copy your database URL (will be your `FIREBASE_DATABASE_URL`)
+
+3. **Get Configuration Values:**
+   - Go to Project Settings (gear icon)
+   - Scroll down to "Your apps" section
+   - Click "Add app" → Web app
+   - Register with a nickname (e.g., "pharmacy-calculator")
+   - Copy all the config values - these are your Firebase environment variables
+
+4. **Set Environment Variables in Netlify:**
+   - Go to your Netlify site dashboard
+   - Navigate to Site settings → Environment variables
+   - Add each Firebase variable from step 3
+   - Also add `OPENROUTER_API_KEY` for AI features
+
+##### Build Process
+
+The application uses a build process to inject environment variables:
+
+1. **Local Development:**
+   ```bash
+   npm install
+   npm run build  # Creates env-config.js with local variables
+   npm run dev    # Starts local development server
+   ```
+
+2. **Production Deployment:**
+   - Netlify automatically runs `npm run build` during deployment
+   - The build process creates `env-config.js` with production environment variables
+   - This file is served at `/env-config.js` and loaded by the application
+
+**Note:** If Firebase environment variables are not set in production, the application will throw an error to prevent file system access issues. This ensures production deployments use proper cloud database storage.
 
 ## Code Organization
 
