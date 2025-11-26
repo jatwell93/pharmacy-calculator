@@ -9,8 +9,7 @@ window.ENV_CONFIG = {
   "FIREBASE_PROJECT_ID": "",
   "FIREBASE_STORAGE_BUCKET": "",
   "FIREBASE_MESSAGING_SENDER_ID": "",
-  "FIREBASE_APP_ID": "",
-  "OPENROUTER_API_KEY": ""
+  "FIREBASE_APP_ID": ""
 };
 
 // Expose individual Firebase config variables

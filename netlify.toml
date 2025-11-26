@@ -4,6 +4,7 @@
 
 [build.environment]
   NODE_VERSION = "18"
+  SECRETS_SCAN_OMIT_PATHS = "env-config.js"
 
 # Functions directory
 [functions]
