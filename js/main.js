@@ -1,3 +1,6 @@
+// Debug log to confirm main.js execution
+console.log("DEBUG: main.js loaded successfully");
+
 // Main Application Entry Point
 // This file initializes the application and sets up global functions
 

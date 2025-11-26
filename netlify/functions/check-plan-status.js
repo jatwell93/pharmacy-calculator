@@ -92,6 +92,8 @@ exports.handler = async function (event, context) {
     }
 
     const data = snapshot.val();
+    console.log("🔍 DEBUG: Found job data for", jobId, "Status:", data.status);
+    console.log("🔍 DEBUG: Data keys:", Object.keys(data));
     return { statusCode: 200, headers, body: JSON.stringify(data) };
   } catch (error) {
     console.error("Error checking status:", error);

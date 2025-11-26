@@ -45,8 +45,23 @@ function serveStaticFile(filePath, res) {
         res.end(`Server Error: ${err.code}`);
       }
     } else {
-      res.writeHead(200, { "Content-Type": contentType });
-      res.end(content, "utf-8");
+      // If serving HTML, inject environment variables
+      if (filePath.endsWith(".html")) {
+        let html = content.toString();
+        html = html.replace(/{% FIREBASE_API_KEY %}/g, process.env.FIREBASE_API_KEY || "");
+        html = html.replace(/{% FIREBASE_AUTH_DOMAIN %}/g, process.env.FIREBASE_AUTH_DOMAIN || "");
+        html = html.replace(/{% FIREBASE_DATABASE_URL %}/g, process.env.FIREBASE_DATABASE_URL || "");
+        html = html.replace(/{% FIREBASE_PROJECT_ID %}/g, process.env.FIREBASE_PROJECT_ID || "");
+        html = html.replace(/{% FIREBASE_STORAGE_BUCKET %}/g, process.env.FIREBASE_STORAGE_BUCKET || "");
+        html = html.replace(/{% FIREBASE_MESSAGING_SENDER_ID %}/g, process.env.FIREBASE_MESSAGING_SENDER_ID || "");
+        html = html.replace(/{% FIREBASE_APP_ID %}/g, process.env.FIREBASE_APP_ID || "");
+        
+        res.writeHead(200, { "Content-Type": contentType });
+        res.end(html, "utf-8");
+      } else {
+        res.writeHead(200, { "Content-Type": contentType });
+        res.end(content, "utf-8");
+      }
     }
   });
 }

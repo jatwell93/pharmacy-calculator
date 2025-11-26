@@ -421,6 +421,8 @@ async function pollForPlan(jobId) {
         }
         const statusData = await statusResponse.json();
 
+        console.log("🔍 POLL DEBUG: Poll #" + pollCount + ", Status:", statusData.status, "Keys:", Object.keys(statusData));
+
         if (statusData.status === "complete") {
           clearInterval(interval);
           hasResolved = true;
@@ -451,6 +453,9 @@ async function pollForPlan(jobId) {
           hideLoading();
           alert("❌ Plan generation failed: " + statusData.error);
           resolve();
+        } else if (statusData.status === "pending") {
+          console.log("Plan still generating, will check again in 5 seconds...");
+          // Continue polling
         } else if (pollCount >= maxPolls) {
           clearInterval(interval);
           hasResolved = true;
@@ -807,9 +812,16 @@ export function copyPayloadForChatGPT() {
   const systemMessage = `You are an operations consultant for small healthcare providers. Use the JSON payload below and produce a complete implementation plan suitable for handing to a store manager and a pharmacist. Be explicit about calculations. Avoid speculative claims. Stick to the data and state assumptions.`;
 
   const userMessage = `From the JSON payload, output:
-- "executive_summary" (max 6 sentences)
-- "plan" (array of initiatives; each initiative must include: id, title, priority (1-5), owner_role, start_week, duration_weeks, tasks (array of {task_id, title, owner, est_hours, acceptance_criteria}), one_time_cost, recurring_annual_cost, expected_monthly_revenue_lift, ROI (show arithmetic), confidence (0-100%), risk_score (0-10), top 2 mitigations).
-- "mermaid_timeline" - a small mermaid timeline diagram organized by quarters (Q1-Q4) that a front-end can render.
+- "executive_summary" This is a summary. Don’t overwhelm the reader with a detailed list of everything they’re about to find in the business plan. Use the executive summary to hook the reader and compel them to continue reading to learn more about your plan
+- "plan" (array of initiatives; each initiative must include: id, title, priority (1-5), owner_role, start_week, duration_weeks, tasks (array of {task_id, title, owner, est_hours, acceptance_criteria}), one_time_cost, recurring_annual_cost, expected_monthly_revenue_lift, ROI (show arithmetic used to calculate this), risk_score (0-10), top 2 mitigations).
+- "mermaid_timeline" - a small mermaid timeline diagram organised by quarters (Q1-Q4) that a front-end can render. 
+Example: timeline
+    title Opportunity Analysis
+    Q1 : Implementation one
+    Q2 : Implementation two
+         : Implementation three
+    Q3 : Implementation four
+    Q4 : Implementation five
 - "financial_breakdown": verify totals, sum of one_time_costs, recurring, and compute payback_period_months = one_time_cost / monthly_revenue_lift (per initiative and overall). Show the arithmetic for each computed number.
 - "validation": run simple checks and list any inconsistencies (e.g., ROI > 1000x, negative costs).
 

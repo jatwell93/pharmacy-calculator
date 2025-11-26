@@ -91,6 +91,10 @@ function collectCalculatorData() {
  */
 function generatePlanHTML(plan, calculatorData) {
   const currentDate = new Date().toLocaleDateString("en-AU");
+  
+  // Debug: Log plan structure
+  console.log("DEBUG: Plan object:", plan);
+  console.log("DEBUG: Implementation Initiatives:", plan.plan);
 
   let html = `
 <!DOCTYPE html>
@@ -626,7 +630,7 @@ ${plan.financial_breakdown.arithmetic}
     <!-- Footer -->
     <div class="footer">
       <p>This plan was generated using the Pharmacy Opportunity Analysis Calculator.</p>
-      <p>For questions or updates, please contact your pharmacy operations team.</p>
+      <p>For questions or updates, please contact [insert email]</p>
       <p>Document generated: ${currentDate}</p>
     </div>
   </div>

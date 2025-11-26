@@ -413,8 +413,8 @@ export function displayPlan(plan) {
           </ul>
         </div>
         <div class="text-sm text-gray-600">
-          <p>Difficulty: ${getImplementationDifficulty(initiative.service_type)}</p>
-          <p>Mitigations: ${initiative.mitigations.join(", ")}</p>
+          <p>Difficulty: ${getImplementationDifficulty(initiative.service_type || initiative.title)}</p>
+          <p>Mitigations: ${(initiative.top_2_mitigations || initiative.mitigations || []).join(", ")}</p>
         </div>
       </div>
     `;
@@ -451,14 +451,6 @@ export function displayPlan(plan) {
         <h4 class="font-bold text-green-800 mb-4">🎯 Implementation Initiatives</h4>
         <div class="space-y-4">
           ${initiativesHTML}
-        </div>
-      </div>
-
-      <!-- Mermaid Timeline Chart -->
-      <div class="mb-6">
-        <h4 class="font-bold text-purple-800 mb-2">📅 Implementation Timeline</h4>
-        <div id="timeline-chart" class="mermaid bg-white p-4 rounded-lg border">
-          ${plan.mermaid_timeline}
         </div>
       </div>
 

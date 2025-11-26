@@ -146,17 +146,21 @@ exports.handler = async function (event, context) {
         // 3. Parse the plan
         const plan = parseAIResponse(aiResponse);
 
+        console.log("🔍 DEBUG: About to save plan for jobId:", jobId);
         await dbSet(dbRef(database, `plans/${jobId}`), {
           status: "complete",
           plan,
           completedAt: new Date().toISOString(),
         });
+        console.log("✅ Plan saved successfully for jobId:", jobId);
       } catch (error) {
         console.error("Background error for job", jobId, ":", error);
+        console.log("🔍 DEBUG: About to save error for jobId:", jobId);
         await dbSet(dbRef(database, `plans/${jobId}`), {
           status: "error",
           error: error.message,
         });
+        console.log("✅ Error saved for jobId:", jobId);
       }
     });
 
@@ -198,108 +202,23 @@ exports.handler = async function (event, context) {
 // ==================== AI PROMPT ENGINEERING ====================
 
 function createPharmacyPrompt(structuredPayload) {
-  const systemMessage = `You are an operations consultant for small healthcare providers. Use the JSON payload below and produce a complete implementation plan suitable for handing to a store manager and a pharmacist. Be explicit about calculations. Avoid speculative claims. Stick to the data and state assumptions. Focus on phased implementation with quarterly milestones over a 12-month period.`;
+  const systemMessage = `You are a pharmacy operations consultant. Respond ONLY with valid JSON. No other text.`;
 
-  const userMessage = `From the JSON payload, output a valid JSON object with exactly these top-level keys:
-- "executive_summary": a string (max 6 sentences)
-- "plan": an array of initiatives; each initiative must include: id, title, priority (1-5), owner_role, start_week, duration_weeks, tasks (array of {task_id, title, owner, est_hours, acceptance_criteria}), one_time_cost, recurring_annual_cost, expected_monthly_revenue_lift, ROI (string showing arithmetic), confidence (0-100%), risk_score (0-10), top 2 mitigations.
-- "quarterly_milestones": an array of 4 objects for Q1-Q4, each with: quarter (string "Q1"), cumulative_revenue_target (number), volume_targets (object mapping service IDs to target volumes), checkpoint_metrics (array of strings, e.g., ["Achieve 25% of annual revenue", "Complete initial training"]).
-- "mermaid_timeline": a string containing a small mermaid timeline diagram organized by quarters (Q1-Q4) that a front-end can render.
-- "financial_breakdown": Use the provided financial_breakdown in the payload; verify sums and show arithmetic as provided. Do not compute new totals; use exact numbers from the payload. For payback, show the string arithmetic like "${structuredPayload.financial_breakdown.overall.one_time_total} / ${structuredPayload.financial_breakdown.overall.monthly_revenue_lift_total} months". For overall ROI: ${structuredPayload.financial_breakdown.overall_roi}.
-- "validation": an array of strings, each a validation message, e.g., ["summaryMetrics revenue totals must equal sum of included topDrivers only (revenue only). Show step-by-step: e.g., HMRs 6460 + ... = 6383.", "Flag: No per-service costs—use totalInvestment for overall ROI/payback. Ignore invalid fields like recurringCostAnnual.", "Use exact numbers from JSON; no assumptions on per-service costs/margins.", "If any numeric field required for ROI or payback is missing or null, state insufficient data instead of estimating."]
-- "notes": optional additional notes, string.
+  const userMessage = `Generate comprehensive implementation plan. Output ONLY JSON with these exact keys:
+- "executive_summary": string (max 8 sentences)
+- "plan": array of 5-7 initiatives (REQUIRED, not empty). Each: id, title, priority (1-5), owner_role, start_week (int), duration_weeks (int), tasks (2+: task_id, title, owner, est_hours, acceptance_criteria), one_time_cost (num), recurring_annual_cost (num), expected_monthly_revenue_lift (num), ROI (string), confidence (0-100), risk_score (1-5), top_2_mitigations (2 strings)
+- "quarterly_milestones": array of 4 (Q1-Q4): quarter, cumulative_revenue_target, volume_targets, checkpoint_metrics
+- "financial_breakdown": total_one_time_costs (num), total_recurring_costs (num), total_monthly_revenue_lift (num), payback_period_months (num), arithmetic (string)
+- "validation": array of strings
+- "notes": string
 
-Output must conform exactly to this JSON schema to ensure parseable structure:
-{
-  "type": "object",
-  "properties": {
-    "executive_summary": { "type": "string" },
-    "plan": {
-      "type": "array",
-      "items": {
-        "type": "object",
-        "properties": {
-          "id": { "type": "string" },
-          "title": { "type": "string" },
-          "priority": { "type": "number" },
-          "owner_role": { "type": "string" },
-          "start_week": { "type": "number" },
-          "duration_weeks": { "type": "number" },
-          "tasks": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "properties": {
-                "task_id": { "type": "string" },
-                "title": { "type": "string" },
-                "owner": { "type": "string" },
-                "est_hours": { "type": "number" },
-                "acceptance_criteria": { "type": "string" }
-              }
-            }
-          },
-          "one_time_cost": { "type": "number" },
-          "recurring_annual_cost": { "type": "number" },
-          "expected_monthly_revenue_lift": { "type": "number" },
-          "ROI": { "type": "string" },
-          "confidence": { "type": "number" },
-          "risk_score": { "type": "number" },
-          "top_2_mitigations": { "type": "array", "items": { "type": "string" } }
-        },
-        "required": ["id", "title", "priority", "owner_role", "start_week", "duration_weeks", "tasks", "one_time_cost", "recurring_annual_cost", "expected_monthly_revenue_lift", "ROI", "confidence", "risk_score", "top_2_mitigations"]
-      }
-    },
-    "quarterly_milestones": {
-      "type": "array",
-      "items": {
-        "type": "object",
-        "properties": {
-          "quarter": { "type": "string" },
-          "cumulative_revenue_target": { "type": "number" },
-          "volume_targets": { "type": "object" },
-          "checkpoint_metrics": { "type": "array", "items": { "type": "string" } }
-        },
-        "required": ["quarter", "cumulative_revenue_target", "volume_targets", "checkpoint_metrics"]
-      },
-      "minItems": 4,
-      "maxItems": 4
-    },
-    "mermaid_timeline": { "type": "string" },
-    "financial_breakdown": {
-      "type": "object",
-      "properties": {
-        "overall": {
-          "type": "object",
-          "properties": {
-            "one_time_total": { "type": "number" },
-            "monthly_revenue_lift_total": { "type": "number" },
-            "annual_revenue_lift_total": { "type": "number" },
-            "overall_roi": { "type": "string" }
-          }
-        },
-        "payback": { "type": "string" },
-        "details": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "properties": {
-              "id": { "type": "string" },
-              "name": { "type": "string" },
-              "monthly_revenue_lift": { "type": "number" }
-            }
-          }
-        }
-      }
-    },
-    "validation": { "type": "array", "items": { "type": "string" } },
-    "notes": { "type": "string" }
-  },
-  "required": ["executive_summary", "plan", "quarterly_milestones", "mermaid_timeline", "financial_breakdown", "validation", "notes"]
-}
+ALLOWED SERVICES ONLY: DAA, Staged Supply, MedsChecks, Diabetes MedsChecks, HMRs, RMMRs, QUM, ODT, THN, Vaccinations (COVID/Flu/NIPVIP/MMR/dTpa/HPV/Shingles/RSV), App enrolments, UTI consultation, OCP consultation, Minor skin conditions, Travel health, Weight management, Sleep studies, Wound care, Home delivery, Adalimumab, Etanercept
 
-Do not wrap the output in markdown code blocks. Output only valid JSON.
+FORBIDDEN: telemedicine, virtual care, online consultations, unlisted services
 
-JSON:
+IMPORTANT: Generate initiatives from the HIGHEST revenue-opportunity services in the data. Use all positive-revenue services to create a thorough, multi-phased implementation strategy across 6 months to 12 months. Prioritize by revenue impact (1=highest revenue, 7=moderate revenue).
+
+Data:
 ${JSON.stringify(structuredPayload, null, 2)}`;
 
   return `${systemMessage}
@@ -324,130 +243,17 @@ async function callOpenRouterAI(prompt, retryCount = 0) {
   console.log("🔍 DEBUG: First 200 chars of prompt:", prompt.substring(0, 200));
 
   const requestBody = {
-    model: "allenai/olmo-3-32b-think",
+    model: "google/gemini-2.5-flash-lite-preview-09-2025",
     messages: [
       {
         role: "system",
         content:
-          "You are a business plan and pharmacy expert creating business plans educational simulations. This is for training purposes only, not financial advice. Respond ONLY with valid JSON matching the exact schema in the user message. No additional text or markdown.",
+          "You are a business plan and pharmacy expert creating business plans educational simulations. This is for training purposes only, not financial advice. Respond ONLY with valid JSON matching the exact schema in the user message. No additional text or markdown. Start your response with '{' and end with '}'.",
       },
       { role: "user", content: prompt },
     ],
-    max_tokens: 1500,
+    max_tokens: 4000,
     temperature: 0.1,
-    response_format: {
-      type: "json_schema",
-      json_schema: {
-        name: "pharmacyPlan",
-        strict: true,
-        schema: {
-          type: "object",
-          properties: {
-            executive_summary: {
-              type: "string",
-              description: "Executive summary (max 6 sentences)",
-            },
-            plan: {
-              type: "array",
-              description: "Array of initiatives",
-              items: {
-                type: "object",
-                properties: {
-                  id: { type: "string" },
-                  title: { type: "string" },
-                  priority: { type: "number", minimum: 1, maximum: 5 },
-                  owner_role: { type: "string" },
-                  start_week: { type: "number" },
-                  duration_weeks: { type: "number" },
-                  tasks: {
-                    type: "array",
-                    items: {
-                      type: "object",
-                      properties: {
-                        task_id: { type: "string" },
-                        title: { type: "string" },
-                        owner: { type: "string" },
-                        est_hours: { type: "number" },
-                        acceptance_criteria: { type: "string" },
-                      },
-                      required: [
-                        "task_id",
-                        "title",
-                        "owner",
-                        "est_hours",
-                        "acceptance_criteria",
-                      ],
-                    },
-                  },
-                  one_time_cost: { type: "number" },
-                  recurring_annual_cost: { type: "number" },
-                  expected_monthly_revenue_lift: { type: "number" },
-                  ROI: { type: "string" },
-                  confidence: { type: "number", minimum: 0, maximum: 100 },
-                  risk_score: { type: "number", minimum: 0, maximum: 10 },
-                  mitigations: {
-                    type: "array",
-                    items: { type: "string" },
-                    maxItems: 2,
-                  },
-                },
-                required: [
-                  "id",
-                  "title",
-                  "priority",
-                  "owner_role",
-                  "start_week",
-                  "duration_weeks",
-                  "tasks",
-                  "one_time_cost",
-                  "recurring_annual_cost",
-                  "expected_monthly_revenue_lift",
-                  "ROI",
-                  "confidence",
-                  "risk_score",
-                  "mitigations",
-                ],
-              },
-            },
-            mermaid_timeline: {
-              type: "string",
-              description: "Mermaid timeline diagram syntax",
-            },
-            financial_breakdown: {
-              type: "object",
-              properties: {
-                total_one_time_costs: { type: "number" },
-                total_recurring_costs: { type: "number" },
-                total_monthly_revenue_lift: { type: "number" },
-                payback_period_months: { type: "number" },
-                arithmetic: { type: "string" },
-              },
-              required: [
-                "total_one_time_costs",
-                "total_recurring_costs",
-                "total_monthly_revenue_lift",
-                "payback_period_months",
-                "arithmetic",
-              ],
-            },
-            validation: {
-              type: "array",
-              items: { type: "string" },
-            },
-            notes: {
-              type: "string",
-            },
-          },
-          required: [
-            "executive_summary",
-            "plan",
-            "mermaid_timeline",
-            "financial_breakdown",
-          ],
-          additionalProperties: false,
-        },
-      },
-    },
   };
 
   console.log(
@@ -576,8 +382,48 @@ async function callOpenRouterAI(prompt, retryCount = 0) {
   }
 
   console.log("🔍 DEBUG: AI response received successfully");
+  
+  const message = data.choices[0].message;
+  console.log("🔍 DEBUG: Message structure:", Object.keys(message));
+  console.log("🔍 DEBUG: Content type:", typeof message.content);
+  console.log("🔍 DEBUG: Content length:", message.content ? String(message.content).length : 0);
+  console.log("🔍 DEBUG: Content value (first 500 chars):", 
+    message.content ? String(message.content).substring(0, 2000) : "NULL/UNDEFINED/EMPTY");
+  
   // The content can be a string or object depending on response_format handling
-  const content = data.choices[0].message.content;
+  let content = message.content;
+  
+  // If content is empty/null, check for reasoning field (used by reasoning models like olmo-3-32b-think)
+  if (!content || content === "") {
+    console.warn("Content is empty or null. Checking for reasoning field (extended thinking models)...");
+    
+    // Some models (especially reasoning/thinking models) put the output in the reasoning field
+    if (message.reasoning && typeof message.reasoning === "string") {
+      console.log("🔍 Found response in message.reasoning field. Extracting JSON from reasoning text...");
+      content = message.reasoning;
+      
+      // Try to extract JSON from the reasoning text
+      const jsonMatch = content.match(/\{[\s\S]*\}(?=\s*$|$)/);
+      if (jsonMatch) {
+        console.log("🔍 Successfully extracted JSON from reasoning field");
+        content = jsonMatch[0];
+      } else {
+        console.warn("⚠️ Could not find JSON object in reasoning field. Will attempt to parse reasoning as plain text.");
+        // The reasoning field contains the model's thinking, not the final output
+        // This shouldn't happen if the prompt is clear, but we'll attempt extraction anyway
+      }
+    } else if (message.text) {
+      console.log("Found response in message.text");
+      content = message.text;
+    } else if (typeof message === "string") {
+      console.log("Message itself is a string");
+      content = message;
+    } else {
+      console.error("Full message object:", JSON.stringify(message, null, 2));
+      throw new Error("OpenRouter returned a response but content is empty or null, and no reasoning/text field found. The model may not have produced output.");
+    }
+  }
+  
   // If the API returned structured "content" object (some providers), stringify for parsing flow
   if (typeof content === "object") {
     try {
@@ -599,6 +445,13 @@ async function callOpenRouterAI(prompt, retryCount = 0) {
 function parseAIResponse(aiResponse) {
   try {
     if (!aiResponse) {
+      console.error("aiResponse is falsy:", {
+        value: aiResponse,
+        type: typeof aiResponse,
+        isNull: aiResponse === null,
+        isUndefined: aiResponse === undefined,
+        isEmptyString: aiResponse === ""
+      });
       throw new Error("Empty AI response received");
     }
 
@@ -708,6 +561,22 @@ function parseAIResponse(aiResponse) {
       // Remove trailing commas before } or ]
       repaired = repaired.replace(/,\s*([}\]])/g, "$1");
 
+      // Fix missing commas in arrays between string elements
+      // Pattern: "string" followed by whitespace and another quote (without comma in between)
+      // Only fix if not already followed by a comma, colon, or closing bracket
+      repaired = repaired.replace(/"\s+"/g, (match, offset) => {
+        // Check if there's already a comma before this
+        if (repaired[offset - 1] === ',') {
+          return match; // Already has comma, skip
+        }
+        // Check what comes after the second quote
+        const afterQuote = repaired[offset + match.length];
+        if (afterQuote === ',' || afterQuote === ':' || afterQuote === undefined) {
+          return match; // Correct context, skip
+        }
+        return '", "'; // Fix missing comma
+      });
+
       // Fix single quotes to double in keys/values (simple case)
       repaired = repaired.replace(/'([^']*)':/g, '"$1":');
       repaired = repaired.replace(/:'([^']*)'/g, ':"$1"');
@@ -763,13 +632,12 @@ function parseAIResponse(aiResponse) {
     // Validate we got the basic structure
     if (
       !plan.executive_summary ||
-      !plan.plan ||
-      !plan.mermaid_timeline ||
+      plan.plan === undefined ||
       !plan.financial_breakdown
     ) {
       console.error("Missing required sections in plan:", Object.keys(plan));
       throw new Error(
-        "AI response missing required sections (executive_summary, plan, mermaid_timeline, or financial_breakdown)",
+        "AI response missing required sections (executive_summary, plan, or financial_breakdown)",
       );
     }
 
@@ -777,10 +645,11 @@ function parseAIResponse(aiResponse) {
     if (!Array.isArray(plan.plan)) {
       throw new Error("Plan section must be an array of initiatives");
     }
-
-    // Fix Mermaid syntax if needed
-    if (plan.mermaid_timeline) {
-      plan.mermaid_timeline = fixMermaidSyntax(plan.mermaid_timeline);
+    
+    // If plan is empty, use fallback plan
+    if (plan.plan.length === 0) {
+      console.warn("⚠️ AI returned empty plan array, using fallback plan");
+      return generateFallbackPlan();
     }
 
     console.log(
@@ -839,16 +708,19 @@ function fixMermaidSyntax(mermaidText) {
     fixed = "timeline\n    title Pharmacy Opportunity Plan\n" + fixed;
   }
 
+  // Valid Mermaid timeline status keywords
+  const validStatuses = ["crit", "done", "active", "milestone"];
+
   // Fix common formatting issues - ensure proper indentation for timeline items
   fixed = fixed
     .split("\n")
     .map((line) => {
-      const trimmed = line.trim();
+      let trimmed = line.trim();
 
       // Skip empty lines
       if (!trimmed) return "";
 
-      // Keep title line as is
+      // Keep timeline and title lines as is
       if (trimmed.startsWith("timeline") || trimmed.startsWith("title")) {
         return line;
       }
@@ -858,9 +730,32 @@ function fixMermaidSyntax(mermaidText) {
         return "    " + trimmed.replace(/\s*:\s*/, " : ");
       }
 
-      // For items under quarters, they should be indented with sub-items further indented
+      // Fix invalid status codes in timeline items
+      // Look for patterns like ":something" where something is not a valid status
+      const statusMatch = trimmed.match(/:([^,\s]+)/);
+      if (statusMatch) {
+        const foundStatus = statusMatch[1].toLowerCase();
+        // If status is not in valid list, replace with appropriate status
+        if (!validStatuses.includes(foundStatus)) {
+          // Map common invalid statuses or default to 'active'
+          let replacement = "active";
+          if (foundStatus.includes("1") || foundStatus.includes("2")) {
+            replacement = "crit"; // numeric statuses likely mean priority
+          } else if (foundStatus.includes("high") || foundStatus.includes("urgent")) {
+            replacement = "crit";
+          } else if (foundStatus.includes("complete") || foundStatus.includes("done")) {
+            replacement = "done";
+          } else if (foundStatus.includes("key") || foundStatus.includes("major")) {
+            replacement = "milestone";
+          }
+          trimmed = trimmed.replace(new RegExp(":" + foundStatus, "i"), ":" + replacement);
+          console.log(`🔍 DEBUG: Fixed invalid status ':${foundStatus}' to ':${replacement}'`);
+        }
+      }
+
+      // For items under quarters, they should be properly formatted
       if (trimmed.startsWith(":")) {
-        return "        : " + trimmed.substring(1).trim();
+        return "        " + trimmed;
       }
 
       // Default indentation for other items
@@ -982,29 +877,158 @@ function generateFallbackPlan() {
           "Seasonal focus on flu vaccines",
         ],
       },
+      {
+        id: "init-4",
+        title: "Implement Diabetes MedsChecks Service",
+        priority: 2,
+        owner_role: "Lead Pharmacist",
+        start_week: 5,
+        duration_weeks: 6,
+        tasks: [
+          {
+            task_id: "task-4-1",
+            title: "Staff training on diabetes protocols",
+            owner: "Lead Pharmacist",
+            est_hours: 16,
+            acceptance_criteria: "All staff certified in diabetes MedsChecks",
+          },
+          {
+            task_id: "task-4-2",
+            title: "Identify eligible diabetic patients",
+            owner: "Pharmacy Technician",
+            est_hours: 12,
+            acceptance_criteria: "20+ patients enrolled in program",
+          },
+        ],
+        one_time_cost: 2500,
+        recurring_annual_cost: 800,
+        expected_monthly_revenue_lift: 450,
+        ROI: "(450 * 12 - 800) / 2500 = 1.99x annual ROI",
+        confidence: 72,
+        risk_score: 3,
+        mitigations: [
+          "Work with local GPs for referrals",
+          "Use existing diabetes education materials",
+        ],
+      },
+      {
+        id: "init-5",
+        title: "Launch Minor Ailments & OTC Consultation Service",
+        priority: 4,
+        owner_role: "Pharmacy Manager",
+        start_week: 9,
+        duration_weeks: 8,
+        tasks: [
+          {
+            task_id: "task-5-1",
+            title: "Develop consultation protocol and documentation",
+            owner: "Lead Pharmacist",
+            est_hours: 18,
+            acceptance_criteria: "Protocol approved and templates ready",
+          },
+          {
+            task_id: "task-5-2",
+            title: "Staff training and competency assessment",
+            owner: "Pharmacy Manager",
+            est_hours: 14,
+            acceptance_criteria: "All staff trained and assessed",
+          },
+        ],
+        one_time_cost: 2000,
+        recurring_annual_cost: 600,
+        expected_monthly_revenue_lift: 350,
+        ROI: "(350 * 12 - 600) / 2000 = 1.93x annual ROI",
+        confidence: 68,
+        risk_score: 2,
+        mitigations: [
+          "Clear scope of practice guidelines",
+          "Support documentation systems",
+        ],
+      },
+      {
+        id: "init-6",
+        title: "Expand Health & Wellness Services (Travel Health, Weight Management)",
+        priority: 4,
+        owner_role: "Pharmacy Technician",
+        start_week: 17,
+        duration_weeks: 10,
+        tasks: [
+          {
+            task_id: "task-6-1",
+            title: "Develop service packages and marketing materials",
+            owner: "Pharmacy Manager",
+            est_hours: 12,
+            acceptance_criteria: "Brochures and website content ready",
+          },
+          {
+            task_id: "task-6-2",
+            title: "Train staff on consultation delivery",
+            owner: "Lead Pharmacist",
+            est_hours: 16,
+            acceptance_criteria: "All staff confident delivering services",
+          },
+        ],
+        one_time_cost: 1500,
+        recurring_annual_cost: 400,
+        expected_monthly_revenue_lift: 320,
+        ROI: "(320 * 12 - 400) / 1500 = 2.44x annual ROI",
+        confidence: 60,
+        risk_score: 4,
+        mitigations: [
+          "Start with travel health (seasonal demand)",
+          "Partner with local health providers",
+        ],
+      },
+      {
+        id: "init-7",
+        title: "Optimize Prescription Delivery & Home Medicine Reviews",
+        priority: 5,
+        owner_role: "Pharmacy Manager",
+        start_week: 3,
+        duration_weeks: 4,
+        tasks: [
+          {
+            task_id: "task-7-1",
+            title: "Establish delivery partnerships and logistics",
+            owner: "Pharmacy Manager",
+            est_hours: 10,
+            acceptance_criteria: "Delivery system operational",
+          },
+          {
+            task_id: "task-7-2",
+            title: "Develop HMR marketing and referral process",
+            owner: "Lead Pharmacist",
+            est_hours: 12,
+            acceptance_criteria: "Process documented and promoted",
+          },
+        ],
+        one_time_cost: 3000,
+        recurring_annual_cost: 1500,
+        expected_monthly_revenue_lift: 400,
+        ROI: "(400 * 12 - 1500) / 3000 = 1.4x annual ROI",
+        confidence: 75,
+        risk_score: 2,
+        mitigations: [
+          "Use existing supplier relationships",
+          "Partner with aged care facilities",
+        ],
+      },
     ],
-    mermaid_timeline: `timeline
-    title Pharmacy Opportunity Plan
-    Q1 : Expand HMR Services
-        : Implement System Training
-    Q2 : Launch DAA-Eligible Services
-        : Enhance IDAA Programs
-    Q3 : Expand ODT Supply Services
-    Q4 : Optimize Diabetes MedsChecks`,
     financial_breakdown: {
-      total_one_time_costs: 10000,
-      total_recurring_costs: 3600,
-      total_monthly_revenue_lift: 2600,
-      payback_period_months: 3.85,
+      total_one_time_costs: 16000,
+      total_recurring_costs: 6500,
+      total_monthly_revenue_lift: 3620,
+      payback_period_months: 4.42,
       arithmetic:
-        "One-time: $3,000 + $4,000 + $3,000 = $10,000 | Annual recurring: $2,400 + $1,200 = $3,600 | Monthly lift: $800 + $1,200 + $600 = $2,600 | Payback: $10,000 / $2,600 = 3.85 months",
+        "One-time: $5,000 + $4,000 + $3,000 + $2,500 + $2,000 + $1,500 + $3,000 = $21,000 | Annual recurring: $2,400 + $1,200 + $800 + $600 + $400 + $1,500 = $7,000 | Monthly lift: $800 + $1,200 + $600 + $450 + $350 + $320 + $400 = $4,120 | Payback: $21,000 / $4,120 = 5.10 months",
     },
     validation: [
       "ROI calculations assume full service uptake within timeframes",
       "Cost estimates based on typical Australian pharmacy rates",
       "Revenue projections conservative compared to CPA benchmarks",
+      "Multiple initiatives allow for phased implementation",
     ],
     notes:
-      "This is a fallback plan provided due to technical issues. Consider it a starting template that should be customized based on your specific circumstances and local market conditions.",
+      "This comprehensive fallback plan includes 6 initiatives covering government-funded programs, vaccinations, and value-added services. Prioritize based on your pharmacy's capabilities and market demand. Consider it a starting template that should be customized based on your specific circumstances and local market conditions.",
   };
 }

@@ -1,18 +1,23 @@
 // Firebase Initialization Module
 // Handles Firebase setup and anonymous authentication for the application
-// Uses Firebase CDN modules loaded in index.html
+// Uses the Firebase npm package (already installed in package.json)
 
-// Firebase configuration
-// Loads from window.firebaseConfig which is set in index.html from environment variables
-// Never hardcode credentials here - they should come from environment variables
-const firebaseConfig = window.firebaseConfig || {
-  apiKey: null,
-  authDomain: null,
-  databaseURL: null,
-  projectId: null,
-  storageBucket: null,
-  messagingSenderId: null,
-  appId: null,
+// Import Firebase functions
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js';
+import { getAuth, signInAnonymously } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js';
+import { getDatabase } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-database.js';
+
+// Firebase configuration - loaded from environment variables
+// In vanilla JS served statically, we need to embed these at build time
+// For now, they will be set to null if not available
+const firebaseConfig = {
+  apiKey: window.FIREBASE_API_KEY || null,
+  authDomain: window.FIREBASE_AUTH_DOMAIN || null,
+  databaseURL: window.FIREBASE_DATABASE_URL || null,
+  projectId: window.FIREBASE_PROJECT_ID || null,
+  storageBucket: window.FIREBASE_STORAGE_BUCKET || null,
+  messagingSenderId: window.FIREBASE_MESSAGING_SENDER_ID || null,
+  appId: window.FIREBASE_APP_ID || null,
 };
 
 // Initialize Firebase
@@ -21,26 +26,31 @@ let auth = null;
 let db = null;
 let initError = null;
 
-// Initialize Firebase when CDN scripts have loaded
-if (typeof firebase !== "undefined") {
+/**
+ * Initialize Firebase
+ */
+export function initializeFirebase() {
   try {
-    app = firebase.initializeApp(firebaseConfig);
-    auth = firebase.auth();
-    db = firebase.database();
+    // Check if Firebase config is properly set
+    const hasConfig = Object.values(firebaseConfig).some(val => val !== null);
+    
+    if (!hasConfig) {
+      throw new Error('Firebase configuration not found in window object');
+    }
+
+    app = initializeApp(firebaseConfig);
+    auth = getAuth(app);
+    db = getDatabase(app);
     console.log("✓ Firebase initialized successfully");
+    return { app, auth, db };
   } catch (error) {
     initError = error;
     console.error("✗ Firebase initialization error:", error.message);
     console.warn("⚠ Firebase features will not be available");
+    return { app: null, auth: null, db: null };
   }
-} else {
-  initError = new Error(
-    "Firebase SDK not loaded. Make sure Firebase CDN scripts are loaded in index.html"
-  );
-  console.warn(
-    "⚠ Firebase SDK not available. Continuing without Firebase features."
-  );
 }
+
 
 /**
  * Sign in the user anonymously
@@ -48,6 +58,9 @@ if (typeof firebase !== "undefined") {
  * before attempting to save/load data from the database
  */
 export async function initializeAnonymousAuth() {
+  // First, ensure Firebase is initialized
+  const { auth: authInstance } = initializeFirebase();
+
   // If Firebase failed to initialize, skip authentication gracefully
   if (initError) {
     console.warn(
@@ -57,12 +70,13 @@ export async function initializeAnonymousAuth() {
     return null;
   }
 
-  if (!auth) {
-    throw new Error("Firebase authentication not initialized");
+  if (!authInstance) {
+    console.warn("⚠ Firebase authentication not available");
+    return null;
   }
 
   try {
-    const result = await auth.signInAnonymously();
+    const result = await signInAnonymously(authInstance);
     console.log("✓ User signed in anonymously with UID:", result.user.uid);
     return result.user;
   } catch (error) {
@@ -88,6 +102,7 @@ export default {
   app,
   auth,
   db,
+  initializeFirebase,
   initializeAnonymousAuth,
   getCurrentUser,
 };

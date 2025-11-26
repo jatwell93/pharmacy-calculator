@@ -202,18 +202,23 @@ exports.handler = async function (event, context) {
 // ==================== AI PROMPT ENGINEERING ====================
 
 function createPharmacyPrompt(structuredPayload) {
-  const systemMessage = `You are an operations consultant for small healthcare providers. Use the JSON payload below and produce a complete implementation plan suitable for handing to a store manager and a pharmacist. Be explicit about calculations. Avoid speculative claims. Stick to the data and state assumptions.`;
+  const systemMessage = `You are a pharmacy operations consultant. Respond ONLY with valid JSON. No other text.`;
 
-  const userMessage = `From the JSON payload, output:
-- "executive_summary" (max 6 sentences)
-- "plan" (array of initiatives; each initiative must include: id, title, priority (1-5), owner_role, start_week, duration_weeks, tasks (array of {task_id, title, owner, est_hours, acceptance_criteria}), one_time_cost, recurring_annual_cost, expected_monthly_revenue_lift, ROI (show arithmetic), confidence (0-100%), risk_score (0-10), top 2 mitigations).
-- "mermaid_timeline" - a small mermaid timeline diagram organized by quarters (Q1-Q4) that a front-end can render.
-- "financial_breakdown": verify totals, sum of one_time_costs, recurring, and compute payback_period_months = one_time_cost / monthly_revenue_lift (per initiative and overall). Show the arithmetic for each computed number.
-- "validation": run simple checks and list any inconsistencies (e.g., ROI > 1000x, negative costs).
+  const userMessage = `Generate comprehensive implementation plan. Output ONLY JSON with these exact keys:
+- "executive_summary": string (max 8 sentences)
+- "plan": array of 5-7 initiatives (REQUIRED, not empty). Each: id, title, priority (1-5), owner_role, start_week (int), duration_weeks (int), tasks (2+: task_id, title, owner, est_hours, acceptance_criteria), one_time_cost (num), recurring_annual_cost (num), expected_monthly_revenue_lift (num), ROI (string), confidence (0-100), risk_score (1-5), top_2_mitigations (2 strings)
+- "quarterly_milestones": array of 4 (Q1-Q4): quarter, cumulative_revenue_target, volume_targets, checkpoint_metrics
+- "financial_breakdown": total_one_time_costs (num), total_recurring_costs (num), total_monthly_revenue_lift (num), payback_period_months (num), arithmetic (string)
+- "validation": array of strings
+- "notes": string
 
-Return valid JSON only (no extra commentary) in a top-level object with keys: executive_summary, plan, mermaid_timeline, financial_breakdown, validation, notes.
+ALLOWED SERVICES ONLY: DAA, Staged Supply, MedsChecks, Diabetes MedsChecks, HMRs, RMMRs, QUM, ODT, THN, Vaccinations (COVID/Flu/NIPVIP/MMR/dTpa/HPV/Shingles/RSV), App enrolments, UTI consultation, OCP consultation, Minor skin conditions, Travel health, Weight management, Sleep studies, Wound care, Home delivery, Adalimumab, Etanercept
 
-JSON:
+FORBIDDEN: telemedicine, virtual care, online consultations, unlisted services
+
+IMPORTANT: Generate initiatives from the HIGHEST revenue-opportunity services in the data. Use all positive-revenue services to create a thorough, multi-phased implementation strategy across 6 months to 12 months. Prioritize by revenue impact (1=highest revenue, 7=moderate revenue).
+
+Data:
 ${JSON.stringify(structuredPayload, null, 2)}`;
 
   return `${systemMessage}
@@ -583,13 +588,12 @@ function parseAIResponse(aiResponse) {
     // Validate we got the basic structure
     if (
       !plan.executive_summary ||
-      !plan.plan ||
-      !plan.mermaid_timeline ||
+      plan.plan === undefined ||
       !plan.financial_breakdown
     ) {
       console.error("Missing required sections in plan:", Object.keys(plan));
       throw new Error(
-        "AI response missing required sections (executive_summary, plan, mermaid_timeline, or financial_breakdown)",
+        "AI response missing required sections (executive_summary, plan, or financial_breakdown)",
       );
     }
 
@@ -597,10 +601,11 @@ function parseAIResponse(aiResponse) {
     if (!Array.isArray(plan.plan)) {
       throw new Error("Plan section must be an array of initiatives");
     }
-
-    // Fix Mermaid syntax if needed
-    if (plan.mermaid_timeline) {
-      plan.mermaid_timeline = fixMermaidSyntax(plan.mermaid_timeline);
+    
+    // If plan is empty, use fallback plan
+    if (plan.plan.length === 0) {
+      console.warn("⚠️ AI returned empty plan array, using fallback plan");
+      return generateFallbackPlan();
     }
 
     console.log(
@@ -773,29 +778,158 @@ function generateFallbackPlan() {
           "Seasonal focus on flu vaccines",
         ],
       },
+      {
+        id: "init-4",
+        title: "Implement Diabetes MedsChecks Service",
+        priority: 4,
+        owner_role: "Accredited Pharmacist",
+        start_week: 5,
+        duration_weeks: 6,
+        tasks: [
+          {
+            task_id: "task-4-1",
+            title: "Train staff on diabetes care protocols",
+            owner: "Lead Pharmacist",
+            est_hours: 12,
+            acceptance_criteria: "Team certified in diabetes medication review",
+          },
+          {
+            task_id: "task-4-2",
+            title: "Establish referral relationships with GPs",
+            owner: "Pharmacy Manager",
+            est_hours: 10,
+            acceptance_criteria: "5+ GPs actively referring diabetes patients",
+          },
+        ],
+        one_time_cost: 2500,
+        recurring_annual_cost: 1800,
+        expected_monthly_revenue_lift: 450,
+        ROI: "(450 * 12 - 1800) / 2500 = 1.68x annual ROI",
+        confidence: 68,
+        risk_score: 3,
+        mitigations: [
+          "Partner with diabetes educator",
+          "Start with existing diabetic patients",
+        ],
+      },
+      {
+        id: "init-5",
+        title: "Launch Minor Ailments & OTC Consultation Service",
+        priority: 5,
+        owner_role: "Accredited Pharmacist",
+        start_week: 9,
+        duration_weeks: 8,
+        tasks: [
+          {
+            task_id: "task-5-1",
+            title: "Develop consultation protocols",
+            owner: "Lead Pharmacist",
+            est_hours: 15,
+            acceptance_criteria: "Protocol templates approved by management",
+          },
+          {
+            task_id: "task-5-2",
+            title: "Market service to local community",
+            owner: "Marketing Lead",
+            est_hours: 12,
+            acceptance_criteria: "100+ patients aware of minor ailment service",
+          },
+        ],
+        one_time_cost: 2000,
+        recurring_annual_cost: 1400,
+        expected_monthly_revenue_lift: 350,
+        ROI: "(350 * 12 - 1400) / 2000 = 1.75x annual ROI",
+        confidence: 72,
+        risk_score: 2,
+        mitigations: [
+          "Ensure clear scope of practice boundaries",
+          "Build relationship with local GPs",
+        ],
+      },
+      {
+        id: "init-6",
+        title: "Expand Health & Wellness Services",
+        priority: 6,
+        owner_role: "Pharmacy Manager",
+        start_week: 17,
+        duration_weeks: 10,
+        tasks: [
+          {
+            task_id: "task-6-1",
+            title: "Develop travel health packages",
+            owner: "Accredited Pharmacist",
+            est_hours: 10,
+            acceptance_criteria: "3+ travel health packages ready to market",
+          },
+          {
+            task_id: "task-6-2",
+            title: "Launch weight management referral program",
+            owner: "Pharmacy Manager",
+            est_hours: 8,
+            acceptance_criteria: "Partnership with 2+ weight management providers",
+          },
+        ],
+        one_time_cost: 1500,
+        recurring_annual_cost: 1280,
+        expected_monthly_revenue_lift: 320,
+        ROI: "(320 * 12 - 1280) / 1500 = 1.71x annual ROI",
+        confidence: 60,
+        risk_score: 4,
+        mitigations: [
+          "Focus on seasonal opportunities",
+          "Partner with external specialists",
+        ],
+      },
+      {
+        id: "init-7",
+        title: "Optimize Prescription Delivery & Home Medicine Reviews",
+        priority: 7,
+        owner_role: "Pharmacy Manager",
+        start_week: 3,
+        duration_weeks: 4,
+        tasks: [
+          {
+            task_id: "task-7-1",
+            title: "Set up prescription delivery logistics",
+            owner: "Operations Lead",
+            est_hours: 8,
+            acceptance_criteria: "Delivery process documented and operational",
+          },
+          {
+            task_id: "task-7-2",
+            title: "Establish home medicine review protocols",
+            owner: "Lead Pharmacist",
+            est_hours: 12,
+            acceptance_criteria: "HMR procedures aligned with CPA standards",
+          },
+        ],
+        one_time_cost: 3000,
+        recurring_annual_cost: 1600,
+        expected_monthly_revenue_lift: 400,
+        ROI: "(400 * 12 - 1600) / 3000 = 1.27x annual ROI",
+        confidence: 75,
+        risk_score: 2,
+        mitigations: [
+          "Use local delivery partners initially",
+          "Prioritize high-value HMR candidates",
+        ],
+      },
     ],
-    mermaid_timeline: `timeline
-    title Pharmacy Opportunity Plan
-    Q1 : Expand HMR Services
-        : Implement System Training
-    Q2 : Launch DAA-Eligible Services
-        : Enhance IDAA Programs
-    Q3 : Expand ODT Supply Services
-    Q4 : Optimize Diabetes MedsChecks`,
     financial_breakdown: {
-      total_one_time_costs: 10000,
-      total_recurring_costs: 3600,
-      total_monthly_revenue_lift: 2600,
-      payback_period_months: 3.85,
+      total_one_time_costs: 21000,
+      total_recurring_costs: 7000,
+      total_monthly_revenue_lift: 4120,
+      payback_period_months: 5.1,
       arithmetic:
-        "One-time: $3,000 + $4,000 + $3,000 = $10,000 | Annual recurring: $2,400 + $1,200 = $3,600 | Monthly lift: $800 + $1,200 + $600 = $2,600 | Payback: $10,000 / $2,600 = 3.85 months",
+        "One-time: $3,000 + $4,000 + $3,000 + $2,500 + $2,000 + $1,500 + $3,000 = $21,000 | Annual recurring: $2,400 + $1,200 + $1,800 + $1,400 + $1,280 + $1,600 = $7,000 | Monthly lift: $800 + $1,200 + $600 + $450 + $350 + $320 + $400 = $4,120 | Payback: $21,000 / $4,120 = 5.1 months",
     },
     validation: [
       "ROI calculations assume full service uptake within timeframes",
       "Cost estimates based on typical Australian pharmacy rates",
       "Revenue projections conservative compared to CPA benchmarks",
+      "Phased implementation allows for cash flow management",
     ],
     notes:
-      "This is a fallback plan provided due to technical issues. Consider it a starting template that should be customized based on your specific circumstances and local market conditions.",
+      "This is a comprehensive fallback plan provided due to technical issues. It includes 7 initiatives covering multiple service categories. Consider it a starting template that should be customized based on your specific circumstances and local market conditions.",
   };
 }
