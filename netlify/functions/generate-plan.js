@@ -20,17 +20,7 @@ const { v4: uuidv4 } = require("uuid");
 // Helper function to initialize database based on environment
 // This is called inside the handler to ensure env vars are available
 function initializeDatabase() {
-  // Log environment variable status for debugging
-  console.log("🔍 Environment Check:", {
-    NETLIFY: process.env.NETLIFY,
-    CONTEXT: process.env.CONTEXT,
-    NODE_ENV: process.env.NODE_ENV,
-    hasFirebaseApiKey: !!process.env.FIREBASE_API_KEY,
-    hasFirebaseAuthDomain: !!process.env.FIREBASE_AUTH_DOMAIN,
-    hasFirebaseDatabaseUrl: !!process.env.FIREBASE_DATABASE_URL,
-    hasFirebaseProjectId: !!process.env.FIREBASE_PROJECT_ID,
-    FORCE_LOCAL_DB: process.env.FORCE_LOCAL_DB
-  });
+  // Environment check performed (values not logged for security)
 
   const isProduction = process.env.NETLIFY === "true" || process.env.CONTEXT === "production";
   const forceLocalDb = process.env.FORCE_LOCAL_DB === "true";
@@ -91,14 +81,7 @@ function initializeDatabase() {
     }
   } else {
     // Production but missing Firebase config - this is an error state
-    console.error("❌ PRODUCTION ERROR: Missing Firebase configuration.");
-    console.error("Required variables: FIREBASE_API_KEY, FIREBASE_AUTH_DOMAIN, FIREBASE_DATABASE_URL, FIREBASE_PROJECT_ID");
-    console.error("Current values:", {
-      FIREBASE_API_KEY: process.env.FIREBASE_API_KEY ? "SET" : "NOT SET",
-      FIREBASE_AUTH_DOMAIN: process.env.FIREBASE_AUTH_DOMAIN ? "SET" : "NOT SET",
-      FIREBASE_DATABASE_URL: process.env.FIREBASE_DATABASE_URL ? "SET" : "NOT SET",
-      FIREBASE_PROJECT_ID: process.env.FIREBASE_PROJECT_ID ? "SET" : "NOT SET",
-    });
+    console.error("❌ PRODUCTION ERROR: Missing Firebase configuration. Please set environment variables in Netlify dashboard.");
     throw new Error("Firebase configuration missing for production deployment. Please set environment variables in Netlify dashboard.");
   }
 

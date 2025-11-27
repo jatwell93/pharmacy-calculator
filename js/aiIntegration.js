@@ -16,7 +16,7 @@ function checkEnvironmentVariables() {
     OPENROUTER_API_KEY: window.ENV_CONFIG?.OPENROUTER_API_KEY
   };
   
-  console.log('🔍 Environment Variable Check:', envVars);
+  // Environment variable check - values not logged for security
   
   const missingVars = [];
   const hasFirebaseConfig = Object.entries(envVars)
