@@ -23,3 +23,5 @@ window.FIREBASE_MESSAGING_SENDER_ID = window.ENV_CONFIG.FIREBASE_MESSAGING_SENDE
 window.FIREBASE_APP_ID = window.ENV_CONFIG.FIREBASE_APP_ID;
 
 console.log('✓ Environment configuration loaded');
+console.log('Firebase Config Available:', !!window.FIREBASE_API_KEY);
+console.log('OpenRouter API Key Available:', !!window.ENV_CONFIG.OPENROUTER_API_KEY);

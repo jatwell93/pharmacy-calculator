@@ -5,10 +5,54 @@ import { collectCurrentAnalysisData, generatePayload } from "./calculations.js";
 import { displayPlan, showLoading, hideLoading } from "./ui.js";
 
 /**
+ * Check if environment variables are properly loaded
+ */
+function checkEnvironmentVariables() {
+  const envVars = {
+    FIREBASE_API_KEY: window.FIREBASE_API_KEY || window.ENV_CONFIG?.FIREBASE_API_KEY,
+    FIREBASE_AUTH_DOMAIN: window.FIREBASE_AUTH_DOMAIN || window.ENV_CONFIG?.FIREBASE_AUTH_DOMAIN,
+    FIREBASE_DATABASE_URL: window.FIREBASE_DATABASE_URL || window.ENV_CONFIG?.FIREBASE_DATABASE_URL,
+    FIREBASE_PROJECT_ID: window.FIREBASE_PROJECT_ID || window.ENV_CONFIG?.FIREBASE_PROJECT_ID,
+    OPENROUTER_API_KEY: window.ENV_CONFIG?.OPENROUTER_API_KEY
+  };
+  
+  console.log('🔍 Environment Variable Check:', envVars);
+  
+  const missingVars = [];
+  const hasFirebaseConfig = Object.entries(envVars)
+    .filter(([key]) => key.startsWith('FIREBASE'))
+    .every(([_, value]) => !!value);
+    
+  const hasOpenRouterKey = !!envVars.OPENROUTER_API_KEY;
+  
+  if (!hasFirebaseConfig) {
+    missingVars.push('Firebase Configuration');
+  }
+  if (!hasOpenRouterKey) {
+    missingVars.push('OpenRouter API Key');
+  }
+  
+  return {
+    hasFirebaseConfig,
+    hasOpenRouterKey,
+    missingVars,
+    envVars
+  };
+}
+
+/**
  * Test AI with sample data
  */
 export async function testWithSampleData() {
   console.log("Testing AI with sample data...");
+
+  // Check environment variables first
+  const envCheck = checkEnvironmentVariables();
+  if (envCheck.missingVars.length > 0) {
+    console.warn("⚠️ Missing environment variables:", envCheck.missingVars);
+    alert(`❌ Missing Configuration: ${envCheck.missingVars.join(' and ')} are not properly configured.\n\nPlease check that environment variables are set correctly in your Netlify dashboard.`);
+    return;
+  }
 
   try {
     // Create sample structured payload matching the new format
@@ -174,6 +218,14 @@ export async function testWithSampleData() {
  */
 export async function testWithRealData() {
   console.log("Testing AI with real calculator data...");
+
+  // Check environment variables first
+  const envCheck = checkEnvironmentVariables();
+  if (envCheck.missingVars.length > 0) {
+    console.warn("⚠️ Missing environment variables:", envCheck.missingVars);
+    alert(`❌ Missing Configuration: ${envCheck.missingVars.join(' and ')} are not properly configured.\n\nPlease check that environment variables are set correctly in your Netlify dashboard.`);
+    return;
+  }
 
   showLoading();
 
@@ -898,6 +950,15 @@ export function generatePlan(type) {
 async function testWithPayload(payload) {
   console.log("Testing AI with custom payload:", payload);
 
+  // Check environment variables first
+  const envCheck = checkEnvironmentVariables();
+  if (envCheck.missingVars.length > 0) {
+    console.warn("⚠️ Missing environment variables:", envCheck.missingVars);
+    hideLoading();
+    alert(`❌ Missing Configuration: ${envCheck.missingVars.join(' and ')} are not properly configured.\n\nPlease check that environment variables are set correctly in your Netlify dashboard.`);
+    return;
+  }
+
   // Store globally for validation access
   window.currentPayload = payload;
 
@@ -1005,7 +1066,17 @@ async function testWithPayload(payload) {
     }
   } catch (error) {
     console.error("AI test failed:", error);
-    alert("❌ Error: " + error.message);
+    
+    // Provide more specific error messages based on the type of error
+    if (error.message.includes("JSON.parse")) {
+      alert("❌ Server Error: The AI service returned an invalid response. This might be due to missing API configuration. Please check the console for details.");
+    } else if (error.message.includes("API Error")) {
+      alert("❌ API Error: " + error.message);
+    } else if (error.message.includes("fetch")) {
+      alert("❌ Network Error: Unable to connect to the AI service. Please check your internet connection.");
+    } else {
+      alert("❌ Error: " + error.message + "\n\nPlease check the browser console for more details.");
+    }
   } finally {
     hideLoading();
   }

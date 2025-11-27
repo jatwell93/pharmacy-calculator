@@ -1,69 +1,87 @@
-Your Netlify environment variables are **correctly configured in the dashboard** (based on your screenshot), but they are **not being delivered to your frontend code**.
+3. Test Firebase Connection Locally
 
-Netlify stores these variables on the server, but for security reasons, it does not automatically inject them into your client-side JavaScript files (like `env-config.js`). This is why Kilocode found them "empty" in the browser—they are stuck on the server.
-
-Here is the step-by-step fix to "inject" these variables during the build process so your app can read them.
-
-### Step 1: Create an Injection Script
-Create a new file in your project root (or in a `scripts/` folder) called `generate-env.js`. This script will read the variables from Netlify and write them into the file your app expects.
+Add this temporary test to your aiIntegration.js (or create a test file):
 
 ```javascript
-// generate-env.js
-const fs = require('fs');
-const path = require('path');
+// Test Firebase connection
+import { getDatabase, ref, set } from "firebase/database";
+import { getAuth, signInAnonymously } from "firebase/auth";
 
-// Define the path where your app looks for env-config.js
-// Based on your structure, it seems to be in the 'js' folder
-const targetPath = path.join(__dirname, 'js', 'env-config.js');
-
-// Create the content by reading from process.env (Netlify's server environment)
-const envConfig = `window.env = {
-  FIREBASE_API_KEY: "${process.env.FIREBASE_API_KEY || ''}",
-  FIREBASE_AUTH_DOMAIN: "${process.env.FIREBASE_AUTH_DOMAIN || ''}",
-  FIREBASE_DATABASE_URL: "${process.env.FIREBASE_DATABASE_URL || ''}",
-  FIREBASE_PROJECT_ID: "${process.env.FIREBASE_PROJECT_ID || ''}",
-  FIREBASE_STORAGE_BUCKET: "${process.env.FIREBASE_STORAGE_BUCKET || ''}",
-  FIREBASE_MESSAGING_SENDER_ID: "${process.env.FIREBASE_MESSAGING_SENDER_ID || ''}",
-  FIREBASE_APP_ID: "${process.env.FIREBASE_APP_ID || ''}",
-  OPENROUTER_API_KEY: "${process.env.OPENROUTER_API_KEY || ''}" 
-};`;
-
-// Write the file
-fs.writeFileSync(targetPath, envConfig);
-console.log(`Generated ${targetPath} with environment variables.`);
-```
-*Note: We include `OPENROUTER_API_KEY` here if your **frontend** needs it. If only your backend functions use it, you can omit it from this public file for better security.*
-
-### Step 2: Update Your Build Command
-You need to tell Netlify to run this script every time it builds your site.
-
-1.  Open your `package.json` file.
-2.  Find the `"scripts"` section.
-3.  Update your `"build"` command (or create one) to run the script first.
-
-```json
-"scripts": {
-  "build": "node generate-env.js"
+async function testFirebase() {
+  try {
+    const auth = getAuth();
+    await signInAnonymously(auth);
+    console.log("✅ Firebase Auth: Connected");
+    
+    const db = getDatabase();
+    const testRef = ref(db, 'test-connection');
+    await set(testRef, { timestamp: Date.now() });
+    console.log("✅ Firebase Database: Write successful");
+  } catch (error) {
+    console.error("❌ Firebase Error:", error.code, error.message);
+  }
 }
+
+testFirebase();
 ```
-*If you already have a build command (e.g., `vite build` or `webpack`), chain them: `"build": "node generate-env.js && vite build"`.*
+Run this locally first. If it fails, your Firebase config is wrong.
+Add Error Logging to Your Function
 
-### Step 3: Load the Configuration
-Ensure your `index.html` loads this file **before** your main application logic so the variables are available globally.
+Your Netlify Function needs better error handling so you can see what's failing. Update your function (e.g., netlify/functions/generate-plan.js) to include:
 
-```html
-<!-- In your index.html head or body, before main.js -->
-<script src="js/env-config.js"></script>
-<script src="js/main.js"></script>
+```javascript
+exports.handler = async (event) => {
+  try {
+    // Log incoming request
+    console.log("Request received:", JSON.parse(event.body));
+    
+    // Your existing code...
+    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(payload)
+    });
+    
+    console.log("OpenRouter status:", response.status);
+    const data = await response.json();
+    console.log("OpenRouter response:", data);
+    
+    return {
+      statusCode: 200,
+      body: JSON.stringify(data)
+    };
+    
+  } catch (error) {
+    // Log the FULL error
+    console.error("Function error:", error);
+    return {
+      statusCode: 500,
+      body: JSON.stringify({ 
+        error: error.message,
+        stack: error.stack 
+      })
+    };
+  }
+};
 ```
 
-### Step 4: Update Netlify Settings
-1.  Go to your Netlify Dashboard > **Site settings** > **Build & deploy**.
-2.  Ensure your **Build command** is set to `npm run build`.
-3.  Trigger a new deploy (**Deploys** > **Trigger deploy** > **Clear cache and deploy site**).
+Verify Environment Variables Are Loaded
 
-### Why the "HTML instead of JSON" Error?
-The error `JSON.parse: unexpected character at line 1` happens because your frontend is likely calling a Netlify Function (e.g., for the AI plan) that is crashing.
-*   **Cause:** The function itself might be trying to use a Firebase variable that it expects the *client* to pass to it, or the client is sending `undefined` data because it couldn't initialize Firebase.
-*   **Result:** The function crashes (HTTP 500), and Netlify serves a default HTML "Error 500" page. Your code tries to parse this HTML page as JSON and fails.
-*   **Fix:** Once the variables are injected correctly using the steps above, the client will send valid data, and the error should resolve.
+Add this temporary diagnostic endpoint to test if Netlify is reading your env vars:
+
+```javascript
+// netlify/functions/test-config.js
+exports.handler = async () => {
+  return {
+    statusCode: 200,
+    body: JSON.stringify({
+      hasFirebaseKey: !!process.env.FIREBASE_API_KEY,
+      hasOpenRouterKey: !!process.env.OPENROUTER_API_KEY,
+      firebaseKeyPrefix: process.env.FIREBASE_API_KEY?.substring(0, 10) + "...",
+    })
+  };
+};
+```

@@ -3,6 +3,7 @@
 /**
  * Build script for environment variable injection
  * This script creates the env-config.js file with Firebase configuration
+ * and logs which variables are available during the build process
  */
 
 const fs = require('fs');
@@ -19,6 +20,17 @@ const envVars = {
   'FIREBASE_APP_ID': process.env.FIREBASE_APP_ID || '',
   'OPENROUTER_API_KEY': process.env.OPENROUTER_API_KEY || ''
 };
+
+// Log environment variable status for debugging
+console.log('🔍 Environment Variables Status:');
+console.log('FIREBASE_API_KEY:', envVars.FIREBASE_API_KEY ? 'SET ✓' : 'NOT SET ✗');
+console.log('FIREBASE_AUTH_DOMAIN:', envVars.FIREBASE_AUTH_DOMAIN ? 'SET ✓' : 'NOT SET ✗');
+console.log('FIREBASE_DATABASE_URL:', envVars.FIREBASE_DATABASE_URL ? 'SET ✓' : 'NOT SET ✗');
+console.log('FIREBASE_PROJECT_ID:', envVars.FIREBASE_PROJECT_ID ? 'SET ✓' : 'NOT SET ✗');
+console.log('FIREBASE_STORAGE_BUCKET:', envVars.FIREBASE_STORAGE_BUCKET ? 'SET ✓' : 'NOT SET ✗');
+console.log('FIREBASE_MESSAGING_SENDER_ID:', envVars.FIREBASE_MESSAGING_SENDER_ID ? 'SET ✓' : 'NOT SET ✗');
+console.log('FIREBASE_APP_ID:', envVars.FIREBASE_APP_ID ? 'SET ✓' : 'NOT SET ✗');
+console.log('OPENROUTER_API_KEY:', envVars.OPENROUTER_API_KEY ? 'SET ✓' : 'NOT SET ✗');
 
 // Generate env-config.js content
 const envConfigContent = `
@@ -37,14 +49,21 @@ window.FIREBASE_MESSAGING_SENDER_ID = window.ENV_CONFIG.FIREBASE_MESSAGING_SENDE
 window.FIREBASE_APP_ID = window.ENV_CONFIG.FIREBASE_APP_ID;
 
 console.log('✓ Environment configuration loaded');
+console.log('Firebase Config Available:', !!window.FIREBASE_API_KEY);
+console.log('OpenRouter API Key Available:', !!window.ENV_CONFIG.OPENROUTER_API_KEY);
 `;
 
 try {
   // Write the env-config.js file
   const outputPath = path.join(process.cwd(), 'env-config.js');
   fs.writeFileSync(outputPath, envConfigContent, 'utf8');
-  console.log('✓ Created env-config.js with environment variables');
+  console.log('✅ Successfully created env-config.js with environment variables');
+  
+  // Verify the file was written correctly
+  const stats = fs.statSync(outputPath);
+  console.log(`📄 File size: ${stats.size} bytes`);
+  
 } catch (error) {
-  console.error('✗ Failed to create env-config.js:', error.message);
+  console.error('❌ Failed to create env-config.js:', error.message);
   process.exit(1);
 }
