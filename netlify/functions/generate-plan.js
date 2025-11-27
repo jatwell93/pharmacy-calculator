@@ -170,58 +170,74 @@ exports.handler = async function (event, context) {
     const { database, dbRef, dbSet } = initializeDatabase();
     console.log("📱 Database initialized for job:", jobId);
 
+    // Save initial pending status
     await dbSet(dbRef(database, `plans/${jobId}`), {
       status: "pending",
       createdAt: new Date().toISOString(),
     });
+    console.log("📝 Initial pending status saved for jobId:", jobId);
 
-    // Async background processing
-    setImmediate(async () => {
-      try {
-        console.log(
-          "Generating AI plan for job:",
-          jobId,
-          "with structured payload",
-        );
+    // Process synchronously - setImmediate doesn't work reliably in serverless
+    // because the function context can be terminated after response is sent
+    try {
+      console.log(
+        "Generating AI plan for job:",
+        jobId,
+        "with structured payload",
+      );
 
-        // 1. Create the AI prompt
-        const prompt = createPharmacyPrompt(structuredPayload);
+      // 1. Create the AI prompt
+      const prompt = createPharmacyPrompt(structuredPayload);
 
-        // 2. Call OpenRouter AI
-        const aiResponse = await callOpenRouterAI(prompt);
+      // 2. Call OpenRouter AI
+      const aiResponse = await callOpenRouterAI(prompt);
 
-        // 3. Parse the plan
-        const plan = parseAIResponse(aiResponse);
+      // 3. Parse the plan
+      const plan = parseAIResponse(aiResponse);
 
-        console.log("🔍 DEBUG: About to save plan for jobId:", jobId);
-        await dbSet(dbRef(database, `plans/${jobId}`), {
+      console.log("🔍 DEBUG: About to save completed plan for jobId:", jobId);
+      await dbSet(dbRef(database, `plans/${jobId}`), {
+        status: "complete",
+        plan,
+        completedAt: new Date().toISOString(),
+      });
+      console.log("✅ Plan saved successfully for jobId:", jobId);
+
+      // Return success with plan directly - no need for polling
+      // Note: We don't include jobId here to prevent client from polling
+      return {
+        statusCode: 200,
+        headers,
+        body: JSON.stringify({
+          success: true,
           status: "complete",
           plan,
-          completedAt: new Date().toISOString(),
-        });
-        console.log("✅ Plan saved successfully for jobId:", jobId);
-      } catch (error) {
-        console.error("Background error for job", jobId, ":", error);
-        console.log("🔍 DEBUG: About to save error for jobId:", jobId);
-        await dbSet(dbRef(database, `plans/${jobId}`), {
-          status: "error",
-          error: error.message,
-        });
-        console.log("✅ Error saved for jobId:", jobId);
-      }
-    });
+        }),
+      };
+    } catch (processingError) {
+      console.error("Processing error for job", jobId, ":", processingError);
+      
+      // Save error status to database
+      await dbSet(dbRef(database, `plans/${jobId}`), {
+        status: "error",
+        error: processingError.message,
+        errorAt: new Date().toISOString(),
+      });
+      console.log("❌ Error saved for jobId:", jobId);
 
-    // Return immediately (use 200 so clients get the jobId in the response body)
-    console.log("Generated jobId:", jobId);
-    console.log("Returning body:", JSON.stringify({ success: true, jobId }));
-    return {
-      statusCode: 200,
-      headers,
-      body: JSON.stringify({
-        success: true,
-        jobId,
-      }),
-    };
+      // Return error response with fallback plan
+      return {
+        statusCode: 200, // Use 200 so client can parse the response
+        headers,
+        body: JSON.stringify({
+          success: false,
+          jobId,
+          status: "error",
+          error: processingError.message,
+          fallbackPlan: generateFallbackPlan(),
+        }),
+      };
+    }
   } catch (error) {
     console.error("Handler error:", error);
     console.error("Error stack:", error.stack);
