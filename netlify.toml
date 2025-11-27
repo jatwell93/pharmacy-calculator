@@ -6,9 +6,13 @@
   NODE_VERSION = "18"
   SECRETS_SCAN_OMIT_PATHS = "env-config.js"
 
-# Functions directory
+# Functions configuration
 [functions]
   directory = "netlify/functions"
+  # Use esbuild for faster builds and better compatibility
+  node_bundler = "esbuild"
+  # Ensure environment variables are available to functions
+  included_files = ["dev/**"]
 
 # Template replacement for Firebase config
 [[redirects]]
@@ -26,3 +30,8 @@
 # FIREBASE_API_KEY, FIREBASE_AUTH_DOMAIN, FIREBASE_DATABASE_URL, FIREBASE_PROJECT_ID
 # FIREBASE_STORAGE_BUCKET, FIREBASE_MESSAGING_SENDER_ID, FIREBASE_APP_ID
 # OPENROUTER_API_KEY
+#
+# Note: Environment variables set in the Netlify dashboard are automatically
+# available to functions via process.env at runtime. The functions have been
+# updated to initialize Firebase inside the handler (not at module load time)
+# to ensure environment variables are properly available.

@@ -1,4 +1,6 @@
 // netlify/functions/generate-plan-background.js
+// FIXED: Moved Firebase initialization from module-level to handler function
+// to ensure environment variables are available at runtime
 
 // Retry configuration constants
 const MAX_RETRIES = 3;
@@ -6,38 +8,92 @@ const RETRY_DELAY = 1000; // Base delay in milliseconds (1 second)
 
 const { v4: uuidv4 } = require("uuid");
 
-// Determine if we're in production environment
-const isProduction = process.env.NETLIFY === "true" && process.env.CONTEXT === "production";
-const forceLocalDb = process.env.FORCE_LOCAL_DB === "true"; // Allow explicit override
+// Helper function to initialize database based on environment
+// This is called inside the handler to ensure env vars are available
+function initializeDatabase() {
+  // Log environment variable status for debugging
+  console.log("🔍 Environment Check:", {
+    NETLIFY: process.env.NETLIFY,
+    CONTEXT: process.env.CONTEXT,
+    NODE_ENV: process.env.NODE_ENV,
+    hasFirebaseApiKey: !!process.env.FIREBASE_API_KEY,
+    hasFirebaseAuthDomain: !!process.env.FIREBASE_AUTH_DOMAIN,
+    hasFirebaseDatabaseUrl: !!process.env.FIREBASE_DATABASE_URL,
+    hasFirebaseProjectId: !!process.env.FIREBASE_PROJECT_ID,
+    FORCE_LOCAL_DB: process.env.FORCE_LOCAL_DB
+  });
 
-// Check Firebase configuration
-const hasFirebaseConfig = process.env.FIREBASE_API_KEY && 
-                         process.env.FIREBASE_AUTH_DOMAIN && 
-                         process.env.FIREBASE_DATABASE_URL && 
-                         process.env.FIREBASE_PROJECT_ID;
+  const isProduction = process.env.NETLIFY === "true" || process.env.CONTEXT === "production";
+  const forceLocalDb = process.env.FORCE_LOCAL_DB === "true";
+  
+  const hasFirebaseConfig = process.env.FIREBASE_API_KEY &&
+                           process.env.FIREBASE_AUTH_DOMAIN &&
+                           process.env.FIREBASE_DATABASE_URL &&
+                           process.env.FIREBASE_PROJECT_ID;
 
-// Use appropriate database based on environment and configuration
-let initializeApp, getDatabase, ref, set;
-if (isProduction && hasFirebaseConfig && !forceLocalDb) {
-  console.log("🔐 Production mode: using Firebase Realtime Database");
-  const firebaseAppModule = require("firebase/app");
-  const firebaseDbModule = require("firebase/database");
-  initializeApp = firebaseAppModule.initializeApp;
-  getDatabase = firebaseDbModule.getDatabase;
-  ref = firebaseDbModule.ref;
-  set = firebaseDbModule.set;
-} else if (forceLocalDb || (!isProduction && !hasFirebaseConfig)) {
-  console.log("⚙️  Development/Fallback mode: using local file-backed database");
-  const localDb = require("../../dev/localDatabase");
-  initializeApp = localDb.initializeApp;
-  getDatabase = localDb.getDatabase;
-  ref = localDb.ref;
-  set = localDb.set;
-} else {
-  // Production but missing Firebase config - this is an error state
-  console.error("❌ PRODUCTION ERROR: Missing Firebase configuration. Please set Firebase environment variables.");
-  console.error("Required variables: FIREBASE_API_KEY, FIREBASE_AUTH_DOMAIN, FIREBASE_DATABASE_URL, FIREBASE_PROJECT_ID");
-  throw new Error("Firebase configuration missing for production deployment. Please set environment variables in Netlify dashboard.");
+  let database, dbRef, dbSet;
+
+  if (hasFirebaseConfig && !forceLocalDb) {
+    // Use Firebase when config is available (production or development with Firebase)
+    console.log("🔐 Using Firebase Realtime Database");
+    try {
+      const firebaseAppModule = require("firebase/app");
+      const firebaseDbModule = require("firebase/database");
+      
+      const firebaseConfig = {
+        apiKey: process.env.FIREBASE_API_KEY,
+        authDomain: process.env.FIREBASE_AUTH_DOMAIN,
+        databaseURL: process.env.FIREBASE_DATABASE_URL,
+        projectId: process.env.FIREBASE_PROJECT_ID,
+        storageBucket: process.env.FIREBASE_STORAGE_BUCKET,
+        messagingSenderId: process.env.FIREBASE_MESSAGING_SENDER_ID,
+        appId: process.env.FIREBASE_APP_ID,
+      };
+
+      // Check if app is already initialized
+      let app;
+      if (firebaseAppModule.getApps().length === 0) {
+        app = firebaseAppModule.initializeApp(firebaseConfig);
+      } else {
+        app = firebaseAppModule.getApp();
+      }
+      
+      database = firebaseDbModule.getDatabase(app);
+      dbRef = firebaseDbModule.ref;
+      dbSet = firebaseDbModule.set;
+      console.log("✅ Firebase initialized successfully");
+    } catch (firebaseError) {
+      console.error("❌ Firebase initialization failed:", firebaseError.message);
+      throw new Error(`Firebase initialization failed: ${firebaseError.message}`);
+    }
+  } else if (forceLocalDb || !isProduction) {
+    // Development mode: use local file-backed database
+    console.log("⚙️ Development mode: using local file-backed database");
+    try {
+      const localDb = require("../../dev/localDatabase");
+      const app = localDb.initializeApp({});
+      database = localDb.getDatabase(app);
+      dbRef = localDb.ref;
+      dbSet = localDb.set;
+      console.log("✅ Local database initialized successfully");
+    } catch (localDbError) {
+      console.error("❌ Local database initialization failed:", localDbError.message);
+      throw new Error(`Local database initialization failed: ${localDbError.message}`);
+    }
+  } else {
+    // Production but missing Firebase config - this is an error state
+    console.error("❌ PRODUCTION ERROR: Missing Firebase configuration.");
+    console.error("Required variables: FIREBASE_API_KEY, FIREBASE_AUTH_DOMAIN, FIREBASE_DATABASE_URL, FIREBASE_PROJECT_ID");
+    console.error("Current values:", {
+      FIREBASE_API_KEY: process.env.FIREBASE_API_KEY ? "SET" : "NOT SET",
+      FIREBASE_AUTH_DOMAIN: process.env.FIREBASE_AUTH_DOMAIN ? "SET" : "NOT SET",
+      FIREBASE_DATABASE_URL: process.env.FIREBASE_DATABASE_URL ? "SET" : "NOT SET",
+      FIREBASE_PROJECT_ID: process.env.FIREBASE_PROJECT_ID ? "SET" : "NOT SET",
+    });
+    throw new Error("Firebase configuration missing for production deployment. Please set environment variables in Netlify dashboard.");
+  }
+
+  return { database, dbRef, dbSet };
 }
 
 exports.handler = async function (event, context) {
@@ -100,34 +156,10 @@ exports.handler = async function (event, context) {
 
     const jobId = uuidv4();
 
-    // Initialize database using the already-configured helper (from top of file)
-    // The module-level logic already determines if we're using Firebase or local DB
-    let database;
-    if (isProduction && hasFirebaseConfig && !forceLocalDb) {
-      // Production Firebase mode
-      const firebaseConfig = {
-        apiKey: process.env.FIREBASE_API_KEY,
-        authDomain: process.env.FIREBASE_AUTH_DOMAIN,
-        databaseURL: process.env.FIREBASE_DATABASE_URL,
-        projectId: process.env.FIREBASE_PROJECT_ID,
-        storageBucket: process.env.FIREBASE_STORAGE_BUCKET,
-        messagingSenderId: process.env.FIREBASE_MESSAGING_SENDER_ID,
-        appId: process.env.FIREBASE_APP_ID,
-      };
-
-      const app = initializeApp(firebaseConfig);
-      database = getDatabase(app);
-      console.log("📱 Using Firebase Realtime Database for job:", jobId);
-    } else {
-      // Development/Fallback mode: use local file-backed database
-      const localDb = require("../../dev/localDatabase");
-      const app = localDb.initializeApp({});
-      database = localDb.getDatabase(app);
-      console.log("✅ Using local file-backed database for job:", jobId);
-    }
-
-    let dbRef = ref;
-    let dbSet = set;
+    // Initialize database - this is now done inside the handler to ensure
+    // environment variables are available at runtime
+    const { database, dbRef, dbSet } = initializeDatabase();
+    console.log("📱 Database initialized for job:", jobId);
 
     await dbSet(dbRef(database, `plans/${jobId}`), {
       status: "pending",

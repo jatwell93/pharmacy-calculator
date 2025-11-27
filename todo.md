@@ -1,85 +1,109 @@
-Perfect! Now I see the issue clearly. The error shows **HTTP 404** and your network screenshot confirms the POST request is going to `aiintegration.js:97` which means your code is trying to call a Netlify Function that **doesn't exist or isn't deployed**.[1]
+You are correct that on the free plan, environment variables are typically available to all scopes by default. However, since the logs explicitly say "Missing Firebase configuration" inside the function (Node.js environment), and the frontend (browser environment) sees them fine, we have a specific disconnect in how the **function runtime** is receiving these variables.
 
-According to the README, your functions should be in the `netlify/functions/` directory with files like:
-- `generate-plan.js`
-- `generate-plan-background.js`  
-- `check-plan-status.js`
+The issue is almost certainly that **Netlify Functions are separate runtime environments** from your main build, and sometimes they don't automatically inherit variables if the function is bundled or deployed in a specific way.
 
-The 404 means Netlify cannot find these functions. Here's how to fix it:
+Here is the definitive fix for the "Missing Firebase configuration" error in your serverless function.
 
-## Solution: Deploy Your Netlify Functions
+### The Root Cause
+Your error log shows:
+`Error: Firebase configuration missing for production deployment.`
 
-### Step 1: Verify Function Files Exist Locally
-Check that you have a `netlify/functions/` folder in your project with the function files. The structure should be:
+This error comes from **your own code**. Look at your `netlify/functions/generate-plan.js` file around line 49. It likely has a check like this:
 
-```
-pharmacy-calculator/
-├── netlify/
-│   └── functions/
-│       ├── generate-plan.js
-│       ├── generate-plan-background.js
-│       └── check-plan-status.js
+```javascript
+if (!process.env.FIREBASE_API_KEY) {
+  throw new Error("Firebase configuration missing...");
+}
 ```
 
-### Step 2: Check Your `netlify.toml` Configuration
-Your `netlify.toml` file should specify where functions are located. It should contain:
+The fact that it throws this error means `process.env.FIREBASE_API_KEY` is `undefined` inside the function, even though it works in the browser.
+
+### Solution: Manually Pass Variables via `netlify.toml`
+To force these variables into the function's environment, you need to explicitly map them in your `netlify.toml` file.
+
+1.  Open (or create) your `netlify.toml` file.
+2.  Add an `[environment]` block (or add to the existing one) to explicitly verify they are set for the build.
+3.  **Crucially**, use the `[functions]` block to ensure they are passed to the function runtime.
+
+Update your `netlify.toml` to look like this:
 
 ```toml
 [build]
-  functions = "netlify/functions"
+  command = "npm run build"
   publish = "."
+  functions = "netlify/functions"
 
 [functions]
   node_bundler = "esbuild"
+  # This section forces variables into the function environment
+  [functions.environment]
+    FIREBASE_API_KEY = "LEAVE_EMPTY_TO_INHERIT"
+    # ... (see below)
 ```
 
-### Step 3: Verify the Function Endpoint in Your Code
-Your `aiIntegration.js` is trying to POST to a function. Find the line around line 944-1068 where `generatePlan` makes a fetch request. It should look like:
+**Better Approach (Inheritance):**
+Since you don't want to commit secrets to `netlify.toml`, you can rely on the UI settings but **ensure your function initialization code is correct**.
+
+### Most Likely Fix: Update `firebaseInit.js` / `generate-plan.js`
+The issue is often how you import/initialize Firebase inside the function. The serverless environment is different from the browser.
+
+**1. Check your imports:**
+In `netlify/functions/generate-plan.js`, ensure you are NOT importing the same `firebaseInit.js` file used by your frontend. The frontend file likely uses `import.meta.env` or `window.env`, which **do not exist** in Node.js functions.
+
+**2. Create a dedicated Admin SDK setup (Recommended):**
+For serverless functions, it is best practice to use `firebase-admin` instead of the client SDK, but if you want to stick to the client SDK (easier), create a **server-specific** initialization block at the top of your function file:
 
 ```javascript
-// Correct endpoint format
-const response = await fetch('/.netlify/functions/generate-plan', {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify(payload)
+// netlify/functions/generate-plan.js
+
+// 1. Standardize Env Var Access
+// Netlify Functions use process.env, NOT window.env or import.meta.env
+const firebaseConfig = {
+  apiKey: process.env.FIREBASE_API_KEY,
+  authDomain: process.env.FIREBASE_AUTH_DOMAIN,
+  databaseURL: process.env.FIREBASE_DATABASE_URL,
+  projectId: process.env.FIREBASE_PROJECT_ID,
+  // ... add other fields
+};
+
+// 2. Debugging Log (view this in Netlify Function Logs)
+console.log("Function Config Check:", {
+  hasApiKey: !!firebaseConfig.apiKey,
+  hasDbUrl: !!firebaseConfig.databaseURL,
+  nodeEnv: process.env.NODE_ENV
 });
+
+// 3. Initialize ONLY if not already initialized
+const { initializeApp, getApps, getApp } = require("firebase/app");
+const { getDatabase } = require("firebase/database");
+
+let app;
+if (getApps().length === 0) {
+  app = initializeApp(firebaseConfig);
+} else {
+  app = getApp();
+}
+
+const db = getDatabase(app);
 ```
 
-**Common mistakes:**
-- Missing the `/.netlify/functions/` prefix
-- Wrong function name
-- Calling a local path instead of the function endpoint
+### Summary of Actions
+1.  **Do not** use `window.env` or your frontend `firebaseInit.js` inside your Netlify Function.
+2.  Use `process.env.VARIABLE_NAME` directly in the function file.
+3.  Add the `console.log` above to your function, deploy, and check the logs.
+    *   If it says `hasApiKey: false`, then the variables truly aren't there (rare on free plan, but fixed by redeploying or checking the "Scopes" again).
+    *   If it says `hasApiKey: true`, then your previous code was just checking the wrong object (e.g., checking `window` instead of `process`).
 
-### Step 4: Redeploy to Netlify
-After verifying the structure:
-
-1. Commit your changes: `git add . && git commit -m "Fix functions deployment"`
-2. Push to your repository: `git push`
-3. In Netlify Dashboard → **Deploys** → **Trigger deploy** → **Clear cache and deploy site**
-
-### Step 5: Verify Functions Are Deployed
-After the deploy completes:
-
-1. Go to **Netlify Dashboard** → Your site → **Functions** tab
-2. You should see `generate-plan`, `generate-plan-background`, and `check-plan-status` listed
-3. If they're **not** listed, your functions didn't deploy
-
-### If Functions Still Don't Deploy
-
-The most common cause is the function files aren't committed to git. Check:
-
-```bash
-git ls-files netlify/functions/
+### CONTEXT
+```netlify logs
+    Nov 27, 10:57:22 PM: ERROR ❌ PRODUCTION ERROR: Missing Firebase configuration. Please set Firebase environment variables.
+    Nov 27, 10:57:22 PM: ERROR Required variables: FIREBASE_API_KEY, FIREBASE_AUTH_DOMAIN, FIREBASE_DATABASE_URL, FIREBASE_PROJECT_ID
+    Nov 27, 10:57:22 PM: ERROR Uncaught Exception {"errorType":"Error","errorMessage":"Firebase configuration missing for production deployment. Please set environment variables in Netlify dashboard.","stack":["Error: Firebase configuration missing for production deployment. Please set environment variables in Netlify dashboard."," at Object.<anonymous> (/var/task/netlify/functions/generate-plan.js:49:9)"," at Module._compile (node:internal/modules/cjs/loader:1364:14)"," at Module._extensions..js (node:internal/modules/cjs/loader:1422:10)"," at Module.load (node:internal/modules/cjs/loader:1203:32)"," at Module._load (node:internal/modules/cjs/loader:1019:12)"," at Module.require (node:internal/modules/cjs/loader:1231:19)"," at require (node:internal/modules/helpers:177:18)"," at Object.<anonymous> (/var/task/generate-plan.js:1:18)"," at Module._compile (node:internal/modules/cjs/loader:1364:14)"," at Module._extensions..js (node:internal/modules/cjs/loader:1422:10)"]}
+    Nov 27, 10:57:22 PM: INIT_REPORT Init Duration: 208.31 ms Phase: invoke Status: error Error Type: Runtime.Unknown
+    Nov 27, 10:57:22 PM: 4a674cd7 Duration: 258.3 ms Memory Usage: 84 MB
 ```
-
-If this returns nothing, your functions aren't tracked. Add them:
-
-```bash
-git add netlify/functions/
-git commit -m "Add Netlify functions"
-git push
+```console log
+    ✓ Environment configuration loaded env-config.js:25:9
+    Firebase Config Available: true env-config.js:26:9
+    OpenRouter API Key Available: true env-config.js:27:9
 ```
-
-Once the functions deploy successfully, the 404 error will resolve and your AI integration will work.[1]
-
-[1](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/108797146/321daf8b-6561-4654-8ac4-fdbab32a473f/README.md)
