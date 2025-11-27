@@ -10,6 +10,7 @@ pharmacy-calculator/
 ├── original_calc.html      # Original calculator version (archived)
 ├── README.md              # This file
 ├── DEBUG_GUIDE.md         # Debugging and development guide
+├── DOWNLOAD_FEATURE.md    # Download feature implementation guide
 ├── package.json           # Node.js dependencies and scripts
 ├── .gitignore             # Git ignore rules
 ├── eslint.config.mjs      # ESLint configuration
@@ -21,7 +22,8 @@ pharmacy-calculator/
 │   ├── serviceData.js    # Service definitions and data structures
 │   ├── calculations.js   # Calculation logic and utilities
 │   ├── ui.js             # DOM manipulation and table generation
-│   └── aiIntegration.js  # AI-powered action plan generation
+│   ├── aiIntegration.js  # AI-powered action plan generation
+│   └── downloadPlan.js   # Plan export functionality
 ├── dev/
 │   ├── local-server.js    # Local development server
 │   └── localDatabase.js   # File-backed database for local testing
@@ -184,6 +186,14 @@ AI-powered features:
 - `testWithRealData()` - Generate plans from current calculator data
 - API integration for plan generation
 
+### `js/downloadPlan.js`
+Plan export functionality:
+- `collectCalculatorData()` - Snapshots current calculator state
+- `generatePlanHTML()` - Creates HTML document
+- `downloadPlanHTML()` - Initiates HTML download
+- `downloadPlanPDF()` - Opens print-to-PDF dialog
+- `downloadPlanCSV()` - Exports spreadsheet data
+
 ### `js/main.js`
 Application initialization:
 - Module imports
@@ -223,6 +233,12 @@ The calculator includes AI-powered action plan generation:
    - Staffing and training recommendations
    - Marketing strategies
 
+### Export Options
+Once a plan is generated, you can download it in multiple formats:
+- **HTML**: Interactive document with full styling
+- **PDF**: Print-optimized version (via browser print dialog)
+- **CSV**: Raw data for spreadsheet analysis
+
 ## Customisation
 
 ### Adding a New Service
@@ -250,6 +266,10 @@ The calculator includes AI-powered action plan generation:
 
 Edit the calculation functions in `js/calculations.js` or create custom calc functions in `js/serviceData.js` for specific services.
 
+## Known Limitations
+
+- **PDF Export**: Currently relies on the browser's print dialog. You will need to select "Save as PDF" as the destination.
+- **Mobile Downloads**: CSV downloading may behave differently on some mobile browsers (opening in-app instead of saving).
 
 ## License
 
