@@ -1,87 +1,85 @@
-3. Test Firebase Connection Locally
+Perfect! Now I see the issue clearly. The error shows **HTTP 404** and your network screenshot confirms the POST request is going to `aiintegration.js:97` which means your code is trying to call a Netlify Function that **doesn't exist or isn't deployed**.[1]
 
-Add this temporary test to your aiIntegration.js (or create a test file):
+According to the README, your functions should be in the `netlify/functions/` directory with files like:
+- `generate-plan.js`
+- `generate-plan-background.js`  
+- `check-plan-status.js`
 
-```javascript
-// Test Firebase connection
-import { getDatabase, ref, set } from "firebase/database";
-import { getAuth, signInAnonymously } from "firebase/auth";
+The 404 means Netlify cannot find these functions. Here's how to fix it:
 
-async function testFirebase() {
-  try {
-    const auth = getAuth();
-    await signInAnonymously(auth);
-    console.log("✅ Firebase Auth: Connected");
-    
-    const db = getDatabase();
-    const testRef = ref(db, 'test-connection');
-    await set(testRef, { timestamp: Date.now() });
-    console.log("✅ Firebase Database: Write successful");
-  } catch (error) {
-    console.error("❌ Firebase Error:", error.code, error.message);
-  }
-}
+## Solution: Deploy Your Netlify Functions
 
-testFirebase();
+### Step 1: Verify Function Files Exist Locally
+Check that you have a `netlify/functions/` folder in your project with the function files. The structure should be:
+
 ```
-Run this locally first. If it fails, your Firebase config is wrong.
-Add Error Logging to Your Function
-
-Your Netlify Function needs better error handling so you can see what's failing. Update your function (e.g., netlify/functions/generate-plan.js) to include:
-
-```javascript
-exports.handler = async (event) => {
-  try {
-    // Log incoming request
-    console.log("Request received:", JSON.parse(event.body));
-    
-    // Your existing code...
-    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(payload)
-    });
-    
-    console.log("OpenRouter status:", response.status);
-    const data = await response.json();
-    console.log("OpenRouter response:", data);
-    
-    return {
-      statusCode: 200,
-      body: JSON.stringify(data)
-    };
-    
-  } catch (error) {
-    // Log the FULL error
-    console.error("Function error:", error);
-    return {
-      statusCode: 500,
-      body: JSON.stringify({ 
-        error: error.message,
-        stack: error.stack 
-      })
-    };
-  }
-};
+pharmacy-calculator/
+├── netlify/
+│   └── functions/
+│       ├── generate-plan.js
+│       ├── generate-plan-background.js
+│       └── check-plan-status.js
 ```
 
-Verify Environment Variables Are Loaded
+### Step 2: Check Your `netlify.toml` Configuration
+Your `netlify.toml` file should specify where functions are located. It should contain:
 
-Add this temporary diagnostic endpoint to test if Netlify is reading your env vars:
+```toml
+[build]
+  functions = "netlify/functions"
+  publish = "."
+
+[functions]
+  node_bundler = "esbuild"
+```
+
+### Step 3: Verify the Function Endpoint in Your Code
+Your `aiIntegration.js` is trying to POST to a function. Find the line around line 944-1068 where `generatePlan` makes a fetch request. It should look like:
 
 ```javascript
-// netlify/functions/test-config.js
-exports.handler = async () => {
-  return {
-    statusCode: 200,
-    body: JSON.stringify({
-      hasFirebaseKey: !!process.env.FIREBASE_API_KEY,
-      hasOpenRouterKey: !!process.env.OPENROUTER_API_KEY,
-      firebaseKeyPrefix: process.env.FIREBASE_API_KEY?.substring(0, 10) + "...",
-    })
-  };
-};
+// Correct endpoint format
+const response = await fetch('/.netlify/functions/generate-plan', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify(payload)
+});
 ```
+
+**Common mistakes:**
+- Missing the `/.netlify/functions/` prefix
+- Wrong function name
+- Calling a local path instead of the function endpoint
+
+### Step 4: Redeploy to Netlify
+After verifying the structure:
+
+1. Commit your changes: `git add . && git commit -m "Fix functions deployment"`
+2. Push to your repository: `git push`
+3. In Netlify Dashboard → **Deploys** → **Trigger deploy** → **Clear cache and deploy site**
+
+### Step 5: Verify Functions Are Deployed
+After the deploy completes:
+
+1. Go to **Netlify Dashboard** → Your site → **Functions** tab
+2. You should see `generate-plan`, `generate-plan-background`, and `check-plan-status` listed
+3. If they're **not** listed, your functions didn't deploy
+
+### If Functions Still Don't Deploy
+
+The most common cause is the function files aren't committed to git. Check:
+
+```bash
+git ls-files netlify/functions/
+```
+
+If this returns nothing, your functions aren't tracked. Add them:
+
+```bash
+git add netlify/functions/
+git commit -m "Add Netlify functions"
+git push
+```
+
+Once the functions deploy successfully, the 404 error will resolve and your AI integration will work.[1]
+
+[1](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/108797146/321daf8b-6561-4654-8ac4-fdbab32a473f/README.md)

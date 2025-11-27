@@ -112,7 +112,7 @@ export async function testWithSampleData() {
     // Try the non-background endpoint first so deployed environments that support immediate responses
     // can return the plan directly. If that fails (404 or empty body), fall back to the background endpoint.
     try {
-      response = await fetch("/api/generate-plan", {
+      response = await fetch("/.netlify/functions/generate-plan", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -128,7 +128,7 @@ export async function testWithSampleData() {
         response.status === 404 ||
         (response.status === 200 && contentLength === "0")
       ) {
-        response = await fetch("/api/generate-plan-background", {
+        response = await fetch("/.netlify/functions/generate-plan-background", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -140,7 +140,7 @@ export async function testWithSampleData() {
       }
     } catch (err) {
       // Network error or other failure — try background endpoint as a fallback
-      response = await fetch("/api/generate-plan-background", {
+      response = await fetch("/.netlify/functions/generate-plan-background", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -249,7 +249,7 @@ export async function testWithRealData() {
     let response;
     // Prefer the non-background endpoint where available; fall back to the background endpoint for Netlify Dev or proxies.
     try {
-      response = await fetch("/api/generate-plan", {
+      response = await fetch("/.netlify/functions/generate-plan", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -265,7 +265,7 @@ export async function testWithRealData() {
         response.status === 404 ||
         (response.status === 200 && contentLength === "0")
       ) {
-        response = await fetch("/api/generate-plan-background", {
+        response = await fetch("/.netlify/functions/generate-plan-background", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -277,7 +277,7 @@ export async function testWithRealData() {
       }
     } catch (err) {
       // If the first call fails (network/proxy issues), attempt the background endpoint
-      response = await fetch("/api/generate-plan-background", {
+      response = await fetch("/.netlify/functions/generate-plan-background", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -467,7 +467,7 @@ async function pollForPlan(jobId) {
 
       pollCount++;
       try {
-        const statusResponse = await fetch(`/api/check-plan-status/${jobId}`);
+        const statusResponse = await fetch(`/.netlify/functions/check-plan-status/${jobId}`);
         if (!statusResponse.ok) {
           throw new Error(`Status check failed: ${statusResponse.status}`);
         }
@@ -967,7 +967,7 @@ async function testWithPayload(payload) {
   try {
     let response;
     try {
-      response = await fetch("/api/generate-plan", {
+      response = await fetch("/.netlify/functions/generate-plan", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -976,7 +976,7 @@ async function testWithPayload(payload) {
       });
 
       if (response.status === 404) {
-        response = await fetch("/api/generate-plan-background", {
+        response = await fetch("/.netlify/functions/generate-plan-background", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -985,7 +985,7 @@ async function testWithPayload(payload) {
         });
       }
     } catch (err) {
-      response = await fetch("/api/generate-plan-background", {
+      response = await fetch("/.netlify/functions/generate-plan-background", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
