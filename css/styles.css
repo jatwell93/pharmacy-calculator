@@ -1,7 +1,94 @@
+/* Screen reader only utility */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+/* ========================================
+   FOCUS INDICATORS (Accessibility P0)
+   Visible focus rings for keyboard users
+   ======================================== */
+
+/* Global focus-visible for keyboard navigation */
+*:focus-visible {
+  outline: 2px solid var(--color-brand-teal);
+  outline-offset: 2px;
+}
+
+/* Remove outline for mouse users (focus via click) */
+*:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* Buttons: Enhanced focus ring */
+button:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring-teal), 0 0 0 1px var(--color-brand-teal);
+}
+
+/* Select elements: Visible focus ring */
+select:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring-teal);
+  border-color: var(--color-brand-teal);
+}
+
+/* Accordion buttons: Special handling */
+button[data-accordion-target]:focus-visible {
+  outline: 3px solid var(--color-brand-teal);
+  outline-offset: -3px;
+  box-shadow: var(--focus-ring-teal);
+}
+
+/* Close buttons (×): Amber focus for destructive actions */
+button[onclick*="close"]:focus-visible {
+  box-shadow: var(--focus-ring-amber), 0 0 0 1px var(--color-brand-amber);
+}
+
+/* Inputs: Already handled by .calc-input:focus, but ensure consistency */
+input[type="number"]:focus-visible {
+  outline: none;
+  border-color: var(--color-brand-teal);
+  box-shadow: var(--focus-ring-teal);
+}
+
+/* Plan preference inputs */
+#max-investment:focus-visible,
+#time-horizon:focus-visible {
+  outline: none;
+  border-color: var(--color-brand-teal);
+  box-shadow: var(--focus-ring-teal);
+}
+
+/* Links */
+a:focus-visible {
+  outline: 2px solid var(--color-brand-teal);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* High contrast mode: Use outline instead of box-shadow */
+@media (forced-colors: active) {
+  *:focus-visible {
+    outline: 2px solid Highlight;
+    outline-offset: 2px;
+  }
+}
+
+/* PharmIQ Styles */
+
 /* Base Styles */
 body {
-    font-family: "Inter", sans-serif;
-    background-color: #f8fafc;
+    font-family: var(--font-body);
+    background-color: var(--color-surface);
+    color: var(--color-text-primary);
 }
 
 /* Input Styles */
@@ -18,52 +105,57 @@ input::-webkit-inner-spin-button {
 
 /* Table Styles */
 .table-header {
-    background-color: #f1f5f9;
-    color: #475569;
-    font-weight: 600;
+    background-color: var(--color-brand-teal-50);
+    color: var(--color-brand-teal-dark);
+    font-weight: var(--weight-semibold);
+    font-family: var(--font-heading);
 }
 
 /* Calculator Input Styles */
 .calc-input {
-    border: 1px solid #cbd5e1;
-    border-radius: 0.375rem;
-    padding: 0.5rem;
+    border: 1px solid var(--color-border-mid);
+    border-radius: var(--radius-md);
+    padding: var(--space-2);
     text-align: center;
-    transition: border-color 0.2s;
+    transition: all var(--duration-normal) var(--ease-standard);
+    font-variant-numeric: tabular-nums;
 }
 
 .calc-input:focus {
     outline: none;
-    border-color: #4f46e5;
-    box-shadow: 0 0 0 1px #4f46e5;
+    border-color: var(--color-brand-teal);
+    box-shadow: var(--focus-ring-teal);
 }
 
 .calc-input:disabled {
-    background-color: #f1f5f9;
+    background-color: var(--color-border-light);
     cursor: not-allowed;
+    opacity: 0.7;
 }
 
 /* Result Cells */
 .result-cell {
-    font-weight: 500;
-    color: #1e293b;
+    font-weight: var(--weight-medium);
+    color: var(--color-text-primary);
+    font-variant-numeric: tabular-nums;
 }
 
 /* Section Title */
 .section-title {
-    color: #4338ca;
+    color: var(--color-brand-navy);
+    font-family: var(--font-heading);
+    font-weight: var(--weight-bold);
 }
 
-/* Total Card */
+/* Total Card Custom Styles (mostly handled by Tailwind classes in HTML now) */
 .total-card {
-    background-color: #eef2ff;
-    border-left: 4px solid #4f46e5;
+    transition: all var(--duration-normal) var(--ease-standard);
 }
 
 /* Funded Cell */
 .funded-cell {
-    color: #334155;
-    font-size: 0.875rem;
+    color: var(--color-text-secondary);
+    font-size: var(--text-body-sm);
 }
 
 /* Loading Animation */
@@ -72,12 +164,8 @@ input::-webkit-inner-spin-button {
 }
 
 @keyframes spin {
-    from {
-        transform: rotate(0deg);
-    }
-    to {
-        transform: rotate(360deg);
-    }
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
 }
 
 .animate-pulse {
@@ -85,44 +173,507 @@ input::-webkit-inner-spin-button {
 }
 
 @keyframes pulse {
-    0%,
-    100% {
-        opacity: 1;
-    }
-    50% {
-        opacity: 0.5;
-    }
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
 }
 
 /* Alert Messages */
 .alert {
-    padding: 1rem;
-    border-radius: 0.5rem;
-    margin-bottom: 1rem;
+    padding: var(--space-4);
+    border-radius: var(--radius-lg);
+    margin-bottom: var(--space-4);
 }
 
 .alert-warning {
-    background-color: #fef3c7;
-    border: 1px solid #fbbf24;
-    color: #92400e;
+    background-color: var(--color-warning-bg);
+    border: 1px solid var(--color-brand-amber-light);
+    color: var(--color-brand-amber-dark);
 }
 
 .alert-warning strong {
-    color: #78350f;
-}
-
-.alert-warning small {
-    display: block;
-    margin-top: 0.5rem;
-    opacity: 0.9;
-}
-
-.mb-3 {
-    margin-bottom: 1rem;
+    color: var(--color-brand-amber-dark);
+    font-weight: var(--weight-bold);
 }
 
 /* Accordion Icon Animation */
 [data-accordion-icon] {
-    transition: transform 0.3s ease-in-out;
+    transition: transform var(--duration-normal) var(--ease-standard);
 }
 
+.rotate-180 {
+    transform: rotate(180deg);
+}
+
+/* Utility Classes */
+.font-heading { font-family: var(--font-heading); }
+.font-worker { font-family: var(--font-worker); }
+.tabular-nums { font-variant-numeric: tabular-nums; }
+
+/* Text Truncation for Long Service Names */
+.service-name {
+  max-width: 280px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 768px) {
+  .service-name {
+    max-width: 180px;
+  }
+}
+
+/* Table Cell Text Overflow Prevention */
+td.font-semibold,
+td.font-bold {
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  word-break: break-word;
+  hyphens: auto;
+  max-width: 300px;
+}
+
+/* Enhanced prefers-reduced-motion */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .animate-spin,
+  .animate-pulse {
+    animation: none !important;
+  }
+}
+
+/* CSS Containment for better rendering performance */
+/* Isolate accordion sections to prevent layout thrashing */
+#parts-accordion > div {
+  contain: layout style paint;
+}
+
+/* Isolate total cards to prevent reflows */
+.total-card {
+  contain: layout style paint;
+}
+
+/* Optimize table rendering */
+table {
+  contain: layout style;
+}
+
+/* Optimize AI plan section rendering */
+#ai-plan-section {
+  contain: layout style paint;
+}
+
+/* Content visibility for below-fold sections */
+#definitions,
+#disclaimer {
+  content-visibility: auto;
+  contain-intrinsic-size: 0 500px;
+}
+
+/* ========================================
+   RESPONSIVE & MOBILE ADAPTATION
+   Mobile-first approach with breakpoints
+   ======================================== */
+
+/* Base: Mobile-first default styles */
+body {
+  -webkit-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Touch target sizing (44x44px minimum) */
+button,
+[role="button"],
+input[type="button"],
+input[type="submit"],
+a {
+  min-height: 44px;
+}
+
+/* Mobile Tables: Card-based layout */
+@media (max-width: 768px) {
+  /* Hide traditional table headers */
+  thead {
+    display: none;
+  }
+
+  /* Make table behave like a block container */
+  table,
+  thead,
+  tbody,
+  th,
+  td,
+  tr {
+    display: block;
+  }
+
+  /* Each row becomes a card */
+  tbody tr {
+    margin-bottom: 16px;
+    padding: 16px;
+    background-color: var(--color-white);
+    border: 1px solid var(--color-border-light);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+  }
+
+  /* Category header rows */
+  td[colspan="6"] {
+    padding: 12px 16px !important;
+    margin: -16px -16px 16px -16px;
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  }
+
+  /* Table cells stack vertically */
+  td {
+    padding: 8px 0;
+    text-align: left !important;
+    border: none;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+
+  /* Add labels before values using data attributes */
+  td::before {
+    content: attr(data-label);
+    font-weight: var(--weight-semibold);
+    color: var(--color-text-secondary);
+    font-size: var(--text-label);
+    margin-right: 12px;
+    flex-shrink: 0;
+  }
+
+  /* Hide labels for cells without data-label */
+  td:not([data-label])::before {
+    content: none;
+  }
+
+  /* Hide empty cells on mobile */
+  td:empty {
+    display: none;
+  }
+
+  /* Staged-supply patient rows: simplified mobile card */
+  tr .row-label {
+    justify-content: center;
+    padding-bottom: 0;
+  }
+
+  tr td[colspan="4"] {
+    display: none;
+  }
+
+  /* RMMR/QUM nested grids: stack on mobile */
+  td[colspan] > div {
+    width: 100%;
+  }
+
+  td[colspan] .grid {
+    grid-template-columns: 1fr !important;
+    gap: 16px !important;
+  }
+
+  /* Service name rows */
+  td.font-semibold.text-brand-navy {
+    flex-direction: column;
+    align-items: flex-start;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--color-border-lighter);
+    margin-bottom: 8px;
+  }
+
+  /* Inputs full width on mobile */
+  td .calc-input {
+    width: 100%;
+    max-width: 120px;
+  }
+
+  /* Result cells emphasis */
+  .result-cell {
+    padding: 8px 0 !important;
+  }
+
+  /* Accordion padding adjustments */
+  #parts-accordion button[type="button"] {
+    padding: 16px;
+    font-size: var(--text-body);
+  }
+
+  /* Totals cards stack vertically */
+  #totals-section > div {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Total cards full width */
+  .total-card {
+    width: 100%;
+  }
+
+  /* Plan preference inputs stack */
+  .grid.grid-cols-1.md\:grid-cols-3 {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Buttons stack on mobile */
+  .grid.grid-cols-1.md\:grid-cols-2 {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* FAQ accordion full width */
+  #faq-accordion {
+    width: 100% !important;
+  }
+
+  /* Modal adjustments */
+  .max-w-4xl {
+    width: calc(100% - 32px) !important;
+    max-height: 90vh !important;
+  }
+
+  /* Increase tap targets for small screens */
+  .cursor-help {
+    padding: 8px;
+    margin: -8px;
+  }
+}
+
+/* Tablet: 768px - 1024px */
+@media (min-width: 768px) and (max-width: 1024px) {
+  .max-w-screen-xl {
+    max-width: 90%;
+  }
+
+  /* Two-column totals layout */
+  #totals-section > div {
+    gap: 20px !important;
+  }
+}
+
+/* Desktop: 1024px+ */
+@media (min-width: 1024px) {
+  /* Show table headers only on desktop */
+  thead {
+    display: table-header-group;
+  }
+
+  table {
+    display: table;
+  }
+
+  tbody {
+    display: table-row-group;
+  }
+
+  tr {
+    display: table-row;
+  }
+
+  td,
+  th {
+    display: table-cell;
+  }
+
+  /* Remove mobile card styling */
+  tbody tr {
+    margin-bottom: 0;
+    padding: 0;
+    background-color: transparent;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  td {
+    padding: 12px 16px;
+    text-align: inherit;
+    display: table-cell;
+  }
+
+  td::before {
+    content: none;
+  }
+
+  td.font-semibold.text-brand-navy {
+    flex-direction: row;
+    align-items: center;
+    padding-bottom: inherit;
+    border-bottom: none;
+    margin-bottom: 0;
+  }
+}
+
+/* Large desktop: 1280px+ */
+@media (min-width: 1280px) {
+  .max-w-screen-xl {
+    max-width: 1280px;
+  }
+}
+
+/* Landscape mobile: Optimize for horizontal orientation */
+@media (max-height: 500px) and (orientation: landscape) {
+  .total-card {
+    padding: 12px !important;
+  }
+
+  .total-card p:first-child {
+    font-size: var(--text-label) !important;
+  }
+
+  .total-card p:last-child {
+    font-size: var(--text-h3) !important;
+  }
+
+  /* Reduce header/footer vertical space */
+  header.mb-12 {
+    margin-bottom: 24px !important;
+    padding-bottom: 16px !important;
+  }
+}
+
+/* High DPI / Retina: Ensure crisp rendering */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+  .border-light,
+  .border-lighter {
+    border-width: 0.5px;
+  }
+}
+
+/* Reduced motion: Respect user preferences */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Print styles: Optimize for paper output */
+@media print {
+  body {
+    background: white !important;
+    font-size: 12pt;
+  }
+
+  .max-w-screen-xl {
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  /* Hide interactive elements */
+  button,
+  #plan-preview,
+  #plan-loading {
+    display: none !important;
+  }
+
+  /* Show all accordion sections */
+  #parts-accordion > div {
+    break-inside: avoid;
+  }
+
+  /* Ensure tables print properly */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  td,
+  th {
+    border: 1px solid #000 !important;
+    padding: 8px;
+  }
+
+  /* Remove shadows and decorative elements */
+  * {
+    box-shadow: none !important;
+    text-shadow: none !important;
+  }
+
+  /* Ensure colors print */
+  .bg-brand-navy {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .bg-brand-teal {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}
+
+/* ========================================
+   SEMANTIC COLOR UTILITY CLASSES
+   Migrate from Tailwind to design tokens
+   ======================================== */
+
+/* Background Colors */
+.bg-surface { background-color: var(--color-surface); }
+.bg-surface-alt { background-color: var(--color-surface-alt); }
+.bg-surface-hover { background-color: var(--color-surface-hover); }
+.bg-white { background-color: var(--color-white); }
+.bg-brand-navy { background-color: var(--color-brand-navy); }
+.bg-brand-teal { background-color: var(--color-brand-teal); }
+.bg-brand-amber { background-color: var(--color-brand-amber); }
+.bg-teal-50 { background-color: var(--color-brand-teal-50); }
+.bg-amber-50 { background-color: var(--color-brand-amber-50); }
+.bg-overlay { background-color: var(--color-overlay); }
+
+/* Text Colors */
+.text-primary { color: var(--color-text-primary); }
+.text-secondary { color: var(--color-text-secondary); }
+.text-muted { color: var(--color-text-muted); }
+.text-label { color: var(--color-text-label); }
+.text-brand-navy { color: var(--color-brand-navy); }
+.text-brand-teal { color: var(--color-brand-teal); }
+.text-brand-amber { color: var(--color-brand-amber); }
+.text-teal-700 { color: var(--color-brand-teal-dark); }
+.text-teal-900 { color: var(--color-brand-teal-dark); }
+.text-amber-700 { color: var(--color-brand-amber-dark); }
+.text-amber-900 { color: var(--color-brand-amber-dark); }
+.text-teal-400 { color: var(--color-brand-teal-light); }
+.text-white { color: var(--color-white); }
+
+/* Border Colors */
+.border-lighter { border-color: var(--color-border-lighter); }
+.border-light { border-color: var(--color-border-light); }
+.border-mid { border-color: var(--color-border-mid); }
+.border-brand-teal { border-color: var(--color-brand-teal); }
+.border-teal-100 { border-color: var(--color-brand-teal-100); }
+.border-amber-100 { border-color: var(--color-brand-amber-light); }
+.border-slate-100 { border-color: var(--color-border-lighter); }
+.border-slate-200 { border-color: var(--color-border-light); }
+
+/* Hover State Colors */
+.hover-bg-surface-alt:hover { background-color: var(--color-surface-alt); }
+.hover-bg-slate-100:hover { background-color: var(--color-border-lighter); }
+.hover-bg-slate-200:hover { background-color: var(--color-border-light); }
+.hover-bg-slate-800:hover { background-color: var(--color-brand-navy-mid); }
+.hover-bg-teal-700:hover { background-color: var(--color-brand-teal-dark); }
+.hover-text-secondary:hover { color: var(--color-text-secondary); }
+.hover-border-teal:hover { border-color: rgba(15, 118, 110, 0.3); }
+.hover\:border-brand-amber\/30:hover { border-color: rgba(234, 139, 40, 0.3); }
+
+/* Transition utilities for hover states */
+.hover\:shadow-md:hover { box-shadow: var(--shadow-md); }
+.hover\:shadow-lg:hover { box-shadow: var(--shadow-lg); }
+.hover\:shadow-xl:hover { box-shadow: var(--shadow-lg); }
+
+/* Shadow Utilities */
+.shadow-sm { box-shadow: var(--shadow-sm); }
+.shadow-md { box-shadow: var(--shadow-md); }
+.shadow-lg { box-shadow: var(--shadow-lg); }

@@ -8,6 +8,22 @@ import { calculateAll } from "./calculations.js";
 import { downloadPlanHTML, downloadPlanPDF, downloadPlanCSV } from "./downloadPlan.js";
 
 /**
+ * Simple HTML escaping to prevent XSS
+ * @param {string} str - String to escape
+ * @returns {string} Escaped string
+ */
+function escapeHTML(str) {
+  if (str === null || str === undefined) return "";
+  if (typeof str !== "string") return String(str);
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+/**
  * Generate all service tables dynamically
  */
 export function generateTables() {
@@ -24,7 +40,7 @@ export function generateTables() {
 
     // Add category header
     const headerTr = document.createElement("tr");
-    headerTr.innerHTML = `<td colspan="6" class="px-4 py-4 bg-blue-50 font-bold text-blue-800 border-b-2">${partNames[partKey]}</td>`;
+    headerTr.innerHTML = `<td colspan="6" class="px-6 py-4 bg-brand-teal/5 font-bold text-brand-teal border-b border-brand-teal/10 font-heading uppercase text-sm tracking-wider">${partNames[partKey]}</td>`;
     tbody.appendChild(headerTr);
 
     servicesData[partKey].forEach((service) => {
@@ -32,15 +48,17 @@ export function generateTables() {
         // Custom layout for staged-supply
         // Header row
         const headerRow = document.createElement("tr");
+        const assumptionsHtml = service.assumptions
+          ? '<span title="' + service.assumptions.replace(/"/g, "&quot;") + '" class="text-slate-400 cursor-help" aria-label="Assumptions: ' + service.assumptions.replace(/"/g, "'") + '">(i)</span>'
+          : "";
         headerRow.innerHTML = `
-          <td class="px-4 py-3 font-medium text-gray-900">${service.name}${service.assumptions ? '<span title="' + service.assumptions.replace(/"/g, "&quot;") + '" class="text-gray-500 cursor-help"> ℹ️</span>' : ""}</td>
-          <td class="px-4 py-3 funded-cell">${service.fundedRateDesc}</td>
-          <td class="px-4 py-3 text-center">Pickups Per Week</td>
+          <td class="px-4 py-3 font-semibold text-brand-navy" data-label="Service"><span class="service-name">${service.name}</span>${assumptionsHtml}</td>
+          <td class="px-4 py-3 funded-cell font-medium" data-label="Funded Rate">${service.fundedRateDesc}</td>
+          <td class="px-4 py-3 text-center text-xs font-bold text-slate-500 uppercase tracking-wider font-heading" data-label="Pickups/Week">Pickups<br>per Week</td>
           <td class="px-4 py-3 text-center"></td>
           <td class="px-4 py-3 text-center"></td>
-          <td id="current-val-${service.id}" class="px-4 py-3 text-right result-cell tabular-nums"></td>
-          <td id="additional-val-${service.id}" class="px-4 py-3 text-right result-cell tabular-nums"></td>
-
+          <td id="current-val-${service.id}" class="px-4 py-3 text-right result-cell tabular-nums text-brand-teal" data-label="Current Value"></td>
+          <td id="additional-val-${service.id}" class="px-4 py-3 text-right result-cell tabular-nums text-brand-amber font-bold" data-label="Additional Value"></td>
         `;
         tbody.appendChild(headerRow);
 
@@ -49,10 +67,11 @@ export function generateTables() {
           const letter = String.fromCharCode(64 + i); // A to O
           const patientRow = document.createElement("tr");
           patientRow.innerHTML = `
-            <td class="px-4 py-3 text-center row-label">Patient ${letter}</td>
+            <td class="px-4 py-3 text-center row-label" data-label="Patient">Patient ${letter}</td>
             <td class="px-4 py-3 text-center"></td>
-            <td class="px-4 py-3 text-center">
-              <input type="number" class="calc-input" id="staged-supply-patient-${letter.toLowerCase()}" min="0" max="7" placeholder="e.g. 3" />
+            <td class="px-4 py-3 text-center" data-label="Pickups/Week">
+              <label for="staged-supply-patient-${letter.toLowerCase()}" class="sr-only">Patient ${letter} — weekly pickups</label>
+              <input type="number" class="calc-input" id="staged-supply-patient-${letter.toLowerCase()}" min="0" max="7" placeholder="0–7" aria-label="Patient ${letter}: weekly pickups (0 to 7)" />
             </td>
             <td colspan="4"></td>
           `;
@@ -65,30 +84,35 @@ export function generateTables() {
         // Header row
         const headerRow = document.createElement("tr");
         headerRow.innerHTML = `
-          <td class="px-4 py-3 row-label">Home Medications Reviews</td>
-          <td class="px-4 py-3 text-center">Funded Rate</td>
-          <td class="px-4 py-3 text-center">Services Per Month</td>
-          <td class="px-4 py-3 text-center">% Paid to 3rd Party</td>
+          <td class="px-4 py-3 font-semibold text-brand-navy">Home Medication Reviews</td>
+          <td class="px-4 py-3 text-center text-xs font-bold text-slate-500 uppercase tracking-wider font-heading">Funded<br>Rate</td>
+          <td class="px-4 py-3 text-center text-xs font-bold text-slate-500 uppercase tracking-wider font-heading">Services<br>per Month</td>
+          <td class="px-4 py-3 text-center text-xs font-bold text-slate-500 uppercase tracking-wider font-heading">% Paid to<br>3rd Party</td>
           <td class="px-4 py-3 text-center"></td>
-          <td class="px-4 py-3 text-right">Current Value</td>
-          <td class="px-4 py-3 text-right">Additional Value</td>
+          <td class="px-4 py-3 text-right text-xs font-bold text-slate-500 uppercase tracking-wider font-heading">Current<br>Value</td>
+          <td class="px-4 py-3 text-right text-xs font-bold text-slate-500 uppercase tracking-wider font-heading">Additional<br>Value</td>
         `;
         tbody.appendChild(headerRow);
 
         // Input row
+        const hmrAssumptionsHtml = service.assumptions
+          ? '<span title="' + service.assumptions.replace(/"/g, "&quot;") + '" class="text-slate-400 cursor-help" aria-label="Assumptions: ' + service.assumptions.replace(/"/g, "'") + '">(i)</span>'
+          : "";
         const inputRow = document.createElement("tr");
         inputRow.innerHTML = `
-          <td class="px-4 py-3 font-medium text-gray-900">${service.name}${service.assumptions ? '<span title="' + service.assumptions.replace(/"/g, "&quot;") + '" class="text-gray-500 cursor-help"> ℹ️</span>' : ""}</td>
-          <td class="px-4 py-3 funded-cell">${service.fundedRateDesc}</td>
-          <td class="px-4 py-3 text-center">
-            <input type="number" class="calc-input" id="${service.id}-current" placeholder="e.g. 5" />
+          <td class="px-4 py-3 font-semibold text-brand-navy" data-label="Service"><span class="service-name">${service.name}</span>${hmrAssumptionsHtml}</td>
+          <td class="px-4 py-3 funded-cell font-medium" data-label="Funded Rate">${service.fundedRateDesc}</td>
+          <td class="px-4 py-3 text-center" data-label="Services/Month">
+            <label for="${service.id}-current" class="sr-only">Home Medication Reviews — services per month</label>
+            <input type="number" class="calc-input" id="${service.id}-current" min="0" placeholder="0" aria-label="Home Medication Reviews: services per month" />
           </td>
-          <td class="px-4 py-3 text-center">
-            <input type="number" class="calc-input" id="${service.id}-3rd-party-pct" min="0" max="100" placeholder="0.00%" value="0" /> %
+          <td class="px-4 py-3 text-center" data-label="% to 3rd Party">
+            <label for="${service.id}-3rd-party-pct" class="sr-only">Percentage paid to third party</label>
+            <input type="number" class="calc-input" id="${service.id}-3rd-party-pct" min="0" max="100" placeholder="0" value="0" aria-label="Home Medication Reviews: percentage of payment paid to third party (0 to 100)" /> <span class="text-slate-400 font-bold">%</span>
           </td>
           <td class="px-4 py-3 text-center"></td>
-          <td id="current-val-${service.id}" class="px-4 py-3 text-right result-cell tabular-nums"></td>
-          <td id="additional-val-${service.id}" class="px-4 py-3 text-right result-cell tabular-nums"></td>
+          <td id="current-val-${service.id}" class="px-4 py-3 text-right result-cell tabular-nums text-brand-teal" data-label="Current Value"></td>
+          <td id="additional-val-${service.id}" class="px-4 py-3 text-right result-cell tabular-nums text-brand-amber font-bold" data-label="Additional Value"></td>
         `;
         tbody.appendChild(inputRow);
 
@@ -97,14 +121,17 @@ export function generateTables() {
         // Custom layout for RMMR with conditional display
         // Eligibility row
         const eligibilityRow = document.createElement("tr");
+        const rmmrAssumptionsHtml = service.assumptions
+          ? '<span title="' + service.assumptions.replace(/"/g, "&quot;") + '" class="text-muted cursor-help" aria-label="Assumptions: ' + service.assumptions.replace(/"/g, "'") + '">(i)</span>'
+          : "";
         eligibilityRow.innerHTML = `
-          <td class="px-4 py-3 font-medium text-gray-900">${service.name}${service.assumptions ? '<span title="' + service.assumptions.replace(/"/g, "&quot;") + '" class="text-gray-500 cursor-help"> ℹ️</span>' : ""}</td>
+          <td class="px-4 py-3 font-semibold text-brand-navy"><span class="service-name">${service.name}</span>${rmmrAssumptionsHtml}</td>
           <td colspan="6" class="px-4 py-3">
-            <div class="flex flex-col sm:flex-row sm:items-center gap-2">
-              <label class="row-label">Do you provide and claim RMMR services within an approved Australian Government-funded Aged Care Facility/Facilities?</label>
-              <select class="w-full sm:w-auto px-2 py-1 border border-gray-300 rounded-md text-sm" id="rmmr-eligible" onchange="toggleRMMRFields()">
-                <option value="No">No</option>
-                <option value="Yes">Yes</option>
+            <div class="flex flex-col sm:flex-row sm:items-center gap-3 bg-surface-alt p-4 rounded-xl border border-light shadow-sm">
+              <label class="text-brand-navy text-sm font-medium" for="rmmr-eligible">Do you claim RMMR services through an Australian Government-funded aged care facility?</label>
+              <select class="w-full sm:w-auto px-4 py-2 border border-light rounded-lg text-sm bg-white focus:ring-2 focus:ring-brand-teal focus:outline-none transition-all font-bold" id="rmmr-eligible" onchange="toggleRMMRFields()">
+                <option value="No">Not yet</option>
+                <option value="Yes">Yes, we do</option>
               </select>
             </div>
           </td>
@@ -114,39 +141,45 @@ export function generateTables() {
         // Details section (hidden by default)
         const detailsDiv = document.createElement("div");
         detailsDiv.id = "rmmr-details";
-        detailsDiv.className = "hidden w-full";
+        detailsDiv.className = "hidden w-full p-6 bg-slate-50/50 rounded-2xl border border-slate-100 mt-2 shadow-inner";
         detailsDiv.innerHTML = `
-          <div class="grid grid-cols-3 gap-4 font-medium text-gray-900 mb-4">
-            <div class="col-span-3">Residential Medication Management Review (RMMR)</div>
+          <div class="grid grid-cols-3 gap-4 font-bold text-brand-navy mb-6 font-heading uppercase text-xs tracking-widest">
+            <div class="col-span-3">Residential Medication Management Review (RMMR) Details</div>
           </div>
-          <div class="space-y-4">
-            <div class="grid grid-cols-3 gap-4 items-start">
-              <label class="row-label" for="rmmr-beds">
-                Enter the number of eligible aged care beds within the Facilities serviced by you.<br>
-                <em>If there is no opportunity to service a Facility, enter 0.</em>
+          <div class="space-y-6">
+            <div class="grid grid-cols-3 gap-6 items-center">
+              <label class="text-slate-700 text-sm font-medium" for="rmmr-beds">
+                Eligible aged care beds
+                <p class="text-xs text-slate-400 font-normal mt-1">Enter 0 if not applicable.</p>
               </label>
               <div>
-                <input type="number" class="calc-input" id="rmmr-beds" min="0" placeholder="e.g. 120" />
+                <input type="number" class="calc-input w-full" id="rmmr-beds" min="0" placeholder="e.g. 120" aria-label="Number of eligible aged care beds serviced for RMMR" />
               </div>
               <div></div>
             </div>
-            <div class="grid grid-cols-3 gap-4 items-start">
-              <label class="row-label" for="current-${service.id}">
-                How many RMMRs do you provide each year? And how many do you have the potential to provide/what is your goal?
-                <span id="rmmr-benchmark" class="hidden text-cyan-500 italic">
-                  <br>Note: On average, 79 RMMRs are conducted per 100 beds.
+            <div class="grid grid-cols-3 gap-6 items-start">
+              <label class="text-slate-700 text-sm font-medium" for="current-${service.id}">
+                Annual RMMR volume
+                <span id="rmmr-benchmark" class="hidden block text-brand-teal text-xs italic mt-2 font-semibold">
+                  Benchmark: 79 RMMRs per 100 beds per year.
                 </span>
               </label>
               <div>
-                <input type="number" class="calc-input" id="current-${service.id}" value="${service.currentVol}" />
+                <div class="flex items-center gap-2 mb-2">
+                  <span class="text-xs text-slate-400 font-semibold uppercase">Current</span>
+                </div>
+                <input type="number" class="calc-input w-full" id="current-${service.id}" value="${service.currentVol}" aria-label="Current annual RMMR volume" />
               </div>
               <div>
-                <input type="number" class="calc-input" id="potential-${service.id}" value="${service.potentialVol}" />
+                <div class="flex items-center gap-2 mb-2">
+                  <span class="text-xs text-slate-400 font-semibold uppercase">Potential</span>
+                </div>
+                <input type="number" class="calc-input w-full" id="potential-${service.id}" value="${service.potentialVol}" aria-label="Potential annual RMMR volume" />
               </div>
             </div>
-            <div class="grid grid-cols-3 gap-4 items-start">
-              <div id="current-val-${service.id}" class="text-right result-cell tabular-nums"></div>
-              <div id="additional-val-${service.id}" class="text-right result-cell tabular-nums"></div>
+            <div class="grid grid-cols-3 gap-6 items-center">
+              <div id="current-val-${service.id}" class="text-right result-cell tabular-nums text-brand-teal text-xl"></div>
+              <div id="additional-val-${service.id}" class="text-right result-cell tabular-nums text-brand-amber text-xl font-bold"></div>
               <div></div>
             </div>
           </div>
@@ -164,13 +197,13 @@ export function generateTables() {
         // Eligibility row
         const eligibilityRow = document.createElement("tr");
         eligibilityRow.innerHTML = `
-          <td class="px-4 py-3 font-medium text-gray-900">${service.name}</td>
+          <td class="px-4 py-3 font-semibold text-brand-navy"><span class="service-name">${service.name}</span></td>
           <td colspan="6" class="px-4 py-3">
-            <div class="flex flex-col sm:flex-row sm:items-center gap-2">
-              <label class="row-label">Do you provide and claim QUM services within an approved Australian Government-funded Aged Care Facility/Facilities?</label>
-              <select class="w-full sm:w-auto px-2 py-1 border border-gray-300 rounded-md text-sm" id="qum-eligible" onchange="toggleQUMFields()">
-                <option value="No">No</option>
-                <option value="Yes">Yes</option>
+            <div class="flex flex-col sm:flex-row sm:items-center gap-3 bg-slate-50 p-4 rounded-xl border border-slate-100 shadow-sm">
+              <label class="text-brand-navy text-sm font-medium" for="qum-eligible">Do you claim QUM services through an Australian Government-funded aged care facility?</label>
+              <select class="w-full sm:w-auto px-4 py-2 border border-slate-200 rounded-lg text-sm bg-white focus:ring-2 focus:ring-brand-teal focus:outline-none transition-all font-bold" id="qum-eligible" onchange="toggleQUMFields()">
+                <option value="No">Not yet</option>
+                <option value="Yes">Yes, we do</option>
               </select>
             </div>
           </td>
@@ -180,24 +213,24 @@ export function generateTables() {
         // Details section (hidden by default)
         const detailsDiv = document.createElement("div");
         detailsDiv.id = "qum-details";
-        detailsDiv.className = "hidden w-full";
+        detailsDiv.className = "hidden w-full p-6 bg-slate-50/50 rounded-2xl border border-slate-100 mt-2 shadow-inner";
         detailsDiv.innerHTML = `
-          <div class="grid grid-cols-3 gap-4 font-medium text-gray-900 mb-4">
-            <div class="col-span-3">Quality Use of Medicines (QUM)</div>
+          <div class="grid grid-cols-3 gap-4 font-bold text-brand-navy mb-6 font-heading uppercase text-xs tracking-widest">
+            <div class="col-span-3">Quality Use of Medicines (QUM) Details</div>
           </div>
-          <div class="space-y-4">
-            <div class="grid grid-cols-3 gap-4 items-start">
-              <label class="row-label" for="qum-beds">
-                Enter the number of eligible aged care beds within the Facilities serviced by you.
+          <div class="space-y-6">
+            <div class="grid grid-cols-3 gap-6 items-center">
+              <label class="text-slate-700 text-sm font-medium" for="qum-beds">
+                Eligible aged care beds
               </label>
               <div>
-                <input type="number" class="calc-input" id="qum-beds" min="0" />
+                <input type="number" class="calc-input w-full" id="qum-beds" min="0" placeholder="e.g. 80" aria-label="Number of eligible aged care beds serviced for QUM" />
               </div>
               <div></div>
             </div>
-            <div class="grid grid-cols-3 gap-4 items-start">
-              <div id="current-val-${service.id}" class="text-right result-cell tabular-nums"></div>
-              <div id="additional-val-${service.id}" class="text-right result-cell tabular-nums"></div>
+            <div class="grid grid-cols-3 gap-6 items-center">
+              <div id="current-val-${service.id}" class="text-right result-cell tabular-nums text-brand-teal text-xl"></div>
+              <div id="additional-val-${service.id}" class="text-right result-cell tabular-nums text-brand-amber text-xl font-bold"></div>
               <div></div>
             </div>
           </div>
@@ -214,26 +247,29 @@ export function generateTables() {
         // Custom layout for Adalimumab
         const headerRow = document.createElement("tr");
         headerRow.innerHTML = `
-          <td class="px-4 py-3 font-medium text-gray-900">${service.name}</td>
+          <td class="px-4 py-3 font-semibold text-brand-navy"><span class="service-name">${service.name}</span></td>
           <td class="px-4 py-3" colspan="6">
-            <div class="w-full">
-              <div class="grid grid-cols-3 gap-4 font-medium text-gray-900 mb-4">
-                <div class="text-center">Reference Biologic Patients<br><small class="text-sm">(originator brand)</small></div>
-                <div class="text-center">Biosimilar Patients</div>
-                <div class="text-center">Pharmacy Program Enrolled<br><small class="text-sm">(via PharmaPrograms)</small></div>
+            <div class="w-full bg-slate-50 p-6 rounded-2xl border border-slate-100 shadow-sm">
+              <div class="grid grid-cols-3 gap-6 font-bold text-brand-navy mb-6 font-heading uppercase text-[10px] tracking-widest text-center">
+                <div class="p-2 border-b border-slate-200">Reference Biologic<br><span class="text-[9px] font-normal text-slate-400">(originator brand)</span></div>
+                <div class="p-2 border-b border-slate-200">Biosimilar<br>Patients</div>
+                <div class="p-2 border-b border-slate-200">Program Enrolled<br><span class="text-[9px] font-normal text-slate-400">(via PharmaPrograms)</span></div>
               </div>
-              <div class="mb-4 italic">
-                Enter the number of patients you are currently dispensing biologics for, specifying how many of these receive the reference biologic (originator) and how many of these are receiving the biosimilar.
+              <div class="mb-6 text-sm text-slate-500 text-center">
+                Enter the number of patients you currently dispense biologics for.
               </div>
-              <div class="grid grid-cols-3 gap-4 items-center">
+              <div class="grid grid-cols-3 gap-6 items-center">
                 <div class="text-center">
-                  <input type="number" class="calc-input" id="${service.id}-originator" min="0" />
+                  <label for="${service.id}-originator" class="sr-only">Reference biologic patients for ${service.name}</label>
+                  <input type="number" class="calc-input w-full" id="${service.id}-originator" min="0" placeholder="0" aria-label="${service.name}: reference biologic patients (originator brand)" />
                 </div>
                 <div class="text-center">
-                  <input type="number" class="calc-input" id="${service.id}-biosimilar" min="0" />
+                  <label for="${service.id}-biosimilar" class="sr-only">Biosimilar patients for ${service.name}</label>
+                  <input type="number" class="calc-input w-full" id="${service.id}-biosimilar" min="0" placeholder="0" aria-label="${service.name}: biosimilar patients" />
                 </div>
                 <div class="text-center">
-                  <input type="number" class="calc-input" id="${service.id}-program" min="0" />
+                  <label for="${service.id}-program" class="sr-only">Pharmacy program enrolled patients for ${service.name}</label>
+                  <input type="number" class="calc-input w-full" id="${service.id}-program" min="0" placeholder="0" aria-label="${service.name}: pharmacy program enrolled patients (via PharmaPrograms)" />
                 </div>
               </div>
             </div>
@@ -245,8 +281,8 @@ export function generateTables() {
         const resultRow = document.createElement("tr");
         resultRow.innerHTML = `
           <td></td>
-          <td id="current-val-${service.id}" class="px-4 py-3 text-right result-cell tabular-nums"></td>
-          <td id="additional-val-${service.id}" class="px-4 py-3 text-right result-cell tabular-nums"></td>
+          <td id="current-val-${service.id}" class="px-4 py-3 text-right result-cell tabular-nums text-brand-teal font-semibold"></td>
+          <td id="additional-val-${service.id}" class="px-4 py-3 text-right result-cell tabular-nums text-brand-amber font-bold"></td>
           <td colspan="4"></td>
         `;
         tbody.appendChild(resultRow);
@@ -256,26 +292,29 @@ export function generateTables() {
         // Custom layout for Etanercept (similar to adalimumab)
         const headerRow = document.createElement("tr");
         headerRow.innerHTML = `
-          <td class="px-4 py-3 font-medium text-gray-900">${service.name}</td>
+          <td class="px-4 py-3 font-semibold text-brand-navy"><span class="service-name">${service.name}</span></td>
           <td class="px-4 py-3" colspan="6">
-            <div class="w-full">
-              <div class="grid grid-cols-3 gap-4 font-medium text-gray-900 mb-4">
-                <div class="text-center">Reference Biologic Patients<br><small class="text-sm">(originator brand)</small></div>
-                <div class="text-center">Biosimilar Patients</div>
-                <div class="text-center">Pharmacy Program Enrolled<br><small class="text-sm">(via PharmaPrograms)</small></div>
+            <div class="w-full bg-slate-50 p-6 rounded-2xl border border-slate-100 shadow-sm">
+              <div class="grid grid-cols-3 gap-6 font-bold text-brand-navy mb-6 font-heading uppercase text-[10px] tracking-widest text-center">
+                <div class="p-2 border-b border-slate-200">Reference Biologic<br><span class="text-[9px] font-normal text-slate-400">(originator brand)</span></div>
+                <div class="p-2 border-b border-slate-200">Biosimilar<br>Patients</div>
+                <div class="p-2 border-b border-slate-200">Program Enrolled<br><span class="text-[9px] font-normal text-slate-400">(via PharmaPrograms)</span></div>
               </div>
-              <div class="mb-4 italic">
-                Enter the number of patients you are currently dispensing biologics for, specifying how many of these receive the reference biologic (originator) and how many of these are receiving the biosimilar.
+              <div class="mb-6 text-sm text-slate-500 text-center">
+                Enter the number of patients you currently dispense biologics for.
               </div>
-              <div class="grid grid-cols-3 gap-4 items-center">
+              <div class="grid grid-cols-3 gap-6 items-center">
                 <div class="text-center">
-                  <input type="number" class="calc-input" id="${service.id}-originator" min="0" />
+                  <label for="${service.id}-originator" class="sr-only">Reference biologic patients for ${service.name}</label>
+                  <input type="number" class="calc-input w-full" id="${service.id}-originator" min="0" placeholder="0" aria-label="${service.name}: reference biologic patients (originator brand)" />
                 </div>
                 <div class="text-center">
-                  <input type="number" class="calc-input" id="${service.id}-biosimilar" min="0" />
+                  <label for="${service.id}-biosimilar" class="sr-only">Biosimilar patients for ${service.name}</label>
+                  <input type="number" class="calc-input w-full" id="${service.id}-biosimilar" min="0" placeholder="0" aria-label="${service.name}: biosimilar patients" />
                 </div>
                 <div class="text-center">
-                  <input type="number" class="calc-input" id="${service.id}-program" min="0" />
+                  <label for="${service.id}-program" class="sr-only">Pharmacy program enrolled patients for ${service.name}</label>
+                  <input type="number" class="calc-input w-full" id="${service.id}-program" min="0" placeholder="0" aria-label="${service.name}: pharmacy program enrolled patients (via PharmaPrograms)" />
                 </div>
               </div>
             </div>
@@ -287,8 +326,8 @@ export function generateTables() {
         const resultRow = document.createElement("tr");
         resultRow.innerHTML = `
           <td></td>
-          <td id="current-val-${service.id}" class="px-4 py-3 text-right result-cell tabular-nums"></td>
-          <td id="additional-val-${service.id}" class="px-4 py-3 text-right result-cell tabular-nums"></td>
+          <td id="current-val-${service.id}" class="px-4 py-3 text-right result-cell tabular-nums text-brand-teal font-semibold"></td>
+          <td id="additional-val-${service.id}" class="px-4 py-3 text-right result-cell tabular-nums text-brand-amber font-bold"></td>
           <td colspan="4"></td>
         `;
         tbody.appendChild(resultRow);
@@ -296,45 +335,55 @@ export function generateTables() {
         return; // Skip standard processing
       }
       const tr = document.createElement("tr");
-      tr.className = "hover:bg-gray-50";
+      tr.className = "hover:bg-slate-50/50 transition-all";
 
       if (service.isCombined) {
         // Layout for combined services (e.g., MedsChecks)
+        const combinedAssumptionsHtml = service.assumptions
+          ? '<span title="' + service.assumptions.replace(/"/g, "&quot;") + '" class="text-slate-400 cursor-help" aria-label="Assumptions: ' + service.assumptions.replace(/"/g, "'") + '">(i)</span>'
+          : "";
         tr.innerHTML = `
-            <td class="px-4 py-3 font-medium text-gray-900">${service.name}${service.assumptions ? '<span title="' + service.assumptions.replace(/"/g, "&quot;") + '" class="text-gray-500 cursor-help"> ℹ️</span>' : ""}</td>
-            <td class="px-4 py-3" colspan="2">
-                        ${service.fields.map((f) => `<div class="text-sm text-gray-600 my-1">${f.name}: <span class="font-semibold">${f.fundedRateDesc}</span></div>`).join("")}
+            <td class="px-4 py-3 font-semibold text-brand-navy" data-label="Service"><span class="service-name">${service.name}</span>${combinedAssumptionsHtml}</td>
+            <td class="px-4 py-3" colspan="2" data-label="Funded Rate">
+                        ${service.fields.map((f) => `<div class="text-sm text-slate-600 my-2">${f.name}: <span class="font-bold text-brand-teal">${f.fundedRateDesc}</span></div>`).join("")}
                     </td>
-                    <td class="px-4 py-3 text-center">
-                        ${service.fields.map((f) => `<div class="my-1"><input type="number" id="current-${service.id}-${f.id}" value="${f.currentVol}" class="calc-input"><span class="text-sm text-gray-500 ml-1">${service.unit}</span></div>`).join("")}
+                    <td class="px-4 py-3 text-center" data-label="Current">
+                        ${service.fields.map((f) => `<div class="my-2"><label for="current-${service.id}-${f.id}" class="sr-only">${f.name} — current volume</label><input type="number" id="current-${service.id}-${f.id}" value="${f.currentVol}" class="calc-input" aria-label="${f.name}: current volume (${service.unit})"><span class="text-xs text-slate-400 ml-1 font-bold">${service.unit}</span></div>`).join("")}
                     </td>
-                    <td class="px-4 py-3 text-center">
-                        ${service.fields.map((f) => `<div class="my-1"><input type="number" id="potential-${service.id}-${f.id}" value="${f.potentialVol}" class="calc-input"><span class="text-sm text-gray-500 ml-1">${service.unit}</span></div>`).join("")}
+                    <td class="px-4 py-3 text-center" data-label="Potential">
+                        ${service.fields.map((f) => `<div class="my-2"><label for="potential-${service.id}-${f.id}" class="sr-only">${f.name} — potential volume</label><input type="number" id="potential-${service.id}-${f.id}" value="${f.potentialVol}" class="calc-input" aria-label="${f.name}: potential volume (${service.unit})"><span class="text-xs text-slate-400 ml-1 font-bold">${service.unit}</span></div>`).join("")}
                     </td>
-                    <td id="current-val-${service.id}" class="px-4 py-3 text-right result-cell tabular-nums align-top pt-5"></td>
-                    <td id="additional-val-${service.id}" class="px-4 py-3 text-right result-cell tabular-nums align-top pt-5"></td>
+                    <td id="current-val-${service.id}" class="px-4 py-3 text-right result-cell tabular-nums align-top pt-5 text-brand-teal" data-label="Current Value"></td>
+                    <td id="additional-val-${service.id}" class="px-4 py-3 text-right result-cell tabular-nums align-top pt-5 text-brand-amber font-bold" data-label="Additional Value"></td>
                 `;
       } else {
         // Standard layout for regular services
+        const stdAssumptionsHtml = service.assumptions
+          ? '<span title="' + service.assumptions.replace(/"/g, "&quot;") + '" class="text-slate-400 cursor-help" aria-label="Assumptions: ' + service.assumptions.replace(/"/g, "'") + '">(i)</span>'
+          : "";
         tr.innerHTML = `
-            <td class="px-4 py-3 font-medium text-gray-900">${service.name}${service.assumptions ? '<span title="' + service.assumptions.replace(/"/g, "&quot;") + '" class="text-gray-500 cursor-help"> ℹ️</span>' : ""}</td>
-            <td class="px-4 py-3 funded-cell">${service.fundedRateDesc}</td>
-                    <td class="px-4 py-3 text-center">
-                        <div class="flex items-center justify-center gap-1">
-                            <input type="number" id="pfc-${service.id}" value="${service.patientFeeCurrent}" class="calc-input" ${service.patientFeeCurrent === 0 && service.patientFeePotential === 0 ? "disabled" : ""}> /
-                            <input type="number" id="pfp-${service.id}" value="${service.patientFeePotential}" class="calc-input" ${service.patientFeeCurrent === 0 && service.patientFeePotential === 0 ? "disabled" : ""}>
+            <td class="px-4 py-3 font-semibold text-brand-navy" data-label="Service"><span class="service-name">${service.name}</span>${stdAssumptionsHtml}</td>
+            <td class="px-4 py-3 funded-cell font-medium" data-label="Funded Rate">${service.fundedRateDesc}</td>
+                    <td class="px-4 py-3 text-center" data-label="Patient Fee (Current/Potential)">
+                        <div class="flex items-center justify-center gap-2">
+                            <label for="pfc-${service.id}" class="sr-only">${service.name} — current patient fee ($)</label>
+                            <input type="number" id="pfc-${service.id}" value="${service.patientFeeCurrent}" class="calc-input" ${service.patientFeeCurrent === 0 && service.patientFeePotential === 0 ? "disabled" : ""} aria-label="${service.name}: current patient fee ($)" placeholder="0"> <span class="text-slate-300">/</span>
+                            <label for="pfp-${service.id}" class="sr-only">${service.name} — potential patient fee ($)</label>
+                            <input type="number" id="pfp-${service.id}" value="${service.patientFeePotential}" class="calc-input" ${service.patientFeeCurrent === 0 && service.patientFeePotential === 0 ? "disabled" : ""} aria-label="${service.name}: potential patient fee ($)" placeholder="0">
                         </div>
                     </td>
-                    <td class="px-4 py-3 text-center">
-                        <input type="number" id="current-${service.id}" value="${service.currentVol}" class="calc-input">
-                        <span class="text-sm text-gray-500 ml-1">${service.unit}</span>
+                    <td class="px-4 py-3 text-center" data-label="Current Volume">
+                        <label for="current-${service.id}" class="sr-only">${service.name} — current volume (${service.unit})</label>
+                        <input type="number" id="current-${service.id}" value="${service.currentVol}" class="calc-input" aria-label="${service.name}: current volume (${service.unit})">
+                        <span class="text-xs text-slate-400 ml-1 font-bold">${service.unit}</span>
                     </td>
-                    <td class="px-4 py-3 text-center">
-                        <input type="number" id="potential-${service.id}" value="${service.potentialVol}" class="calc-input">
-                        <span class="text-sm text-gray-500 ml-1">${service.unit}</span>
+                    <td class="px-4 py-3 text-center" data-label="Potential Volume">
+                        <label for="potential-${service.id}" class="sr-only">${service.name} — potential volume (${service.unit})</label>
+                        <input type="number" id="potential-${service.id}" value="${service.potentialVol}" class="calc-input" aria-label="${service.name}: potential volume (${service.unit})">
+                        <span class="text-xs text-slate-400 ml-1 font-bold">${service.unit}</span>
                     </td>
-                    <td id="current-val-${service.id}" class="px-4 py-3 text-right result-cell tabular-nums"></td>
-                    <td id="additional-val-${service.id}" class="px-4 py-3 text-right result-cell tabular-nums"></td>
+                    <td id="current-val-${service.id}" class="px-4 py-3 text-right result-cell tabular-nums text-brand-teal" data-label="Current Value (Yearly)"></td>
+                    <td id="additional-val-${service.id}" class="px-4 py-3 text-right result-cell tabular-nums text-brand-amber font-bold" data-label="Additional Value (Yearly)"></td>
                 `;
       }
       tbody.appendChild(tr);
@@ -373,63 +422,67 @@ export function displayPlan(plan) {
   window.currentPlan = plan;
 
   const planResult = document.getElementById("plan-result");
+  if (!planResult) return;
 
   // Build initiatives HTML
   let initiativesHTML = "";
   plan.plan.forEach((initiative) => {
-    let tasksHTML = "";
-    initiative.tasks.forEach((task) => {
-      tasksHTML += `<li>${task.title} (${task.owner}, ${task.est_hours}h) - ${task.acceptance_criteria}</li>`;
-    });
-
     initiativesHTML += `
-      <div class="bg-white border border-gray-200 rounded-lg p-4">
-        <div class="flex justify-between items-start mb-2">
-          <h5 class="font-semibold text-lg text-gray-900">${initiative.title}</h5>
-          <span class="px-2 py-1 bg-green-100 text-green-800 text-sm rounded-full">Priority ${initiative.priority}</span>
+      <div class="bg-white border border-slate-100 rounded-2xl p-6 shadow-sm hover:shadow-md transition-all">
+        <div class="flex justify-between items-start mb-4">
+          <h5 class="font-bold text-xl text-brand-navy font-heading">${escapeHTML(initiative.title)}</h5>
+          <span class="px-3 py-1 bg-brand-teal text-white text-xs font-bold rounded-full uppercase tracking-widest shadow-sm">Priority ${escapeHTML(initiative.priority)}</span>
         </div>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-3">
-          <div>
-            <p class="text-sm text-gray-600">Owner</p>
-            <p class="font-medium">${initiative.owner_role}</p>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+          <div class="bg-slate-50 p-3 rounded-xl border border-slate-100">
+            <p class="text-[10px] text-slate-400 uppercase font-bold tracking-wider mb-1">Owner</p>
+            <p class="font-semibold text-brand-navy text-sm">${escapeHTML(initiative.owner_role)}</p>
           </div>
-          <div>
-            <p class="text-sm text-gray-600">Timeline</p>
-            <p class="font-medium">Week ${initiative.start_week} - ${initiative.start_week + initiative.duration_weeks}</p>
+          <div class="bg-slate-50 p-3 rounded-xl border border-slate-100">
+            <p class="text-[10px] text-slate-400 uppercase font-bold tracking-wider mb-1">Timeline</p>
+            <p class="font-semibold text-brand-navy text-sm">Week ${escapeHTML(initiative.start_week)} - ${escapeHTML(initiative.start_week + (initiative.duration_weeks || 0))}</p>
           </div>
-          <div>
-            <p class="text-sm text-gray-600">ROI</p>
-            <p class="font-medium">${initiative.ROI}</p>
+          <div class="bg-slate-50 p-3 rounded-xl border border-slate-100">
+            <p class="text-[10px] text-slate-400 uppercase font-bold tracking-wider mb-1">ROI</p>
+            <p class="font-semibold text-brand-teal text-sm">${escapeHTML(initiative.ROI)}</p>
           </div>
         </div>
-        <div class="mb-3">
-          <p class="text-sm text-gray-600 mb-1">Monthly Revenue Lift</p>
-          <p class="font-bold text-green-600">$${initiative.expected_monthly_revenue_lift.toLocaleString()}</p>
+        <div class="mb-6">
+          <p class="text-[10px] text-slate-400 uppercase font-bold tracking-wider mb-2">Monthly Revenue Lift</p>
+          <p class="text-2xl font-bold text-brand-teal font-heading">$${(initiative.expected_monthly_revenue_lift || 0).toLocaleString()}</p>
         </div>
-        <div class="mb-3">
-          <p class="text-sm text-gray-600 mb-1">Tasks</p>
-          <ul class="list-disc list-inside text-sm space-y-1">
-            ${tasksHTML}
+        <div class="mb-6">
+          <p class="text-[10px] text-slate-400 uppercase font-bold tracking-wider mb-3">Tasks</p>
+          <ul class="space-y-2">
+            ${initiative.tasks.map(task => `
+              <li class="flex items-start gap-2 text-sm text-slate-600">
+                <span class="text-brand-teal mt-1">✓</span>
+                <span><strong class="text-brand-navy">${escapeHTML(task.title)}</strong> <span class="text-slate-400">(${escapeHTML(task.owner)}, ${escapeHTML(task.est_hours)}h)</span></span>
+              </li>
+            `).join('')}
           </ul>
         </div>
-        <div class="text-sm text-gray-600">
-          <p>Difficulty: ${getImplementationDifficulty(initiative.service_type || initiative.title)}</p>
-          <p>Mitigations: ${(initiative.top_2_mitigations || initiative.mitigations || []).join(", ")}</p>
+        <div class="pt-4 border-t border-slate-100 flex flex-wrap gap-4 text-xs text-slate-500">
+          <p><span class="font-bold text-slate-400 uppercase tracking-tighter mr-1">Difficulty:</span> ${getImplementationDifficulty(initiative.service_type || initiative.title)}</p>
+          <p><span class="font-bold text-slate-400 uppercase tracking-tighter mr-1">Mitigations:</span> ${(initiative.top_2_mitigations || initiative.mitigations || []).join(", ")}</p>
         </div>
       </div>
     `;
   });
 
   // Build validation HTML
-  let validationHTML = "<p>No validation issues found.</p>";
+  let validationHTML = "<p class='text-brand-teal font-medium flex items-center gap-2'><span class='text-lg'>✓</span> No validation issues found.</p>";
   if (plan.validation && plan.validation.length > 0) {
     let issuesHTML = "";
     plan.validation.forEach((item) => {
-      issuesHTML += `<li>${item}</li>`;
+      issuesHTML += `<li class="flex items-start gap-2">
+        <span class="text-brand-amber font-bold">!</span>
+        <span>${item}</span>
+      </li>`;
     });
     validationHTML = `
-      <p><strong>Inconsistencies:</strong></p>
-      <ul class="list-disc list-inside">
+      <p class="font-bold text-brand-amber mb-3 uppercase text-xs tracking-widest">Inconsistencies detected:</p>
+      <ul class="space-y-2 text-sm text-slate-600">
         ${issuesHTML}
       </ul>
     `;
@@ -437,53 +490,83 @@ export function displayPlan(plan) {
 
   // Create the plan HTML
   planResult.innerHTML = `
-    <div class="bg-white p-6 rounded-lg shadow-lg">
-      <h3 class="text-2xl font-bold text-blue-900 mb-4">Your AI-Generated Pharmacy Action Plan</h3>
+    <div class="bg-white p-8 md:p-12 rounded-3xl shadow-2xl border border-slate-100">
+      <div class="flex items-center gap-4 mb-8">
+        <div class="bg-brand-navy text-white p-3 rounded-2xl shadow-lg">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+          </svg>
+        </div>
+        <h3 class="text-3xl font-bold text-brand-navy font-heading tracking-tight">AI-Generated Pharmacy Action Plan</h3>
+      </div>
 
       <!-- Executive Summary -->
-      <div class="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
-        <h4 class="font-bold text-blue-800 mb-2">📋 Executive Summary</h4>
-        <p class="text-gray-700">${plan.executive_summary.replace(/\n/g, "<br>")}</p>
+      <div class="mb-10 p-8 bg-brand-teal/5 rounded-3xl border border-brand-teal/10 shadow-sm">
+        <h4 class="font-bold text-brand-teal mb-4 font-heading uppercase text-xs tracking-[0.2em]">📋 Executive Summary</h4>
+        <p class="text-brand-navy leading-relaxed font-medium">${escapeHTML(plan.executive_summary).replace(/\n/g, "<br>")}</p>
       </div>
 
       <!-- Initiatives -->
-      <div class="mb-6">
-        <h4 class="font-bold text-green-800 mb-4">🎯 Implementation Initiatives</h4>
-        <div class="space-y-4">
+      <div class="mb-12">
+        <h4 class="font-bold text-brand-navy mb-6 font-heading uppercase text-xs tracking-[0.2em] flex items-center gap-2">
+          <span>🎯</span> Implementation Initiatives
+        </h4>
+        <div class="space-y-6">
           ${initiativesHTML}
         </div>
       </div>
 
       <!-- Financial Breakdown -->
-      <div class="mb-6 p-4 bg-green-50 rounded-lg border border-green-200">
-        <h4 class="font-bold text-green-800 mb-2">💰 Financial Breakdown</h4>
-        <div class="text-sm text-gray-700">
-          ${
-            plan.overallFinancials
-              ? `
-            ${plan.overallFinancials.paybackArithmetic ? `<p><strong>Payback:</strong> ${plan.overallFinancials.paybackArithmetic}</p>` : ""}
-            ${plan.overallFinancials.roiArithmetic ? `<p><strong>ROI:</strong> ${plan.overallFinancials.roiArithmetic}</p>` : ""}
-            <p><strong>Total Monthly Revenue Lift:</strong> $${(typeof plan.overallFinancials.monthlyRevenueLift === "number" ? plan.overallFinancials.monthlyRevenueLift : (plan.financial_breakdown && plan.financial_breakdown.overall && plan.financial_breakdown.overall.monthly_revenue_lift_total) || 0).toLocaleString()}</p>
-            <p><strong>Total Investment:</strong> $${(typeof plan.overallFinancials.totalInvestment === "number" ? plan.overallFinancials.totalInvestment : (plan.financial_breakdown && plan.financial_breakdown.overall && plan.financial_breakdown.overall.one_time_total) || 0).toLocaleString()}</p>
-            <pre class="mt-2 whitespace-pre-wrap">${plan.overallFinancials.roiArithmetic || (plan.financial_breakdown && plan.financial_breakdown.arithmetic) || "Details not available"}</pre>
-          `
-              : `
-            ${plan.financial_breakdown && plan.financial_breakdown.payback_period_months ? `<p><strong>Payback Period:</strong> ${plan.financial_breakdown.payback_period_months.toFixed(1)} months</p>` : ""}
-            <p><strong>Total One-Time Costs:</strong> $${((plan.financial_breakdown && plan.financial_breakdown.total_one_time_costs) || 0).toLocaleString()}</p>
-            <p><strong>Total Recurring Annual Costs:</strong> $${((plan.financial_breakdown && plan.financial_breakdown.total_recurring_costs) || 0).toLocaleString()}</p>
-            <p><strong>Total Monthly Revenue Lift:</strong> $${((plan.financial_breakdown && plan.financial_breakdown.total_monthly_revenue_lift) || 0).toLocaleString()}</p>
-            <pre class="mt-2 whitespace-pre-wrap">${(plan.financial_breakdown && plan.financial_breakdown.arithmetic) || "Details not available"}</pre>
-          `
-          }
+      <div class="mb-10 p-8 bg-brand-navy text-white rounded-3xl shadow-xl">
+        <h4 class="font-bold text-teal-400 mb-6 font-heading uppercase text-xs tracking-[0.2em] flex items-center gap-2">
+          <span>💰</span> Financial Breakdown
+        </h4>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div class="space-y-4">
+            ${
+              plan.overallFinancials
+                ? `
+              <div class="p-4 bg-white/5 rounded-2xl border border-white/10">
+                <p class="text-teal-400 text-[10px] font-bold uppercase tracking-widest mb-1">Payback Period</p>
+                <p class="text-2xl font-bold font-heading">${plan.overallFinancials.paybackArithmetic || "N/A"}</p>
+              </div>
+              <div class="p-4 bg-white/5 rounded-2xl border border-white/10">
+                <p class="text-teal-400 text-[10px] font-bold uppercase tracking-widest mb-1">Total ROI</p>
+                <p class="text-2xl font-bold font-heading text-brand-amber">${plan.overallFinancials.roiArithmetic || "N/A"}</p>
+              </div>
+            `
+                : `
+              <div class="p-4 bg-white/5 rounded-2xl border border-white/10">
+                <p class="text-teal-400 text-[10px] font-bold uppercase tracking-widest mb-1">Payback Period</p>
+                <p class="text-2xl font-bold font-heading">${plan.financial_breakdown && plan.financial_breakdown.payback_period_months ? plan.financial_breakdown.payback_period_months.toFixed(1) + ' months' : "N/A"}</p>
+              </div>
+            `
+            }
+          </div>
+          <div class="space-y-4">
+            <div class="p-4 bg-white/5 rounded-2xl border border-white/10">
+              <p class="text-teal-400 text-[10px] font-bold uppercase tracking-widest mb-1">Total Monthly Revenue Lift</p>
+              <p class="text-3xl font-bold font-heading text-teal-400 tabular-nums">$${(typeof (plan.overallFinancials?.monthlyRevenueLift) === "number" ? plan.overallFinancials.monthlyRevenueLift : (plan.financial_breakdown?.overall?.monthly_revenue_lift_total) || 0).toLocaleString()}</p>
+            </div>
+            <div class="p-4 bg-white/5 rounded-2xl border border-white/10">
+              <p class="text-teal-400 text-[10px] font-bold uppercase tracking-widest mb-1">Total Investment</p>
+              <p class="text-2xl font-bold font-heading tabular-nums">$${(typeof (plan.overallFinancials?.totalInvestment) === "number" ? plan.overallFinancials.totalInvestment : (plan.financial_breakdown?.overall?.one_time_total) || 0).toLocaleString()}</p>
+            </div>
+          </div>
+        </div>
+        <div class="mt-8 pt-6 border-t border-white/10">
+          <pre class="text-[10px] font-mono text-slate-400 whitespace-pre-wrap">${escapeHTML(plan.overallFinancials?.roiArithmetic || (plan.financial_breakdown?.arithmetic) || "Details not available")}</pre>
         </div>
       </div>
 
       <!-- Validation & Notes -->
-      <div class="mb-6 p-4 bg-yellow-50 rounded-lg border border-yellow-200">
-        <h4 class="font-bold text-yellow-800 mb-2">⚠️ Validation & Notes</h4>
-        <div class="text-sm text-gray-700">
+      <div class="p-8 bg-brand-amber/5 rounded-3xl border border-brand-amber/10 shadow-sm">
+        <h4 class="font-bold text-brand-amber mb-4 font-heading uppercase text-xs tracking-[0.2em] flex items-center gap-2">
+          <span>⚠️</span> Validation & Notes
+        </h4>
+        <div class="text-sm text-slate-700">
           ${validationHTML}
-          ${plan.notes ? `<p><strong>Notes:</strong> ${plan.notes}</p>` : ""}
+          ${plan.notes ? `<div class="mt-4 pt-4 border-t border-brand-amber/10 italic text-slate-500">${escapeHTML(plan.notes)}</div>` : ""}
         </div>
       </div>
     </div>
@@ -525,7 +608,7 @@ export function displayPlan(plan) {
   const debugInfoHtml = `
     <div class="mt-6 p-4 bg-gray-50 rounded-lg border">
       <h4 class="font-semibold mb-2 text-gray-800">Debug Information</h4>
-      <p class="text-sm text-gray-600 mb-2">Checksum: <span class="font-mono">${plan.metadata && plan.metadata.checksum ? plan.metadata.checksum : "N/A"}</span></p>
+      <p class="text-sm text-gray-600 mb-2">Checksum: <span class="font-mono">${escapeHTML(plan.metadata && plan.metadata.checksum ? plan.metadata.checksum : "N/A")}</span></p>
       <p class="text-sm text-gray-600 mb-2">Use this info when reporting issues for faster support.</p>
       <button onclick="copyDebugInfo()" class="px-3 py-1 bg-gray-600 text-white text-sm rounded hover:bg-gray-700">Copy Debug Info</button>
     </div>
@@ -606,44 +689,45 @@ export function downloadPlan() {
   modal.className =
     "fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50";
   modal.innerHTML = `
-    <div class="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-      <h3 class="text-xl font-bold text-gray-900 mb-4">Download Plan</h3>
-      <p class="text-gray-600 text-sm mb-6">Choose your preferred format:</p>
+    <div class="bg-white rounded-3xl p-8 max-w-md w-full mx-4 shadow-2xl border border-slate-100">
+      <h3 class="text-2xl font-bold text-brand-navy mb-4 font-heading tracking-tight text-center">Download Action Plan</h3>
+      <p class="text-slate-500 text-sm mb-8 text-center">Select your preferred professional format for distribution or archiving.</p>
       
-      <div class="space-y-3">
+      <div class="space-y-4">
         <button
-          class="w-full px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition"
+          class="w-full px-6 py-4 bg-brand-teal hover:bg-teal-700 text-white rounded-2xl font-bold transition-all shadow-md flex items-center justify-between group"
           onclick="downloadPlanAsHTML()"
         >
-          📄 Download as HTML
+          <span>📄 Download as HTML</span>
+          <span class="text-white/50 group-hover:translate-x-1 transition-all">→</span>
         </button>
         
         <button
-          class="w-full px-4 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition"
+          class="w-full px-6 py-4 bg-brand-navy hover:bg-slate-800 text-white rounded-2xl font-bold transition-all shadow-md flex items-center justify-between group"
           onclick="downloadPlanAsPDF()"
         >
-          📕 Download as PDF (Print)
+          <span>📕 Download as PDF</span>
+          <span class="text-white/50 group-hover:translate-x-1 transition-all">→</span>
         </button>
         
         <button
-          class="w-full px-4 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition"
+          class="w-full px-6 py-4 bg-white border-2 border-slate-100 hover:border-brand-amber/30 text-slate-600 hover:text-brand-amber rounded-2xl font-bold transition-all flex items-center justify-between group"
           onclick="downloadPlanAsCSV()"
         >
-          📊 Download Calculator Data (CSV)
+          <span>📊 Calculator Data (CSV)</span>
+          <span class="text-slate-200 group-hover:translate-x-1 transition-all">→</span>
         </button>
         
         <button
-          class="w-full px-4 py-3 bg-gray-400 hover:bg-gray-500 text-white rounded-lg font-medium transition"
-          onclick="closePlanDownloadModal()"
+          class="w-full px-6 py-4 bg-slate-50 hover:bg-slate-100 text-slate-400 rounded-2xl font-bold transition-all mt-4"
+          onclick="window.closePlanDownloadModal()"
         >
           Cancel
         </button>
       </div>
       
-      <p class="text-xs text-gray-500 mt-6 text-center">
-        HTML: Best for sharing and viewing<br>
-        PDF: Best for printing and archiving<br>
-        CSV: Data only, for spreadsheet analysis
+      <p class="text-[10px] text-slate-400 mt-8 text-center uppercase tracking-widest font-bold">
+        PharmIQ | Infrastructure for Choice
       </p>
     </div>
   `;
@@ -654,17 +738,17 @@ export function downloadPlan() {
   // Expose download functions to window
   window.downloadPlanAsHTML = () => {
     downloadPlanHTML(plan);
-    closePlanDownloadModal();
+    window.closePlanDownloadModal();
   };
 
   window.downloadPlanAsPDF = () => {
     downloadPlanPDF(plan);
-    closePlanDownloadModal();
+    window.closePlanDownloadModal();
   };
 
   window.downloadPlanAsCSV = () => {
     downloadPlanCSV(plan);
-    closePlanDownloadModal();
+    window.closePlanDownloadModal();
   };
 
   window.closePlanDownloadModal = () => {
@@ -721,9 +805,9 @@ export function displayProvenance() {
   if (!provenanceEl) return;
 
   let html =
-    '<h3 class="text-lg font-bold mb-2">Definitions & Rate Sources</h3>';
+    '<h3 class="text-xl font-bold mb-4 font-heading text-brand-navy">Definitions & Rate Sources</h3>';
   html +=
-    '<p class="text-sm text-gray-600 mb-2">Last updated: October 2024 (based on CPA guidelines)</p>';
+    '<p class="text-xs text-slate-400 mb-6 uppercase tracking-widest font-bold">Last updated: October 2024 (based on 8CPA guidelines)</p>';
 
   // Collect unique rates from services
   const rates = {};
@@ -748,13 +832,13 @@ export function displayProvenance() {
     });
   });
 
-  html += '<ul class="list-disc list-inside text-sm">';
+  html += '<ul class="space-y-3 text-sm text-slate-600 mb-8">';
   Object.entries(rates).forEach(([rate, services]) => {
-    html += `<li>${services.join(", ")}: ${rate}</li>`;
+    html += `<li class="flex items-start gap-2"><span class="text-brand-teal font-bold">•</span><span><strong class="text-brand-navy">${escapeHTML(services.join(", "))}:</strong> ${escapeHTML(rate)}</span></li>`;
   });
   html += "</ul>";
   html +=
-    '<button onclick="copyDebugInfo()" class="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm">Copy Debug Info</button>';
+    '<button onclick="copyDebugInfo()" class="px-6 py-3 bg-brand-navy hover:bg-slate-800 text-white rounded-xl font-bold transition-all shadow-md text-sm">Copy Debug Information</button>';
 
   provenanceEl.innerHTML = html;
 }

@@ -30,7 +30,7 @@ function collectCalculatorData() {
   };
 
   Object.keys(partNames).forEach((partKey) => {
-    const tbody = document.getElementById(`${partKey}-body`);
+    const tbody = document.getElementById(`${partKey}-rows`);
     if (!tbody) return;
 
     data.sections[partKey] = {
@@ -40,7 +40,6 @@ function collectCalculatorData() {
 
     // Parse rows from the table body
     const rows = tbody.querySelectorAll("tr");
-    let currentService = null;
 
     rows.forEach((row) => {
       const cells = row.querySelectorAll("td");
@@ -92,17 +91,13 @@ function collectCalculatorData() {
 function generatePlanHTML(plan, calculatorData) {
   const currentDate = new Date().toLocaleDateString("en-AU");
   
-  // Debug: Log plan structure
-  console.log("DEBUG: Plan object:", plan);
-  console.log("DEBUG: Implementation Initiatives:", plan.plan);
-
   let html = `
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Pharmacy Implementation Plan</title>
+  <title>PharmIQ | Implementation Plan</title>
   <style>
     * {
       margin: 0;
@@ -111,230 +106,293 @@ function generatePlanHTML(plan, calculatorData) {
     }
     
     body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      color: #333;
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      color: #0F172A;
       line-height: 1.6;
-      background: white;
+      background: #F8FAFC;
     }
     
     .container {
       max-width: 900px;
       margin: 0 auto;
-      padding: 20px;
+      padding: 40px 20px;
     }
     
     .header {
-      text-align: center;
-      border-bottom: 3px solid #0066cc;
-      padding-bottom: 20px;
-      margin-bottom: 30px;
+      text-align: left;
+      border-bottom: 4px solid #0F766E;
+      padding-bottom: 30px;
+      margin-bottom: 40px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
     }
     
     h1 {
-      font-size: 32px;
-      color: #0066cc;
+      font-size: 36px;
+      color: #0F766E;
+      margin-bottom: 5px;
+      font-family: 'Space Grotesk', sans-serif;
+      letter-spacing: -0.02em;
+    }
+    
+    .tagline {
+      font-size: 14px;
+      color: #0F172A;
+      font-weight: 600;
       margin-bottom: 5px;
     }
     
     .subtitle {
-      font-size: 14px;
-      color: #666;
-      margin: 5px 0;
+      font-size: 13px;
+      color: #64748B;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      font-weight: 700;
     }
     
     h2 {
-      font-size: 20px;
-      color: #0066cc;
-      margin-top: 30px;
-      margin-bottom: 15px;
-      border-bottom: 2px solid #e0e0e0;
-      padding-bottom: 10px;
+      font-size: 24px;
+      color: #0F172A;
+      margin-top: 40px;
+      margin-bottom: 20px;
+      font-family: 'Space Grotesk', sans-serif;
+      letter-spacing: -0.01em;
     }
     
     h3 {
-      font-size: 16px;
-      color: #333;
-      margin-top: 20px;
-      margin-bottom: 10px;
+      font-size: 18px;
+      color: #0F172A;
+      margin-top: 25px;
+      margin-bottom: 12px;
+      font-weight: 700;
     }
     
     .section {
-      margin-bottom: 25px;
+      margin-bottom: 35px;
     }
     
     .summary-cards {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
-      gap: 15px;
-      margin-bottom: 25px;
+      gap: 20px;
+      margin-bottom: 40px;
     }
     
     .card {
-      background: #f5f5f5;
-      border: 1px solid #ddd;
-      padding: 15px;
-      border-radius: 8px;
-      text-align: center;
+      background: white;
+      border: 1px solid #E2E8F0;
+      padding: 20px;
+      border-radius: 16px;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
     }
+    
+    .card-teal { background: #F0FDFA; border-color: #CCFBF1; }
+    .card-amber { background: #FFFBEB; border-color: #FDE68A; }
+    .card-navy { background: #0F172A; color: white; }
     
     .card-label {
-      font-size: 12px;
-      color: #666;
+      font-size: 10px;
+      color: #64748B;
       text-transform: uppercase;
-      margin-bottom: 5px;
+      letter-spacing: 0.1em;
+      font-weight: 800;
+      margin-bottom: 8px;
     }
+    
+    .card-navy .card-label { color: #94A3B8; }
     
     .card-value {
-      font-size: 22px;
-      font-weight: bold;
-      color: #0066cc;
+      font-size: 24px;
+      font-weight: 800;
+      color: #0F172A;
     }
     
+    .card-navy .card-value { color: white; }
+    
     .executive-summary {
-      background: #e6f2ff;
-      border-left: 4px solid #0066cc;
-      padding: 15px;
-      margin-bottom: 20px;
-      border-radius: 4px;
+      background: #F0FDFA;
+      border-left: 6px solid #0F766E;
+      padding: 25px;
+      margin-bottom: 30px;
+      border-radius: 12px;
+      font-weight: 500;
     }
     
     .executive-summary p {
-      margin-bottom: 10px;
+      margin-bottom: 15px;
     }
     
     .initiative {
-      border-left: 4px solid #28a745;
-      background: #f9f9f9;
-      padding: 15px;
-      margin-bottom: 15px;
-      border-radius: 4px;
+      border: 1px solid #E2E8F0;
+      background: white;
+      padding: 25px;
+      margin-bottom: 20px;
+      border-radius: 16px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
     }
     
     .initiative-header {
       display: flex;
       justify-content: space-between;
-      align-items: flex-start;
-      margin-bottom: 10px;
+      align-items: center;
+      margin-bottom: 20px;
+      padding-bottom: 15px;
+      border-bottom: 1px solid #F1F5F9;
     }
     
     .initiative-title {
-      font-weight: bold;
-      font-size: 16px;
-      color: #333;
+      font-weight: 800;
+      font-size: 18px;
+      color: #0F172A;
     }
     
     .priority-badge {
-      background: #28a745;
+      background: #0F766E;
       color: white;
-      padding: 4px 10px;
-      border-radius: 20px;
-      font-size: 12px;
-      white-space: nowrap;
+      padding: 6px 12px;
+      border-radius: 99px;
+      font-size: 10px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
     }
     
     .initiative-details {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
-      gap: 10px;
-      margin-bottom: 10px;
-      font-size: 13px;
+      gap: 15px;
+      margin-bottom: 15px;
     }
     
     .detail-item {
-      background: white;
-      padding: 8px;
-      border-radius: 4px;
-      border: 1px solid #e0e0e0;
+      background: #F8FAFC;
+      padding: 12px;
+      border-radius: 8px;
+      border: 1px solid #F1F5F9;
     }
     
     .detail-label {
-      color: #666;
-      font-size: 11px;
+      color: #94A3B8;
+      font-size: 9px;
       text-transform: uppercase;
+      font-weight: 800;
+      letter-spacing: 0.05em;
     }
     
     .detail-value {
-      font-weight: bold;
-      color: #333;
-      margin-top: 3px;
+      font-weight: 700;
+      color: #0F172A;
+      margin-top: 4px;
+      font-size: 14px;
     }
     
     .task-list {
-      margin-top: 10px;
+      margin-top: 20px;
+      background: #F8FAFC;
+      padding: 15px;
+      border-radius: 8px;
     }
     
     .task-list ul {
-      margin-left: 20px;
+      margin-left: 5px;
+      list-style: none;
       font-size: 13px;
     }
     
     .task-list li {
-      margin-bottom: 5px;
-      color: #555;
+      margin-bottom: 8px;
+      color: #475569;
+      display: flex;
+      gap: 10px;
+    }
+    
+    .task-list li::before {
+      content: "✓";
+      color: #0F766E;
+      font-weight: 800;
     }
     
     table {
       width: 100%;
-      border-collapse: collapse;
-      margin-bottom: 15px;
+      border-collapse: separate;
+      border-spacing: 0;
+      margin-bottom: 20px;
       font-size: 13px;
+      border: 1px solid #E2E8F0;
+      border-radius: 12px;
+      overflow: hidden;
     }
     
     th {
-      background: #0066cc;
-      color: white;
-      padding: 10px;
+      background: #F8FAFC;
+      color: #64748B;
+      padding: 12px 15px;
       text-align: left;
-      font-weight: 600;
+      font-weight: 700;
+      text-transform: uppercase;
+      font-size: 10px;
+      letter-spacing: 0.05em;
+      border-bottom: 1px solid #E2E8F0;
     }
     
     td {
-      padding: 10px;
-      border-bottom: 1px solid #ddd;
+      padding: 12px 15px;
+      border-bottom: 1px solid #F1F5F9;
+      background: white;
     }
     
-    tr:nth-child(even) {
-      background: #f9f9f9;
+    tr:last-child td {
+      border-bottom: none;
     }
     
-    .text-right {
-      text-align: right;
-    }
-    
-    .text-center {
-      text-align: center;
-    }
+    .text-right { text-align: right; }
+    .text-center { text-align: center; }
     
     .financial-breakdown {
-      background: #e6ffe6;
-      border-left: 4px solid #28a745;
-      padding: 15px;
-      margin-bottom: 20px;
-      border-radius: 4px;
+      background: #0F172A;
+      color: white;
+      padding: 30px;
+      margin-bottom: 30px;
+      border-radius: 20px;
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
     }
     
-    .financial-item {
-      display: flex;
-      justify-content: space-between;
-      margin-bottom: 8px;
-      font-size: 13px;
+    .financial-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+    
+    .fin-card {
+      background: rgba(255,255,255,0.05);
+      padding: 15px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,0.1);
     }
     
     .financial-label {
-      color: #333;
+      color: #94A3B8;
+      font-size: 10px;
+      text-transform: uppercase;
+      font-weight: 800;
+      margin-bottom: 5px;
     }
     
     .financial-value {
-      font-weight: bold;
-      color: #28a745;
+      font-weight: 800;
+      color: #2DD4BF;
+      font-size: 20px;
     }
     
+    .roi-value { color: #F59E0B; }
+    
     .validation-box {
-      background: #fff3cd;
-      border-left: 4px solid #ffc107;
-      padding: 15px;
-      margin-bottom: 20px;
-      border-radius: 4px;
+      background: #FFFBEB;
+      border-left: 6px solid #D97706;
+      padding: 20px;
+      margin-bottom: 30px;
+      border-radius: 12px;
       font-size: 13px;
     }
     
@@ -343,44 +401,27 @@ function generatePlanHTML(plan, calculatorData) {
       margin-top: 10px;
     }
     
-    .validation-box li {
-      margin-bottom: 5px;
-      color: #555;
-    }
-    
     .calculator-section {
       page-break-before: always;
-      margin-top: 30px;
-    }
-    
-    .calculator-data {
-      font-size: 12px;
-    }
-    
-    .calculator-data table td {
-      padding: 8px;
-      font-size: 12px;
+      margin-top: 50px;
     }
     
     .footer {
-      margin-top: 30px;
-      padding-top: 15px;
-      border-top: 1px solid #ddd;
+      margin-top: 60px;
+      padding-top: 30px;
+      border-top: 1px solid #E2E8F0;
       text-align: center;
       font-size: 11px;
-      color: #999;
+      color: #94A3B8;
     }
     
+    .brand-accent { color: #0F766E; font-weight: 800; }
+    
     @media print {
-      body {
-        background: white;
-      }
-      .container {
-        max-width: 100%;
-      }
-      .no-print {
-        display: none;
-      }
+      body { background: white; }
+      .container { max-width: 100%; padding: 0; }
+      .initiative, .card, .financial-breakdown { box-shadow: none; border: 1px solid #EEE; }
+      .no-print { display: none; }
     }
   </style>
 </head>
@@ -388,23 +429,29 @@ function generatePlanHTML(plan, calculatorData) {
   <div class="container">
     <!-- Header -->
     <div class="header">
-      <h1>Pharmacy Implementation Plan</h1>
-      <p class="subtitle">AI-Generated Action Plan & Financial Analysis</p>
-      <p class="subtitle">Generated: ${currentDate}</p>
+      <div>
+        <h1>PharmIQ</h1>
+        <p class="tagline">Infrastructure for Choice. Clarity for Growth.</p>
+        <p class="subtitle">Implementation Action Plan</p>
+      </div>
+      <div style="text-align: right;">
+        <p style="font-size: 12px; color: #64748B; font-weight: 700;">DOCUMENT ID: PIQ-${Math.random().toString(36).substr(2, 9).toUpperCase()}</p>
+        <p style="font-size: 12px; color: #64748B;">GENERATED: ${currentDate}</p>
+      </div>
     </div>
     
     <!-- Calculator Totals Summary -->
     <div class="summary-cards">
-      <div class="card">
-        <div class="card-label">Estimated Current Value (Yearly)</div>
+      <div class="card card-teal">
+        <div class="card-label">Est. Current Value (Yearly)</div>
         <div class="card-value">${calculatorData.totals.currentValue}</div>
       </div>
-      <div class="card">
-        <div class="card-label">Estimated Additional Value (Yearly)</div>
+      <div class="card card-amber">
+        <div class="card-label">Est. Additional Value (Yearly)</div>
         <div class="card-value">${calculatorData.totals.additionalValue}</div>
       </div>
-      <div class="card">
-        <div class="card-label">Estimated Total Value (Yearly)</div>
+      <div class="card card-navy">
+        <div class="card-label">Total Potential Value (Yearly)</div>
         <div class="card-value">${calculatorData.totals.totalValue}</div>
       </div>
     </div>
@@ -425,7 +472,7 @@ function generatePlanHTML(plan, calculatorData) {
     
     <!-- Implementation Initiatives -->
     <div class="section">
-      <h2>Implementation Initiatives</h2>
+      <h2>Strategic Initiatives</h2>
       ${
         plan.plan && plan.plan.length > 0
           ? plan.plan
@@ -443,7 +490,7 @@ function generatePlanHTML(plan, calculatorData) {
               <div class="detail-value">${initiative.owner_role || "TBD"}</div>
             </div>
             <div class="detail-item">
-              <div class="detail-label">Timeline</div>
+              <div class="detail-label">Implementation Window</div>
               <div class="detail-value">${
                 initiative.start_week && initiative.duration_weeks
                   ? `Week ${initiative.start_week} - ${initiative.start_week + initiative.duration_weeks}`
@@ -452,21 +499,21 @@ function generatePlanHTML(plan, calculatorData) {
             </div>
             <div class="detail-item">
               <div class="detail-label">Monthly Revenue Lift</div>
-              <div class="detail-value">$${(initiative.expected_monthly_revenue_lift || 0).toLocaleString()}</div>
+              <div class="detail-value" style="color: #0F766E;">$${(initiative.expected_monthly_revenue_lift || 0).toLocaleString()}</div>
             </div>
           </div>
           
           <div class="initiative-details">
             <div class="detail-item">
-              <div class="detail-label">ROI</div>
-              <div class="detail-value">${initiative.ROI || "TBD"}</div>
+              <div class="detail-label">Projected ROI</div>
+              <div class="detail-value" style="color: #D97706;">${initiative.ROI || "TBD"}</div>
             </div>
             <div class="detail-item">
-              <div class="detail-label">Investment</div>
+              <div class="detail-label">Required Investment</div>
               <div class="detail-value">$${(initiative.one_time_cost || 0).toLocaleString()}</div>
             </div>
             <div class="detail-item">
-              <div class="detail-label">Difficulty</div>
+              <div class="detail-label">Complexity</div>
               <div class="detail-value">${getImplementationDifficulty(initiative.service_type)}</div>
             </div>
           </div>
@@ -475,12 +522,12 @@ function generatePlanHTML(plan, calculatorData) {
             initiative.tasks && initiative.tasks.length > 0
               ? `
             <div class="task-list">
-              <strong style="font-size: 13px;">Tasks:</strong>
+              <p class="detail-label" style="margin-bottom: 10px;">ACTION TASKS:</p>
               <ul>
                 ${initiative.tasks
                   .map(
                     (task) => `
-                  <li><strong>${task.title || "Task"}</strong> (${task.owner || "TBD"}, ${task.est_hours || "0"}h) - ${task.acceptance_criteria || "No criteria specified"}</li>
+                  <li><strong>${task.title || "Task"}</strong> <span style="color: #94A3B8; font-size: 11px;">(${task.owner || "TBD"}, ${task.est_hours || "0"}h)</span></li>
                 `,
                   )
                   .join("")}
@@ -492,7 +539,7 @@ function generatePlanHTML(plan, calculatorData) {
           
           ${
             initiative.mitigations && initiative.mitigations.length > 0
-              ? `<p style="margin-top: 10px; font-size: 13px;"><strong>Risk Mitigations:</strong> ${initiative.mitigations.join(", ")}</p>`
+              ? `<p style="margin-top: 15px; font-size: 11px; color: #64748B;"><strong>RISK MITIGATIONS:</strong> ${initiative.mitigations.join(", ")}</p>`
               : ""
           }
         </div>
@@ -505,45 +552,55 @@ function generatePlanHTML(plan, calculatorData) {
     
     <!-- Financial Breakdown -->
     <div class="section">
-      <h2>Financial Breakdown</h2>
+      <h2>Financial Performance Summary</h2>
       <div class="financial-breakdown">
-        ${
-          plan.overallFinancials
-            ? `
+        <div class="financial-grid">
           ${
-            plan.overallFinancials.paybackArithmetic
-              ? `<div class="financial-item"><span class="financial-label">Payback Analysis:</span><span class="financial-value">${plan.overallFinancials.paybackArithmetic}</span></div>`
-              : ""
-          }
-          ${
-            plan.overallFinancials.roiArithmetic
-              ? `<div class="financial-item"><span class="financial-label">ROI Analysis:</span><span class="financial-value">${plan.overallFinancials.roiArithmetic}</span></div>`
-              : ""
-          }
-          <div class="financial-item"><span class="financial-label">Total Monthly Revenue Lift:</span><span class="financial-value">$${(plan.overallFinancials.monthlyRevenueLift || 0).toLocaleString()}</span></div>
-          <div class="financial-item"><span class="financial-label">Total Investment Required:</span><span class="financial-value">$${(plan.overallFinancials.totalInvestment || 0).toLocaleString()}</span></div>
-        `
-            : plan.financial_breakdown
+            plan.overallFinancials
               ? `
-          ${plan.financial_breakdown.payback_period_months ? `<div class="financial-item"><span class="financial-label">Payback Period:</span><span class="financial-value">${plan.financial_breakdown.payback_period_months.toFixed(1)} months</span></div>` : ""}
-          <div class="financial-item"><span class="financial-label">Total One-Time Costs:</span><span class="financial-value">$${(plan.financial_breakdown.total_one_time_costs || 0).toLocaleString()}</span></div>
-          <div class="financial-item"><span class="financial-label">Total Annual Recurring Costs:</span><span class="financial-value">$${(plan.financial_breakdown.total_recurring_costs || 0).toLocaleString()}</span></div>
-          <div class="financial-item"><span class="financial-label">Total Monthly Revenue Lift:</span><span class="financial-value">$${(plan.financial_breakdown.total_monthly_revenue_lift || 0).toLocaleString()}</span></div>
+            <div class="fin-card">
+              <div class="financial-label">Payback Period Analysis</div>
+              <div class="financial-value">${plan.overallFinancials.paybackArithmetic || "N/A"}</div>
+            </div>
+            <div class="fin-card">
+              <div class="financial-label">Total ROI Projection</div>
+              <div class="financial-value roi-value">${plan.overallFinancials.roiArithmetic || "N/A"}</div>
+            </div>
+            <div class="fin-card">
+              <div class="financial-label">Monthly Revenue Growth</div>
+              <div class="financial-value">$${(plan.overallFinancials.monthlyRevenueLift || 0).toLocaleString()}</div>
+            </div>
+            <div class="fin-card">
+              <div class="financial-label">Total Implementation Capital</div>
+              <div class="financial-value">$${(plan.overallFinancials.totalInvestment || 0).toLocaleString()}</div>
+            </div>
+          `
+              : plan.financial_breakdown
+                ? `
+            <div class="fin-card">
+              <div class="financial-label">Payback Period</div>
+              <div class="financial-value">${plan.financial_breakdown.payback_period_months ? plan.financial_breakdown.payback_period_months.toFixed(1) + ' months' : "N/A"}</div>
+            </div>
+            <div class="fin-card">
+              <div class="financial-label">Total Monthly Revenue Lift</div>
+              <div class="financial-value">$${(plan.financial_breakdown.total_monthly_revenue_lift || 0).toLocaleString()}</div>
+            </div>
+          `
+                : ""
+          }
+        </div>
+        
+        ${
+          plan.financial_breakdown && plan.financial_breakdown.arithmetic
+            ? `
+          <div style="margin-top: 25px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.1); font-family: monospace; font-size: 10px; color: #94A3B8; white-space: pre-wrap;">
+PROJECTION BASIS:
+${plan.financial_breakdown.arithmetic}
+          </div>
         `
-              : ""
+            : ""
         }
       </div>
-      
-      ${
-        plan.financial_breakdown && plan.financial_breakdown.arithmetic
-          ? `
-        <h3>Financial Calculation Details</h3>
-        <div style="background: #f9f9f9; padding: 12px; border-radius: 4px; font-family: monospace; font-size: 12px; white-space: pre-wrap; word-wrap: break-word; overflow-x: auto;">
-${plan.financial_breakdown.arithmetic}
-        </div>
-      `
-          : ""
-      }
     </div>
     
     <!-- Validation & Notes -->
@@ -551,59 +608,38 @@ ${plan.financial_breakdown.arithmetic}
       plan.validation && plan.validation.length > 0
         ? `
       <div class="section">
-        <h2>Validation & Notes</h2>
+        <h2>Professional Assurance Validation</h2>
         <div class="validation-box">
-          <strong>Validation Results:</strong>
+          <strong class="detail-label" style="color: #92400E; display: block; margin-bottom: 10px;">VALIDATION CHECKS:</strong>
           <ul>
             ${plan.validation.map((issue) => `<li>${issue}</li>`).join("")}
           </ul>
-          ${plan.notes ? `<p style="margin-top: 10px;"><strong>Additional Notes:</strong> ${plan.notes}</p>` : ""}
+          ${plan.notes ? `<div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #FDE68A; font-style: italic;">${plan.notes}</div>` : ""}
         </div>
       </div>
     `
         : ""
     }
     
-    <!-- User Preferences -->
-    <div class="section">
-      <h2>Plan Configuration</h2>
-      <table>
-        <tbody>
-          <tr>
-            <td><strong>Max Investment:</strong></td>
-            <td>$${calculatorData.userPreferences.maxInvestment}</td>
-          </tr>
-          <tr>
-            <td><strong>Time Horizon:</strong></td>
-            <td>${calculatorData.userPreferences.timeHorizon} months</td>
-          </tr>
-          <tr>
-            <td><strong>Detail Level:</strong></td>
-            <td>${calculatorData.userPreferences.detailLevel}</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-    
     <!-- Calculator Data Appendix -->
     <div class="section calculator-section">
-      <h2>Calculator Data Snapshot</h2>
-      <p style="font-size: 13px; color: #666; margin-bottom: 15px;">
-        This section contains the detailed calculator input and output data that was used to generate this plan.
+      <h2>Appendix: Opportunity Analysis Data</h2>
+      <p style="font-size: 12px; color: #64748B; margin-bottom: 20px;">
+        The following data was provided by the operator and used as the mathematical basis for this PharmIQ Strategic Action Plan.
       </p>
       
       ${Object.entries(calculatorData.sections)
         .map(
           ([key, section]) => `
-        <h3>${section.name}</h3>
+        <h3 style="font-size: 14px; text-transform: uppercase; letter-spacing: 0.05em; color: #64748B;">${section.name}</h3>
         <div class="calculator-data">
           <table>
             <thead>
               <tr>
-                <th>Service</th>
-                <th>Funded Rate</th>
-                <th>Current Value</th>
-                <th>Additional Value</th>
+                <th>Service Name</th>
+                <th>8CPA Funded Rate</th>
+                <th class="text-right">Current Value</th>
+                <th class="text-right">Additional Opportunity</th>
               </tr>
             </thead>
             <tbody>
@@ -611,10 +647,10 @@ ${plan.financial_breakdown.arithmetic}
                 .map(
                   (item) => `
                 <tr>
-                  <td>${item.name}</td>
+                  <td style="font-weight: 600; color: #0F172A;">${item.name}</td>
                   <td>${item.fundedRate}</td>
                   <td class="text-right">${item.currentValue}</td>
-                  <td class="text-right">${item.additionalValue}</td>
+                  <td class="text-right" style="font-weight: 700; color: #0F766E;">${item.additionalValue}</td>
                 </tr>
               `,
                 )
@@ -629,9 +665,9 @@ ${plan.financial_breakdown.arithmetic}
     
     <!-- Footer -->
     <div class="footer">
-      <p>This plan was generated using the Pharmacy Opportunity Analysis Calculator.</p>
-      <p>For questions or updates, please contact [insert email]</p>
-      <p>Document generated: ${currentDate}</p>
+      <p>This professional assurance plan was generated by <span class="brand-accent">PharmIQ</span> — Infrastructure for Choice. Clarity for Growth.</p>
+      <p style="margin-top: 5px;">&copy; 2026 PharmIQ Operations. All rights reserved.</p>
+      <p style="margin-top: 15px; font-size: 9px; color: #CBD5E1;">PRIVACY NOTICE: This document contains confidential operational data. Ensure secure distribution. No data is stored on PharmIQ servers.</p>
     </div>
   </div>
 </body>
@@ -673,7 +709,7 @@ export function downloadPlanHTML(plan) {
     const blob = new Blob([htmlContent], { type: "text/html;charset=utf-8" });
     const link = document.createElement("a");
     link.href = URL.createObjectURL(blob);
-    link.download = `pharmacy-plan-${new Date().toISOString().split("T")[0]}.html`;
+    link.download = `pharmiq-plan-${new Date().toISOString().split("T")[0]}.html`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -698,19 +734,23 @@ export async function downloadPlanPDF(plan) {
     // Generate HTML content
     const htmlContent = generatePlanHTML(plan, calculatorData);
 
-    // Open a new window with the HTML
-    const printWindow = window.open("", "_blank");
-    printWindow.document.write(htmlContent);
-    printWindow.document.close();
+    // Create a Blob and URL for the content to avoid document.write
+    const blob = new Blob([htmlContent], { type: "text/html" });
+    const url = URL.createObjectURL(blob);
 
-    // Wait for content to load, then trigger print dialog
-    printWindow.onload = () => {
-      setTimeout(() => {
-        printWindow.print();
-        // Note: After printing, user should save as PDF from the print dialog
-        // Or they can close the window - the file will be saved based on browser print settings
-      }, 500);
-    };
+    // Open a new window with the URL
+    const printWindow = window.open(url, "_blank");
+
+    // Clean up the URL after opening
+    if (printWindow) {
+      // Trigger print dialog when loaded
+      printWindow.addEventListener("load", () => {
+        setTimeout(() => {
+          printWindow.print();
+          URL.revokeObjectURL(url);
+        }, 500);
+      });
+    }
   } catch (error) {
     console.error("Error preparing PDF download:", error);
     alert("Error preparing PDF: " + error.message);
@@ -725,7 +765,7 @@ export function downloadPlanCSV(plan) {
   try {
     const calculatorData = collectCalculatorData();
 
-    let csv = "Pharmacy Implementation Plan - Calculator Data\n\n";
+    let csv = "PharmIQ Implementation Plan - Calculator Data\n\n";
 
     // Add summary
     csv += "SUMMARY\n";
@@ -746,7 +786,7 @@ export function downloadPlanCSV(plan) {
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
     const link = document.createElement("a");
     link.href = URL.createObjectURL(blob);
-    link.download = `pharmacy-calculator-${new Date().toISOString().split("T")[0]}.csv`;
+    link.download = `pharmiq-calculator-${new Date().toISOString().split("T")[0]}.csv`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
