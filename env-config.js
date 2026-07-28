@@ -9,8 +9,7 @@ window.ENV_CONFIG = {
   "FIREBASE_PROJECT_ID": "",
   "FIREBASE_STORAGE_BUCKET": "",
   "FIREBASE_MESSAGING_SENDER_ID": "",
-  "FIREBASE_APP_ID": "",
-  "OPENROUTER_API_KEY": ""
+  "FIREBASE_APP_ID": ""
 };
 
 // Expose individual Firebase config variables
@@ -24,4 +23,3 @@ window.FIREBASE_APP_ID = window.ENV_CONFIG.FIREBASE_APP_ID;
 
 console.log('✓ Environment configuration loaded');
 console.log('Firebase Config Available:', !!window.FIREBASE_API_KEY);
-console.log('OpenRouter API Key Available:', !!window.ENV_CONFIG.OPENROUTER_API_KEY);

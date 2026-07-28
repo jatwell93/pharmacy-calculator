@@ -9,7 +9,10 @@
 const fs = require('fs');
 const path = require('path');
 
-// Environment variables to inject
+// Environment variables to inject into the CLIENT bundle.
+// IMPORTANT: only browser-safe values belong here (Firebase web config is public
+// by design). Never add server secrets like OPENROUTER_API_KEY — those are read
+// server-side by the Netlify functions via process.env and must not reach the browser.
 const envVars = {
   'FIREBASE_API_KEY': process.env.FIREBASE_API_KEY || '',
   'FIREBASE_AUTH_DOMAIN': process.env.FIREBASE_AUTH_DOMAIN || '',
@@ -17,8 +20,7 @@ const envVars = {
   'FIREBASE_PROJECT_ID': process.env.FIREBASE_PROJECT_ID || '',
   'FIREBASE_STORAGE_BUCKET': process.env.FIREBASE_STORAGE_BUCKET || '',
   'FIREBASE_MESSAGING_SENDER_ID': process.env.FIREBASE_MESSAGING_SENDER_ID || '',
-  'FIREBASE_APP_ID': process.env.FIREBASE_APP_ID || '',
-  'OPENROUTER_API_KEY': process.env.OPENROUTER_API_KEY || ''
+  'FIREBASE_APP_ID': process.env.FIREBASE_APP_ID || ''
 };
 
 // Log environment variable status for debugging
@@ -30,7 +32,7 @@ console.log('FIREBASE_PROJECT_ID:', envVars.FIREBASE_PROJECT_ID ? 'SET ✓' : 'N
 console.log('FIREBASE_STORAGE_BUCKET:', envVars.FIREBASE_STORAGE_BUCKET ? 'SET ✓' : 'NOT SET ✗');
 console.log('FIREBASE_MESSAGING_SENDER_ID:', envVars.FIREBASE_MESSAGING_SENDER_ID ? 'SET ✓' : 'NOT SET ✗');
 console.log('FIREBASE_APP_ID:', envVars.FIREBASE_APP_ID ? 'SET ✓' : 'NOT SET ✗');
-console.log('OPENROUTER_API_KEY:', envVars.OPENROUTER_API_KEY ? 'SET ✓' : 'NOT SET ✗');
+console.log('OPENROUTER_API_KEY:', process.env.OPENROUTER_API_KEY ? 'SET ✓ (server-side only)' : 'NOT SET ✗');
 
 // Generate env-config.js content
 const envConfigContent = `
@@ -50,7 +52,6 @@ window.FIREBASE_APP_ID = window.ENV_CONFIG.FIREBASE_APP_ID;
 
 console.log('✓ Environment configuration loaded');
 console.log('Firebase Config Available:', !!window.FIREBASE_API_KEY);
-console.log('OpenRouter API Key Available:', !!window.ENV_CONFIG.OPENROUTER_API_KEY);
 `;
 
 try {

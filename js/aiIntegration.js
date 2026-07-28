@@ -56,29 +56,25 @@ function checkEnvironmentVariables() {
     FIREBASE_API_KEY: window.FIREBASE_API_KEY || window.ENV_CONFIG?.FIREBASE_API_KEY,
     FIREBASE_AUTH_DOMAIN: window.FIREBASE_AUTH_DOMAIN || window.ENV_CONFIG?.FIREBASE_AUTH_DOMAIN,
     FIREBASE_DATABASE_URL: window.FIREBASE_DATABASE_URL || window.ENV_CONFIG?.FIREBASE_DATABASE_URL,
-    FIREBASE_PROJECT_ID: window.FIREBASE_PROJECT_ID || window.ENV_CONFIG?.FIREBASE_PROJECT_ID,
-    OPENROUTER_API_KEY: window.ENV_CONFIG?.OPENROUTER_API_KEY
+    FIREBASE_PROJECT_ID: window.FIREBASE_PROJECT_ID || window.ENV_CONFIG?.FIREBASE_PROJECT_ID
   };
-  
-  // Environment variable check - values not logged for security
-  
+
+  // Environment variable check - values not logged for security.
+  // Note: OPENROUTER_API_KEY is intentionally NOT checked client-side. It is a
+  // server-only secret consumed by the Netlify functions via process.env and must
+  // never be exposed to the browser.
+
   const missingVars = [];
   const hasFirebaseConfig = Object.entries(envVars)
     .filter(([key]) => key.startsWith('FIREBASE'))
     .every(([_key, value]) => !!value);
-    
-  const hasOpenRouterKey = !!envVars.OPENROUTER_API_KEY;
-  
+
   if (!hasFirebaseConfig) {
     missingVars.push('Firebase Configuration');
   }
-  if (!hasOpenRouterKey) {
-    missingVars.push('OpenRouter API Key');
-  }
-  
+
   return {
     hasFirebaseConfig,
-    hasOpenRouterKey,
     missingVars,
     envVars
   };
