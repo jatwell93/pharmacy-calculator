@@ -112,76 +112,9 @@ function validatePayloadNumbers(payload) {
   return errors;
 }
 
-// Helper function to initialize database based on environment
-// This is called inside the handler to ensure env vars are available
-function initializeDatabase() {
-  // Environment check performed (values not logged for security)
-
-  const isProduction = process.env.NETLIFY === "true" || process.env.CONTEXT === "production";
-  const forceLocalDb = process.env.FORCE_LOCAL_DB === "true";
-  
-  const hasFirebaseConfig = process.env.FIREBASE_API_KEY &&
-                           process.env.FIREBASE_AUTH_DOMAIN &&
-                           process.env.FIREBASE_DATABASE_URL &&
-                           process.env.FIREBASE_PROJECT_ID;
-
-  let database, dbRef, dbSet;
-
-  if (hasFirebaseConfig && !forceLocalDb) {
-    // Use Firebase when config is available (production or development with Firebase)
-    console.log("🔐 Using Firebase Realtime Database");
-    try {
-      const firebaseAppModule = require("firebase/app");
-      const firebaseDbModule = require("firebase/database");
-      
-      const firebaseConfig = {
-        apiKey: process.env.FIREBASE_API_KEY,
-        authDomain: process.env.FIREBASE_AUTH_DOMAIN,
-        databaseURL: process.env.FIREBASE_DATABASE_URL,
-        projectId: process.env.FIREBASE_PROJECT_ID,
-        storageBucket: process.env.FIREBASE_STORAGE_BUCKET,
-        messagingSenderId: process.env.FIREBASE_MESSAGING_SENDER_ID,
-        appId: process.env.FIREBASE_APP_ID,
-      };
-
-      // Check if app is already initialized
-      let app;
-      if (firebaseAppModule.getApps().length === 0) {
-        app = firebaseAppModule.initializeApp(firebaseConfig);
-      } else {
-        app = firebaseAppModule.getApp();
-      }
-      
-      database = firebaseDbModule.getDatabase(app);
-      dbRef = firebaseDbModule.ref;
-      dbSet = firebaseDbModule.set;
-      console.log("✅ Firebase initialized successfully");
-    } catch (firebaseError) {
-      console.error("❌ Firebase initialization failed:", firebaseError.message);
-      throw new Error(`Firebase initialization failed: ${firebaseError.message}`);
-    }
-  } else if (forceLocalDb || !isProduction) {
-    // Development mode: use local file-backed database
-    console.log("⚙️ Development mode: using local file-backed database");
-    try {
-      const localDb = require("../../dev/localDatabase");
-      const app = localDb.initializeApp({});
-      database = localDb.getDatabase(app);
-      dbRef = localDb.ref;
-      dbSet = localDb.set;
-      console.log("✅ Local database initialized successfully");
-    } catch (localDbError) {
-      console.error("❌ Local database initialization failed:", localDbError.message);
-      throw new Error(`Local database initialization failed: ${localDbError.message}`);
-    }
-  } else {
-    // Production but missing Firebase config - this is an error state
-    console.error("❌ PRODUCTION ERROR: Missing Firebase configuration. Please set environment variables in Netlify dashboard.");
-    throw new Error("Firebase configuration missing for production deployment. Please set environment variables in Netlify dashboard.");
-  }
-
-  return { database, dbRef, dbSet };
-}
+// Database initializer: Admin SDK server-side (bypasses Security Rules) in
+// production, file-backed local DB in dev / FORCE_LOCAL_DB. See lib/firebaseDb.js.
+const { initializeDatabase } = require("./lib/firebaseDb");
 
 exports.handler = async function (event, context) {
   // Set proper headers for JSON response

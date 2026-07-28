@@ -1,0 +1,7 @@
+{
+  "//": "Realtime Database Security Rules for PharmIQ. The Netlify functions use the Firebase Admin SDK (service account), which bypasses these rules entirely, so ALL client access is denied. The browser never reads or writes the database directly. Deploy with `firebase deploy --only database`, or paste into Firebase console > Realtime Database > Rules.",
+  "rules": {
+    ".read": false,
+    ".write": false
+  }
+}
