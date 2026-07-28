@@ -365,7 +365,7 @@ async function callOpenRouterAI(prompt, retryCount = 0) {
   console.log("🔍 DEBUG: First 200 chars of prompt:", prompt.substring(0, 200));
 
   const requestBody = {
-    model: "qwen/qwen3-vl-235b-a22b-thinking",
+    model: "google/gemma-4-31b-it:free",
     messages: [
       {
         role: "system",
