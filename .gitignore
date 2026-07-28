@@ -13,7 +13,7 @@ lerna-debug.log*
 
 # Diagnostic reports (https://nodejs.org/api/report.html)
 report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
-
+bug-scan-report.txt
 # Runtime data
 pids
 *.pid
@@ -45,6 +45,12 @@ build/Release
 # Dependency directories
 node_modules/
 jspm_packages/
+.agents/
+.brand-identity-pharma-apps/
+
+# AI coding tool local dirs (machine-specific)
+.claude/
+.qwen/
 
 # Snowpack dependency directory (https://snowpack.dev/)
 web_modules/

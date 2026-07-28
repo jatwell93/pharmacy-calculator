@@ -132,7 +132,7 @@ function generatePlanHTML(plan, calculatorData) {
       font-size: 36px;
       color: #0F766E;
       margin-bottom: 5px;
-      font-family: 'Space Grotesk', sans-serif;
+      font-family: 'Outfit', 'DM Sans', sans-serif;
       letter-spacing: -0.02em;
     }
     
@@ -156,7 +156,7 @@ function generatePlanHTML(plan, calculatorData) {
       color: #0F172A;
       margin-top: 40px;
       margin-bottom: 20px;
-      font-family: 'Space Grotesk', sans-serif;
+      font-family: 'Outfit', 'DM Sans', sans-serif;
       letter-spacing: -0.01em;
     }
     

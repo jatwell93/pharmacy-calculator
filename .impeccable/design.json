@@ -1,0 +1,135 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-07-28T00:00:00Z",
+  "title": "Design System: PharmIQ Opportunity Analysis Calculator",
+  "extensions": {
+    "colorMeta": {
+      "brand-teal": {
+        "role": "primary",
+        "displayName": "PharmIQ Teal",
+        "canonical": "#0F766E",
+        "tonalRamp": ["#052E2B", "#0A4A45", "#0D5D5A", "#0F766E", "#14B8A6", "#2DD4BF", "#5EEAD4", "#CCFBF1"]
+      },
+      "brand-amber": {
+        "role": "secondary",
+        "displayName": "Opportunity Amber",
+        "canonical": "#D97706",
+        "tonalRamp": ["#451A03", "#78350F", "#92400E", "#B45309", "#D97706", "#F59E0B", "#FCD34D", "#FEF3C7"]
+      },
+      "brand-navy": {
+        "role": "neutral",
+        "displayName": "Brand Navy",
+        "canonical": "#0F172A",
+        "tonalRamp": ["#020617", "#0F172A", "#1E293B", "#334155", "#475569", "#94A3B8", "#CBD5E1", "#F1F5F9"]
+      },
+      "brand-sky": {
+        "role": "secondary",
+        "displayName": "Sky Blue",
+        "canonical": "#0EA5E9",
+        "tonalRamp": ["#082F49", "#0C4A6E", "#075985", "#0369A1", "#0EA5E9", "#38BDF8", "#7DD3FC", "#E0F2FE"]
+      },
+      "surface-2": {
+        "role": "neutral",
+        "displayName": "Base Surface (Slate)",
+        "canonical": "#F8FAFC",
+        "tonalRamp": ["#0F172A", "#1E293B", "#475569", "#94A3B8", "#CBD5E1", "#E2E8F0", "#F1F5F9", "#F8FAFC"]
+      }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Display (Fraunces)", "purpose": "Hero opportunity figure / page-defining headline. One per view." },
+      "headline": { "displayName": "Headline (Outfit)", "purpose": "Page title." },
+      "title": { "displayName": "Title (Outfit)", "purpose": "Section and card headings." },
+      "body": { "displayName": "Body (Inter)", "purpose": "Descriptions, form values, table cells. 16px min on mobile." },
+      "label": { "displayName": "Label (Outfit)", "purpose": "Uppercase table headers, eyebrows, button labels." }
+    },
+    "shadows": [
+      { "name": "sm", "value": "0 1px 3px rgba(15,23,42,0.10), 0 1px 2px rgba(15,23,42,0.06)", "purpose": "Small buttons and inline controls at rest." },
+      { "name": "md", "value": "0 4px 6px rgba(15,23,42,0.07), 0 2px 4px rgba(15,23,42,0.06)", "purpose": "Hover feedback." },
+      { "name": "lg", "value": "0 10px 15px rgba(15,23,42,0.10), 0 4px 6px rgba(15,23,42,0.05)", "purpose": "Total/hero card and main working card." }
+    ],
+    "motion": [
+      { "name": "ease-standard", "value": "cubic-bezier(0.4, 0, 0.2, 1)", "purpose": "Default easing for state transitions." },
+      { "name": "duration-fast", "value": "150ms", "purpose": "Hover, reveal, and inline status changes. Respect prefers-reduced-motion." }
+    ],
+    "breakpoints": [
+      { "name": "md", "value": "768px" },
+      { "name": "screen-xl", "value": "1280px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The single teal action per moment (e.g. Generate Plan).",
+      "html": "<button class=\"ds-btn-primary\">Generate Action Plan</button>",
+      "css": ".ds-btn-primary { background: #0F766E; color: #FFFFFF; font-family: 'Outfit','DM Sans',sans-serif; font-weight: 600; font-size: 14px; padding: 16px 24px; border: none; border-radius: 12px; box-shadow: 0 1px 3px rgba(15,23,42,0.10), 0 1px 2px rgba(15,23,42,0.06); cursor: pointer; transition: background 0.15s cubic-bezier(0.4,0,0.2,1), box-shadow 0.15s, transform 0.15s; } .ds-btn-primary:hover { background: #0D5D5A; box-shadow: 0 4px 6px rgba(15,23,42,0.07), 0 2px 4px rgba(15,23,42,0.06); transform: translateY(-1px); } .ds-btn-primary:focus-visible { outline: 2px solid #0F766E; outline-offset: 2px; }"
+    },
+    {
+      "name": "Secondary Button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Lower-emphasis action (e.g. Review Plan Data).",
+      "html": "<button class=\"ds-btn-secondary\">Review Plan Data</button>",
+      "css": ".ds-btn-secondary { background: #FFFFFF; color: #0F172A; font-family: 'Outfit','DM Sans',sans-serif; font-weight: 600; font-size: 14px; padding: 16px 24px; border: 1px solid #E2E8F0; border-radius: 16px; box-shadow: 0 1px 3px rgba(15,23,42,0.10), 0 1px 2px rgba(15,23,42,0.06); cursor: pointer; transition: background 0.15s, box-shadow 0.15s; } .ds-btn-secondary:hover { background: #F8FAFC; box-shadow: 0 4px 6px rgba(15,23,42,0.07); } .ds-btn-secondary:focus-visible { outline: 2px solid #0F766E; outline-offset: 2px; }"
+    },
+    {
+      "name": "Total / Hero Card",
+      "kind": "card",
+      "refersTo": "total-card",
+      "description": "Navy card carrying the headline opportunity figure in Display type.",
+      "html": "<div class=\"ds-total-card\"><span class=\"ds-total-label\">Total Additional Opportunity (Yearly)</span><p class=\"ds-total-figure\">$248,600</p></div>",
+      "css": ".ds-total-card { background: #0F172A; color: #FFFFFF; border-radius: 16px; padding: 24px; box-shadow: 0 10px 15px rgba(15,23,42,0.10), 0 4px 6px rgba(15,23,42,0.05); } .ds-total-label { font-family: 'Outfit','DM Sans',sans-serif; font-weight: 600; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: #94A3B8; } .ds-total-figure { font-family: 'Fraunces',Georgia,serif; font-weight: 600; font-size: clamp(2.5rem, 5vw, 4rem); line-height: 1.05; letter-spacing: -0.02em; margin: 8px 0 0; font-variant-numeric: tabular-nums; }"
+    },
+    {
+      "name": "Number Input",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Current/potential volume field with tabular numerals.",
+      "html": "<input class=\"ds-input\" type=\"number\" inputmode=\"numeric\" value=\"120\" aria-label=\"Current volume\" />",
+      "css": ".ds-input { background: #FFFFFF; color: #0F172A; font-family: 'Inter',system-ui,sans-serif; font-size: 16px; font-variant-numeric: tabular-nums; padding: 8px 12px; border: 1px solid #CBD5E1; border-radius: 8px; transition: border-color 0.15s, box-shadow 0.15s; } .ds-input:focus-visible { outline: none; border-color: #0F766E; box-shadow: 0 0 0 3px rgba(15,118,110,0.20); }"
+    },
+    {
+      "name": "Table Header",
+      "kind": "custom",
+      "refersTo": "label",
+      "description": "Data-table column header — Outfit uppercase label on slate.",
+      "html": "<table class=\"ds-table\"><thead><tr><th>Program</th><th>Funded Per Service</th><th class=\"num\">Est. Additional (Yearly)</th></tr></thead><tbody><tr><td>MedsChecks</td><td class=\"num\">$22.55</td><td class=\"num\">$18,400</td></tr></tbody></table>",
+      "css": ".ds-table { width: 100%; border-collapse: collapse; } .ds-table thead { background: #F1F5F9; } .ds-table th { font-family: 'Outfit','DM Sans',sans-serif; font-weight: 600; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: #94A3B8; text-align: left; padding: 12px 16px; border-bottom: 1px solid #E2E8F0; } .ds-table td { font-family: 'Inter',system-ui,sans-serif; font-size: 14px; color: #0F172A; padding: 12px 16px; border-bottom: 1px solid #E2E8F0; } .ds-table .num { text-align: right; font-variant-numeric: tabular-nums; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Command Center",
+    "overview": "This surface is operational infrastructure, not a brochure. A pharmacist opens it to quantify missed professional-services revenue and leave with a plan, often between dispensing tasks. Every decision serves that job: dense-but-calm data tables, one unmistakable primary action per moment, and a single hero figure that reads as the instrument's output. The system pairs an editorial serif (Fraunces) reserved strictly for the headline moment with a geometric sans (Outfit) doing all the operational heavy lifting, over a restrained slate-neutral canvas. Teal is the one voice of action; amber is scarce and means attention. Depth comes from an adjacent-surface ladder and hairline borders before any heavy shadow.",
+    "keyCharacteristics": [
+      "Operational density with a calm, uncluttered rhythm.",
+      "One hero number, one primary action, one accent voice per viewport.",
+      "Neutral slate surfaces; color earns its place by carrying status.",
+      "Editorial serif for the headline moment only; geometric sans everywhere else.",
+      "Depth via surface ladder + hairline borders, not shadow stacks."
+    ],
+    "rules": [
+      { "name": "The One Voice Rule", "body": "Teal is the only action color. If two elements compete for 'click me' in a viewport, one of them is wrong.", "section": "colors" },
+      { "name": "The Scarce Amber Rule", "body": "If more than one amber element appears at rest in a single viewport, reassess the hierarchy — amber means attention, and attention doesn't scale.", "section": "colors" },
+      { "name": "The Serif-Once Rule", "body": "Fraunces appears exactly once per view — the hero number or headline. Everywhere else is Outfit or Inter.", "section": "typography" },
+      { "name": "The Tabular Numbers Rule", "body": "All currency and volume figures use tabular/lining numerals so columns align and totals don't jitter as values change.", "section": "typography" },
+      { "name": "The Ladder-First Rule", "body": "Reach for the next surface step and a hairline border before adding a shadow. Do not nest cards to fake depth.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do keep exactly one primary (teal) action per moment and one Fraunces headline per view.",
+      "Do use tabular numerals for every currency and volume figure so columns stay aligned.",
+      "Do build depth with the surface ladder and hairline borders first; add shadow only for the working card and hover.",
+      "Do wrap dense tables in overflow-x-auto and keep 16px minimum input font size on mobile.",
+      "Do reserve amber for opportunity/warning and keep it scarce.",
+      "Do target WCAG AA, pair color states with text/icon cues, and keep visible focus states."
+    ],
+    "donts": [
+      "Don't introduce a second action color or use teal for decoration.",
+      "Don't set Fraunces on body, labels, or more than one headline — it's the serif-once voice.",
+      "Don't nest cards or stack shadows to fake hierarchy.",
+      "Don't let more than one amber element sit at rest in a viewport.",
+      "Don't use muted #94A3B8 for informational body text on light surfaces, and don't put white text on amber.",
+      "Don't make the tool feel like a generic blue healthcare dashboard — the brand lives in restraint and precise detail."
+    ]
+  }
+}
