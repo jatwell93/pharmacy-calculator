@@ -33,7 +33,7 @@ export function initializeFirebase() {
   try {
     // Check if Firebase config is properly set
     const hasConfig = Object.values(firebaseConfig).some(val => val !== null);
-    
+
     if (!hasConfig) {
       throw new Error('Firebase configuration not found in window object');
     }

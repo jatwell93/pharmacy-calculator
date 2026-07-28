@@ -10,14 +10,21 @@
  */
 function renderDisclaimer() {
   const disclaimerHTML = `
-    <div class="disclaimer" style="padding: 10px; border: 1px solid #ccc; background-color: #f9f9f9; font-size: 0.9em; line-height: 1.4;">
-      <p>
-        <strong>Important Disclaimer:</strong> This calculator provides estimates only and is not financial or professional advice. All projections are based on assumed revenue rates from CPA guidelines and may not reflect actual pharmacy performance. Actual results can vary due to market conditions, competition, patient demand, and implementation quality. Consult CPA guidelines, your business advisor, and legal professionals before implementing any changes. This tool is for informational purposes only and does not guarantee outcomes.
+    <div class="disclaimer p-6 bg-slate-50 border border-slate-200 rounded-2xl text-slate-500 text-sm leading-relaxed">
+      <div class="flex items-start gap-3 mb-4">
+        <span class="text-brand-amber font-bold text-lg">⚠️</span>
+        <p>
+          <strong class="text-brand-navy font-bold">Professional Assurance Disclaimer:</strong> This calculator provides mathematical estimates only and does not constitute financial, professional, or regulatory advice. All projections are based on assumed revenue rates from 8CPA guidelines and may not reflect your specific pharmacy performance.
+        </p>
+      </div>
+      <p class="mb-4">
+        Actual results vary based on local market conditions, patient demand, and clinical implementation quality. We strongly recommend consulting official 8CPA documentation and your professional business advisors before executing operational changes.
       </p>
-      <br>
-      <p>
-        <u>No pharmacy data is stored or retained by this calculator.</u> Your inputs are converted to a JSON format and sent to a large language model (LLM) via OpenRouter to generate analysis, which is immediately returned and displayed to you. Neither your data nor prompts are saved or recorded by this tool or by OpenRouter.
-      </p>
+      <div class="pt-4 border-t border-slate-200">
+        <p class="font-medium text-slate-600 italic">
+          <span class="text-brand-teal not-italic font-bold">Data Privacy:</span> No pharmacy data is stored or retained. Your inputs are processed in-memory to generate analysis and are never saved to a database.
+        </p>
+      </div>
     </div>
   `;
   return disclaimerHTML;

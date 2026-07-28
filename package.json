@@ -1,7 +1,7 @@
 {
-  "name": "pharmacy-calculator",
+  "name": "pharmiq-opportunity-calculator",
   "version": "1.0.0",
-  "description": "Pharmacy Opportunity Calculator with AI-powered action plan generation",
+  "description": "PharmIQ | Infrastructure for Choice. Opportunity Analysis Calculator with AI-powered action plan generation.",
   "main": "index.html",
   "scripts": {
     "dev": "node dev/local-server.js",

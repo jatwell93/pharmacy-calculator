@@ -4,6 +4,7 @@ console.log("DEBUG: main.js loaded successfully");
 // Main Application Entry Point
 // This file initializes the application and sets up global functions
 
+import { initializeState } from "./state.js";
 import {
   generateTables,
   setupEventListeners,
@@ -28,6 +29,8 @@ import {
 } from "./downloadPlan.js";
 import { appendDisclaimerTo } from "./disclaimer.js";
 import { initializeAnonymousAuth } from "./firebaseInit.js";
+import { setupInputValidation } from "./validation.js";
+import { setupNetworkListeners } from "./network.js";
 
 /**
  * Initialize accordion functionality for parts
@@ -73,6 +76,9 @@ function initializePartsAccordion() {
 async function initializeApp() {
   console.log("Initializing Pharmacy Calculator...");
 
+  // Initialize central state
+  initializeState();
+
   // Initialize Firebase authentication first (non-blocking - errors are caught)
   try {
     await initializeAnonymousAuth();
@@ -99,6 +105,12 @@ async function initializeApp() {
 
   // Setup event listeners for input changes
   setupEventListeners();
+
+  // Setup input validation
+  setupInputValidation();
+
+  // Setup network listeners for offline detection
+  setupNetworkListeners();
 
   // Initialize accordion functionality
   initializePartsAccordion();

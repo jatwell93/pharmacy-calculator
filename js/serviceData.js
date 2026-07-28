@@ -72,8 +72,7 @@ export const servicesData = {
         const WEEKS_PER_YEAR = 52;
         let yearlyRevenue = 0;
         for (let pickups of patientPickups) {
-          const p = Math.max(0, parseInt(pickups) || 0);
-          if (p > 0) {
+          const p = Math.max(0, parseInt(pickups, 10) || 0);          if (p > 0) {
             let weeklyFee = STAGED_SUPPLY_FIRST_DAY;
             if (p > 1) {
               weeklyFee += (p - 1) * STAGED_SUPPLY_SUBSEQUENT_DAY;
@@ -674,15 +673,7 @@ export const servicesData = {
       unit: "Patients",
       timeFactor: 1,
       customLayout: true,
-      calc: () => {
-        const originator =
-          parseFloat(document.getElementById("adalimumab-originator").value) ||
-          0;
-        const biosimilar =
-          parseFloat(document.getElementById("adalimumab-biosimilar").value) ||
-          0;
-        const program =
-          parseFloat(document.getElementById("adalimumab-program").value) || 0;
+      calc: (originator = 0, biosimilar = 0, program = 0) => {
         const ADA_MARGIN = 681.2;
         const ADA_PROGRAM = 370.0;
         const marginOpportunity = originator * ADA_MARGIN;
@@ -698,15 +689,7 @@ export const servicesData = {
       unit: "Patients",
       timeFactor: 1,
       customLayout: true,
-      calc: () => {
-        const originator =
-          parseFloat(document.getElementById("etanercept-originator").value) ||
-          0;
-        const biosimilar =
-          parseFloat(document.getElementById("etanercept-biosimilar").value) ||
-          0;
-        const program =
-          parseFloat(document.getElementById("etanercept-program").value) || 0;
+      calc: (originator = 0, biosimilar = 0, program = 0) => {
         const ETA_MARGIN = 790.27;
         const ETA_PROGRAM = 240.0;
         const marginOpportunity = originator * ETA_MARGIN;

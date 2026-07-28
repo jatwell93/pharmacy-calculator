@@ -84,7 +84,7 @@ function getAtPath(root, pathStr) {
   const parts = pathStr.split('/').filter(Boolean);
   let cur = root;
   for (const p of parts) {
-    if (cur == null || typeof cur !== 'object' || !(p in cur)) {
+    if ((cur === null || cur === undefined) || typeof cur !== 'object' || !(p in cur)) {
       return undefined;
     }
     cur = cur[p];
@@ -173,7 +173,7 @@ async function set(refObj, value) {
   // if null/undefined, initialize as {}
   const root = db || {};
   // When value is an object, clone to avoid accidental mutation
-  const toWrite = (value && typeof value === 'object') ? JSON.parse(JSON.stringify(value)) : value;
+  let toWrite = value; try { if (value && typeof value === 'object') toWrite = JSON.parse(JSON.stringify(value)); } catch (e) { console.error('localDatabase: deep-clone failed', e); }
   const newRoot = setAtPath(root, refObj.path, toWrite);
   await writeDb(newRoot);
   return { success: true };
