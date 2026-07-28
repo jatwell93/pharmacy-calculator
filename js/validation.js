@@ -178,6 +178,9 @@ export function setupInputValidation() {
 
   // Validate on blur
   document.addEventListener("blur", (e) => {
+    // blur bubbles in capture phase from non-element targets (document, window),
+    // which have no classList — bail before touching it.
+    if (!(e.target instanceof Element)) return;
     if (!e.target.classList.contains("calc-input")) return;
 
     const input = e.target;

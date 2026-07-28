@@ -28,7 +28,6 @@ import {
   downloadPlanCSV,
 } from "./downloadPlan.js";
 import { appendDisclaimerTo } from "./disclaimer.js";
-import { initializeAnonymousAuth } from "./firebaseInit.js";
 import { setupInputValidation } from "./validation.js";
 import { setupNetworkListeners } from "./network.js";
 
@@ -79,17 +78,9 @@ async function initializeApp() {
   // Initialize central state
   initializeState();
 
-  // Initialize Firebase authentication first (non-blocking - errors are caught)
-  try {
-    await initializeAnonymousAuth();
-    console.log("✓ Firebase authentication initialized");
-  } catch (error) {
-    console.warn(
-      "⚠ Firebase authentication failed, some features may not work:",
-      error.message
-    );
-    // Continue with app initialization even if Firebase fails
-  }
+  // Note: the browser no longer initializes Firebase. All database access happens
+  // server-side via the Netlify functions (Firebase Admin SDK); the client only
+  // calls /api endpoints, so no client-side Firebase auth is needed.
 
   // Generate all service tables
   generateTables();

@@ -295,6 +295,12 @@ export function generatePayload(userPreferences = {}, rawDataOverride = null) {
   const topDrivers = rankedByImpact.slice(0, Math.min(8, rankedByImpact.length));
   const includedMonthlyDelta = topDrivers.filter((d) => d.included).reduce((sum, d) => sum + d.monthlyRevenueImpact, 0);
 
+  // "Other items" = everything not surfaced in topDrivers (ranked 9+). The server
+  // validates otherItemsSummary.count, so this block must always be present.
+  const topDriverIds = new Set(topDrivers.map((d) => d.id));
+  const otherItems = processedData.filter((d) => !topDriverIds.has(d.id));
+  const otherMonthlyImpact = otherItems.reduce((sum, d) => sum + d.monthlyRevenueImpact, 0);
+
   const payload = {
     metadata: {
       calculatorVersion: "1.3.1",
@@ -309,6 +315,9 @@ export function generatePayload(userPreferences = {}, rawDataOverride = null) {
       currentMonthlyRevenue: Math.round(totalCurrentMonthly),
       projectedMonthlyRevenue: Math.round(totalCurrentMonthly + includedMonthlyDelta),
       monthlyRevenueDelta: Math.round(includedMonthlyDelta),
+      // Server-required alias for the delta from selected drivers; downstream
+      // rendering (aiIntegration.js) also reads summaryMetrics.selectedMonthlyRevenueDelta.
+      selectedMonthlyRevenueDelta: Math.round(includedMonthlyDelta),
       estimatedAnnualDelta: Math.round(includedMonthlyDelta * 12),
       itemCount: processedData.length,
       totalInvestment: userPreferences.maxInvestment || 0,
@@ -325,6 +334,12 @@ export function generatePayload(userPreferences = {}, rawDataOverride = null) {
       included: driver.included,
       assumptions: driver.assumptions,
     })),
+    otherItemsSummary: {
+      count: otherItems.length,
+      combinedMonthlyImpact: Math.round(otherMonthlyImpact),
+      combinedOneTimeCost: null,
+      combinedRecurringAnnualCost: null,
+    },
     overallFinancials: (() => {
       const investment = userPreferences.maxInvestment || 0;
       const monthlyLift = includedMonthlyDelta || 0;
